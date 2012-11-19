@@ -15,3 +15,5 @@ project/plugins/project/
 .scala_dependencies
 .idea*
 
+examples/*/bin/.lib
+examples/*/target
