@@ -18,6 +18,7 @@
 
 SCRIPT=`readlink -f $0`
 SCRIPTPATH=`dirname $SCRIPT`
+PROG_NAME={{PROG_NAME}}
 source ${SCRIPTPATH}/launch-common
 
 exec "$JAVACMD" ${JVM_OPT} \

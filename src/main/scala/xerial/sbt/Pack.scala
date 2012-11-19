@@ -62,20 +62,20 @@ object Pack extends sbt.Plugin {
         def rpath(f:RichFile) = f.relativeTo(base) map { _.toString } getOrElse(f.toString)
 
         val distDir = target / packDir
-        out.log.info("Creating a distributable package in: " + rpath(distDir))
+        out.log.info("Creating a distributable package in " + rpath(distDir))
         IO.delete(distDir)
         distDir.mkdirs()
 
 
         val libDir = distDir / "lib"
-        out.log.info("Copy libraries to " + rpath(libDir))
+        out.log.info("Copying libraries to " + rpath(libDir))
         libDir.mkdirs()
         (libs ++ depJars).foreach(l => IO.copyFile(l, libDir / l.getName))
         out.log.info("project jars:\n" + libs.mkString("\n"))
         out.log.info("project dependencies:\n" + depJars.mkString("\n"))
 
         val binDir = distDir / "bin"
-        out.log.info("Create a bin folder: " + rpath(binDir))
+        out.log.info("Cremaate a bin folder: " + rpath(binDir))
         binDir.mkdirs()
 
         def read(path:String) : String = Resource.open(this.getClass, path) { f =>
@@ -112,7 +112,8 @@ object Pack extends sbt.Plugin {
         }
 
         // Create Makefile
-        val makefile = StringTemplate.eval(read("pack/script/Makefile.template"))(Map("PROG_NAME" -> name)) +
+        val globalVar = Map[Any, String]("PROG_NAME" -> name)
+        val makefile = StringTemplate.eval(read("pack/script/Makefile.template"))(globalVar) +
           (for(p <- mainTable.keys) yield
             "\t" + """ln -sf "../$(PROG)/current/bin/%s" "$(PREFIX)/bin/%s"""".format(p, p)).mkString("\n") + "\n"
 
