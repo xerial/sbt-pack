@@ -75,7 +75,7 @@ object Pack extends sbt.Plugin {
         out.log.info("project dependencies:\n" + depJars.mkString("\n"))
 
         val binDir = distDir / "bin"
-        out.log.info("Cremaate a bin folder: " + rpath(binDir))
+        out.log.info("Create a bin folder: " + rpath(binDir))
         binDir.mkdirs()
 
         def read(path:String) : String = Resource.open(this.getClass, path) { f =>
@@ -96,6 +96,10 @@ object Pack extends sbt.Plugin {
         // Create launch scripts
         out.log.info("Generating launch scripts")
         write("bin/launch-common", read("pack/script/launch-common"))
+        if(mainTable.isEmpty) {
+          out.log.warn("No mapping (progran name) -> MainClass is defined. Please set packMain variable (Map[String, String]) in your sbt project settings.")
+        }
+
         val mains = for((name, mainClass) <- mainTable) yield {
           out.log.info("main class for %s: %s".format(name, mainClass))
           Map[Any, String]("PROG_NAME"->name, "MAIN_CLASS"->mainClass)
@@ -120,7 +124,7 @@ object Pack extends sbt.Plugin {
         write("Makefile", makefile)
 
         // Copy other scripts
-        IO.copyDirectory(base / "src/script", binDir)
+        IO.copyDirectory(base / "src/pack", binDir)
 
         // chmod +x the bin directory
         if (!System.getProperty("os.name", "").contains("Windows")) {
