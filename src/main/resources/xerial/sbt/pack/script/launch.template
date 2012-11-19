@@ -18,7 +18,7 @@
 
 SCRIPT=`readlink -f $0`
 SCRIPTPATH=`dirname $SCRIPT`
-source $(SCRIPTPATH)/launch-common
+source ${SCRIPTPATH}/launch-common
 
 exec "$JAVACMD" ${JVM_OPT} \
   -classpath "${PROG_HOME}"/lib/plexus-classworlds-*.jar \
