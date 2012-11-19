@@ -1,0 +1,5 @@
+main is {{MAIN_CLASS}} from core
+
+[core]
+load ${prog.home}/lib/*.jar
+

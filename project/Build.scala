@@ -21,9 +21,8 @@ import sbt._
 import Keys._
 
 import sbtrelease.ReleasePlugin._
-import com.jsuereth.pgp.sbtplugin.PgpPlugin._
 
-object SbtPackBuild extends Build {
+object PackBuild extends Build {
 
   val SCALA_VERSION = "2.9.2"
 
@@ -85,9 +84,7 @@ object SbtPackBuild extends Build {
             <url>http://xerial.org/leo</url>
           </developer>
         </developers>
-    },
-    useGpg := true,
-    useGpgAgent := false
+    }
   )
 
 
