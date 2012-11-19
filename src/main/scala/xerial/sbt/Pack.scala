@@ -120,7 +120,7 @@ object Pack extends sbt.Plugin {
         write("Makefile", makefile)
 
         // Copy other scripts
-        IO.copyDirectory(base / "src/script", binDir)
+        IO.copyDirectory(base / "src/pack", binDir)
 
         // chmod +x the bin directory
         if (!System.getProperty("os.name", "").contains("Windows")) {
