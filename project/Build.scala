@@ -71,12 +71,6 @@ object PackBuild extends Build {
           <developerConnection>scm:git:git@github.com:xerial/sbt-pack.git</developerConnection>
           <url>github.com/xerial/sbt-pack.git</url>
         </scm>
-        <properties>
-          <scala.version>
-            {SCALA_VERSION}
-          </scala.version>
-          <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        </properties>
         <developers>
           <developer>
             <id>leo</id>
