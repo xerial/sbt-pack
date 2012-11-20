@@ -21,8 +21,6 @@ Add `sbt-pack` plugin:
 
 **project/plugins.sbt**
 
-	resolvers += "Sonatype OSS Releases" at "https://oss.sonatype.org/content/repositories/releases"
-	
 	addSbtPlugin("org.xerial.sbt" % "sbt-pack" % "0.1")
 
 
@@ -37,15 +35,13 @@ Import `xerial.sbt.Pack.packSettings` into your project settings. Then set `pack
     object Build extends sbt.Build {
     
       lazy val root = Project(
-        id = "example1",
+        id = "myprog",
         base = file("."),
         settings = Defaults.defaultSettings ++ packSettings ++
           Seq(
             // Map from program name -> Main class (full path)
             packMain := Map("hello" -> "myprog.Hello"),
-            // custom settings here
-            crossPaths := false,
-			//libraryDependencies += ...
+            // Add custom settings here
           )
       )
     }
