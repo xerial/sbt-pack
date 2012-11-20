@@ -67,8 +67,12 @@ Import `xerial.sbt.Pack.packSettings` into your project settings. Then set `pack
 	
 Your program package will be generated in `target/pack` folder.
 
-### Other examples of projects
+### Example projects
 
-See `examples` folder of this source code.
+See also [examples](https://github.com/xerial/sbt-pack/tree/master/examples) folder
+in the source code. It contains several example Scala projects.
+
+
+
 
 	
