@@ -1,0 +1,51 @@
+A command-launcher example using org.xerial:xerial-lens library. 
+You can define multiple commands using a single main(args:Array[String]) entry:
+
+To create a package, do:
+   
+    $ bin/sbt pack
+
+Then, launch a command:
+
+    $ target/pack/bin/launcher
+    Type --help for the list of commands.
+    To see the detailed help of each command, type (command name) --help
+
+    # Run sub-commands
+    $ target/pack/bin/launcher hello
+    Hello World!!
+
+    $ target/pack/bin/launcher version
+    launcher version:=0.1-SNAPSHOT
+
+    # Display the list of sub commands
+    $ target/pack/bin/launcher --help
+    usage: [command name]
+      
+    [options]
+      -h, --help  Display help messages
+    [commands]
+      hello                  Say hello
+      repeat                 Repeat say hello
+      version                Show version information
+      complexCommands        option setting examples
+
+    # Display the help of the sub command
+    $ target/pack/bin/launcher complexCommands --help
+    usage: complexCommands [otherArg]
+     option setting examples
+    [options]
+     --min:[MIN]  min value
+     --max:[MAX]  max value
+     -c [CARD]    card: spade|diamond|heard|clover
+     -f           flag
+
+
+    $ target/pack/bin/launcher complexCommands --min:5 -c clover -f hello
+    [Main] min:5, max:10
+    [Main] card:Clover
+    [Main] flag:Some(true)
+    [Main] other arg:hello
+
+
+

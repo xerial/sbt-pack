@@ -35,15 +35,13 @@ Import `xerial.sbt.Pack.packSettings` into your project settings. Then set `pack
     object Build extends sbt.Build {
     
       lazy val root = Project(
-        id = "example1",
+        id = "myprog",
         base = file("."),
         settings = Defaults.defaultSettings ++ packSettings ++
           Seq(
             // Map from program name -> Main class (full path)
             packMain := Map("hello" -> "myprog.Hello"),
-            // custom settings here
-            crossPaths := false,
-			//libraryDependencies += ...
+            // Add custom settings here
           )
       )
     }
@@ -64,11 +62,33 @@ Import `xerial.sbt.Pack.packSettings` into your project settings. Then set `pack
 **Create a package**
 
     $ sbt pack
-	
+
 Your program package will be generated in `target/pack` folder.
 
-### Other examples of projects
+**Launch a command**
 
-See `examples` folder of this source code.
+    $ target/pack/bin/hello
+    Hello World!!
+
+**Install the command**
+
+    $ cd target/pack; make install
+    $ ~/local/bin/hello
+    Hello World!
+
+**Install the command to the system**
+   
+    $ cd target/pack
+    $ sudo make install PREFIX="/usr/local"
+    $ /usr/local/bin/hello
+    Hello World!
+
+### Example projects
+
+See also [examples](https://github.com/xerial/sbt-pack/tree/master/examples) folder
+in the source code. It contains several Scala project examples using sbt-pack.
+
+
+
 
 	

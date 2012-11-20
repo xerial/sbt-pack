@@ -1,0 +1,19 @@
+Minimal project settings example.
+
+To create a package, do:
+   
+    $ bin/sbt pack
+
+Then, launch a command:
+
+    $ target/pack/bin/hello
+    Hello World!!
+
+To install the command to your local folder ~/local/bin, do:
+
+    $ cd target/pack; make install
+
+Install the program in /usr/local/bin:
+
+    $ cd target/pack
+    $ sudo make install PREFIX=/usr/local
