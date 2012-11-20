@@ -66,8 +66,26 @@ Import `xerial.sbt.Pack.packSettings` into your project settings. Then set `pack
 **Create a package**
 
     $ sbt pack
-	
+
 Your program package will be generated in `target/pack` folder.
+
+**Launch a command**
+
+    $ target/pack/bin/hello
+    Hello World!!
+
+**Install the command**
+
+    $ cd target/pack; make install
+    $ ~/local/bin/hello
+    Hello World!
+
+**Install the command to the system**
+   
+    $ cd target/pack
+    $ sudo make install PREFIX="/usr/local"
+    $ /usr/local/bin/hello
+    Hello World!
 
 ### Example projects
 
