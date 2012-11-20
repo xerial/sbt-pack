@@ -42,9 +42,6 @@ if [ -z "$PROG_HOME" ] ; then
   cd "$saveddir"
 fi
 
-case "`uname`" in
-  CYGWIN*) PROG_HOME=$(cygpath -w $PROG_HOME);;
-esac
 
 PROG_NAME={{PROG_NAME}}
 
