@@ -21,6 +21,8 @@ Add `sbt-pack` plugin:
 
 **project/plugins.sbt**
 
+	resolvers += "Sonatype OSS Releases" at "https://oss.sonatype.org/content/repositories/releases"
+	
 	addSbtPlugin("org.xerial.sbt" % "sbt-pack" % "0.1")
 
 
