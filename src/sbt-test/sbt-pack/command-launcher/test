@@ -1,2 +1,2 @@
 > pack
-# $ exec sh ./target/pack/bin/launcher
+$ exec sh ./target/pack/bin/launcher
