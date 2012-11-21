@@ -1,0 +1,2 @@
+> pack
+# $ exec sh ./target/pack/bin/launcher

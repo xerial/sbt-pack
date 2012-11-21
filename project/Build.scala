@@ -19,6 +19,7 @@ package xerial.sbt
 import java.io.File
 import sbt._
 import Keys._
+import sbt.ScriptedPlugin._
 
 import sbtrelease.ReleasePlugin._
 
@@ -42,7 +43,7 @@ object PackBuild extends Build {
     }
   }
 
-  lazy val buildSettings = Defaults.defaultSettings ++ releaseSettings ++ Seq[Setting[_]](
+  lazy val buildSettings = Defaults.defaultSettings ++ releaseSettings ++ scriptedSettings ++ Seq[Setting[_]](
     organization := "org.xerial.sbt",
     organizationName := "Xerial project",
     organizationHomepage := Some(new URL("http://xerial.org/")),
@@ -58,6 +59,11 @@ object PackBuild extends Build {
     parallelExecution := true,
     crossPaths := false,
     scalacOptions ++= Seq("-encoding", "UTF-8", "-deprecation", "-unchecked", "-target:jvm-1.5"),
+    scriptedBufferLog := false,
+    scriptedLaunchOpts ++= {
+      import scala.collection.JavaConverters._
+      management.ManagementFactory.getRuntimeMXBean().getInputArguments().asScala.filter(a => Seq("-Xmx","-Xms").contains(a) || a.startsWith("-XX")).toSeq
+    },
     pomExtra := {
       <url>http://xerial.org/</url>
       <licenses>
