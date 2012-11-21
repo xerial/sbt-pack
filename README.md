@@ -85,10 +85,12 @@ Your program package will be generated in `target/pack` folder.
 
 ### Example projects
 
-See also [examples](https://github.com/xerial/sbt-pack/tree/master/examples) folder
+See also [examples](https://github.com/xerial/sbt-pack/tree/master/src/sbt-test/sbt-pack) folder
 in the source code. It contains several Scala project examples using sbt-pack.
 
+### Use case
 
-
+- scala-min: A minimal Scala project using sbt-pack: <https://github.com/xerial/scala-min>
+ - A minimal project to start writing Scala programs. 
 
 	
