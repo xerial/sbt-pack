@@ -1,7 +1,7 @@
 sbt-pack plugin
 ========
 
-A sbt plugin for creating distributable package with dependent jars and launch scripts.
+A sbt plugin for creating distributable packages with dependent jars and launch scripts.
 
 ### Features
 
