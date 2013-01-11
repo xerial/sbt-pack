@@ -35,8 +35,7 @@ object Pack extends sbt.Plugin {
     packDependencies <<= packAllClasspaths.map {
       _.flatten.map(_.data).filter(ClasspathUtilities.isArchive).distinct
     },
-    packLibJars <<= (thisProjectRef, buildStructure, packExclude) flatMap getFromSelectedProjects(packageBin.task in Compile),
-    libraryDependencies ++= Seq("org.codehaus.plexus" % "plexus-classworlds" % "2.4" % "provided")
+    packLibJars <<= (thisProjectRef, buildStructure, packExclude) flatMap getFromSelectedProjects(packageBin.task in Compile)
   ) ++ Seq(packTask)
 
   private def getFromAllProjects[T](targetTask: SettingKey[Task[T]])(currentProject: ProjectRef, structure: Load.BuildStructure): Task[Seq[T]] =
@@ -95,7 +94,6 @@ object Pack extends sbt.Plugin {
 
         // Create launch scripts
         out.log.info("Generating launch scripts")
-        write("bin/launch-common", read("pack/script/launch-common"))
         if(mainTable.isEmpty) {
           out.log.warn("No mapping (progran name) -> MainClass is defined. Please set packMain variable (Map[String, String]) in your sbt project settings.")
         }
@@ -107,12 +105,8 @@ object Pack extends sbt.Plugin {
 
         for(m <- mains) {
           val progName = m("PROG_NAME").replaceAll(" ", "") // remove white spaces
-
           val launchScript = StringTemplate.eval(read("pack/script/launch.template"))(m)
-          val classworldConf = StringTemplate.eval(read("pack/script/boot.conf.template"))(m)
-
           write("bin/%s".format(progName), launchScript)
-          write("bin/%s.conf".format(progName), classworldConf)
         }
 
         // Create Makefile
