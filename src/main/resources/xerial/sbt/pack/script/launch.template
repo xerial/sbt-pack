@@ -14,8 +14,6 @@
 # *  See the License for the specific language governing permissions and
 # *  limitations under the License.
 # *--------------------------------------------------------------------------*/
-#!/bin/sh
-
 
 if [ -z "$PROG_HOME" ] ; then
   ## resolve links - $0 may be a link to PROG_HOME
@@ -43,16 +41,88 @@ if [ -z "$PROG_HOME" ] ; then
 fi
 
 
+cygwin=false
+mingw=false
+darwin=false
+case "`uname`" in
+  CYGWIN*) cygwin=true;;
+  MINGW*) mingw=true;;
+  Darwin*) darwin=true
+           if [ -z "$JAVA_VERSION" ] ; then
+             JAVA_VERSION="CurrentJDK"
+           else
+            echo "Using Java version: $JAVA_VERSION" 1>&2
+           fi
+           if [ -z "$JAVA_HOME" ] ; then
+             JAVA_HOME=/System/Library/Frameworks/JavaVM.framework/Versions/${JAVA_VERSION}/Home
+           fi
+           JVM_OPT="$JVM_OPT -Xdock:name=${PROG_NAME} -Xdock:icon=$PROG_HOME/prog-icon-mac.png -Dcom.apple.macos.useScreenMenuBar=true"
+           JAVACMD="`which java`"
+           ;;
+esac
+
+# Resolve JAVA_HOME from javac command path
+if [ -z "$JAVA_HOME" ]; then
+  javaExecutable="`which javac`"
+  if [ -n "$javaExecutable" -a ! "`expr \"$javaExecutable\" : '\([^ ]*\)'`" = "no" ]; then
+    # readlink(1) is not available as standard on Solaris 10.
+    readLink=`which readlink`
+    if [ ! `expr "$readLink" : '\([^ ]*\)'` = "no" ]; then
+      javaExecutable="`readlink -f \"$javaExecutable\"`"
+      javaHome="`dirname \"$javaExecutable\"`"
+      javaHome=`expr "$javaHome" : '\(.*\)/bin'`
+      JAVA_HOME="$javaHome"
+      export JAVA_HOME
+    fi
+  fi
+fi
+
+
+if [ -z "$JAVACMD" ] ; then
+  if [ -n "$JAVA_HOME"  ] ; then
+    if [ -x "$JAVA_HOME/jre/sh/java" ] ; then
+      # IBM's JDK on AIX uses strange locations for the executables
+      JAVACMD="$JAVA_HOME/jre/sh/java"
+    else
+      JAVACMD="$JAVA_HOME/bin/java"
+    fi
+  else
+    JAVACMD="`which java`"
+  fi
+fi
+
+if [ ! -x "$JAVACMD" ] ; then
+  echo "Error: JAVA_HOME is not defined correctly."
+  echo "  We cannot execute $JAVACMD"
+  exit 1
+fi
+
+if [ -z "$JAVA_HOME" ] ; then
+  echo "Warning: JAVA_HOME environment variable is not set."
+fi
+
+# For Cygwin, switch paths to Windows format before running java
+if $cygwin; then
+  [ -n "$PROG_HOME" ] &&
+    PROG_HOME=`cygpath --path --windows "$PROG_HOME"`
+  [ -n "$JAVA_HOME" ] &&
+    JAVA_HOME=`cygpath --path --windows "$JAVA_HOME"`
+#  [ -n "$HOME" ] &&
+#    HOME=`cygpath --path --windows "$HOME"`
+fi
+
+# For Migwn, ensure paths are in UNIX format before anything is touched
+if $mingw ; then
+  [ -n "$PROG_HOME" ] &&
+    PROG_HOME="`(cd "$PROG_HOME"; pwd)`"
+  [ -n "$JAVA_HOME" ] &&
+    JAVA_HOME="`(cd "$JAVA_HOME"; pwd)`"
+  # TODO classpath?
+fi
+
+
 PROG_NAME={{PROG_NAME}}
 
-cd $currentDir
-
-source ${PROG_HOME}/bin/launch-common
-
-exec "$JAVACMD" ${JVM_OPT} \
-  -classpath "${PROG_HOME}"/lib/plexus-classworlds-*.jar \
-  "-Dclassworlds.conf=${PROG_HOME}/bin/{{PROG_NAME}}.conf" \
-  "-Dprog.home=${PROG_HOME}" \
-  ${CLASSWORLDS_LAUNCHER} "$@"
+exec "$JAVACMD" ${JVM_OPT} -cp "${PROG_HOME}/lib/*" -Dprog.home="${PROG_HOME}" {{MAIN_CLASS}} $@
 
 
