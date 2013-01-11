@@ -123,7 +123,6 @@ fi
 
 PROG_NAME={{PROG_NAME}}
 
-cd $currentDir
-exec "$JAVACMD" ${JVM_OPT} -cp "${PROG_HOME}/lib/*" "-Dprog.home=${PROG_HOME}" "$@"
+exec "$JAVACMD" ${JVM_OPT} -cp "${PROG_HOME}/lib/*" -Dprog.home="${PROG_HOME}" {{MAIN_CLASS}} $@
 
 

@@ -104,8 +104,8 @@ object Pack extends sbt.Plugin {
         }
 
         for(m <- mains) {
-          val progName = m("PROG_NAME").replaceAll(" ", "") // remove white spaces
           val launchScript = StringTemplate.eval(read("pack/script/launch.template"))(m)
+          val progName = m("PROG_NAME").replaceAll(" ", "") // remove white spaces
           write("bin/%s".format(progName), launchScript)
         }
 
