@@ -101,12 +101,15 @@ if [ -z "$JAVA_HOME" ] ; then
   echo "Warning: JAVA_HOME environment variable is not set."
 fi
 
-# For Cygwin, switch paths to Windows format before running java
+CLASSPATH_SUFFIX=""
+
+# For Cygwin, switch paths to Windows-mixed format before running java
 if $cygwin; then
   [ -n "$PROG_HOME" ] &&
-    PROG_HOME=`cygpath --path --windows "$PROG_HOME"`
+    PROG_HOME=`cygpath -am "$PROG_HOME"`
   [ -n "$JAVA_HOME" ] &&
-    JAVA_HOME=`cygpath --path --windows "$JAVA_HOME"`
+    JAVA_HOME=`cygpath -am "$JAVA_HOME"`
+  CLASSPATH_SUFFIX=";"
 #  [ -n "$HOME" ] &&
 #    HOME=`cygpath --path --windows "$HOME"`
 fi
@@ -123,6 +126,6 @@ fi
 
 PROG_NAME={{PROG_NAME}}
 
-exec "$JAVACMD" ${JVM_OPT} -cp "${PROG_HOME}/lib/*" -Dprog.home="${PROG_HOME}" {{MAIN_CLASS}} $@
+exec "$JAVACMD" ${JVM_OPT} -cp "${PROG_HOME}/lib/*${CLASSPATH_SUFFIX}" -Dprog.home="${PROG_HOME}" {{MAIN_CLASS}} $@
 
 
