@@ -109,16 +109,23 @@ object Pack extends sbt.Plugin {
           write("bin/%s".format(progName), launchScript)
         }
 
+
         // Create Makefile
         val globalVar = Map[Any, String]("PROG_NAME" -> name)
         val makefile = StringTemplate.eval(read("pack/script/Makefile.template"))(globalVar) +
           (for(p <- mainTable.keys) yield
             "\t" + """ln -sf "../$(PROG)/current/bin/%s" "$(PREFIX)/bin/%s"""".format(p, p)).mkString("\n") + "\n"
 
-        write("Makefile", makefile)
+        val otherResourceDir = base / "src/pack"
+        val binScriptsDir = otherResourceDir / "bin"
+        val additionalLines : Array[String] = for(script <- Option(binScriptsDir.listFiles) getOrElse Array.empty) yield {
+          "\t" + """ln -sf "../$(PROG)/current/bin/%s" "$(PREFIX)/bin/%s"""".format(script.getName, script.getName)
+        }
+
+        write("Makefile", makefile + additionalLines.mkString("\n") + "\n")
 
         // Copy other scripts
-        IO.copyDirectory(base / "src/pack", binDir)
+        IO.copyDirectory(otherResourceDir, distDir)
 
         // chmod +x the bin directory
         if (!System.getProperty("os.name", "").contains("Windows")) {
