@@ -118,11 +118,11 @@ object Pack extends sbt.Plugin {
 
         val otherResourceDir = base / "src/pack"
         val binScriptsDir = otherResourceDir / "bin"
-        val additionalLines : Array[String] = (for(script <- Option(binScriptsDir.listFiles) getOrElse Array.empty) yield {
-          "\t" + """ln -sf "../$(PROG)/current/bin/%s" "$(PREFIX)/bin/%s"""".format(script.getName, script.getName).mkString("\n") + "\n"
-        })
+        val additionalLines : Array[String] = for(script <- Option(binScriptsDir.listFiles) getOrElse Array.empty) yield {
+          "\t" + """ln -sf "../$(PROG)/current/bin/%s" "$(PREFIX)/bin/%s"""".format(script.getName, script.getName)
+        }
 
-        write("Makefile", makefile + additionalLines.map(_.mkString))
+        write("Makefile", makefile + additionalLines.mkString("\n") + "\n")
 
         // Copy other scripts
         IO.copyDirectory(otherResourceDir, distDir)

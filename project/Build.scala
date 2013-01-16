@@ -96,7 +96,6 @@ object PackBuild extends Build {
       Seq(libraryDependencies ++=
         Seq(
           "org.scalatest" %% "scalatest" % "2.0.M5" % "test",
-          "org.codehaus.plexus" % "plexus-classworlds" % "2.4" % "provided",
           "org.xerial" % "xerial-core" % "3.0"
         )
       )
