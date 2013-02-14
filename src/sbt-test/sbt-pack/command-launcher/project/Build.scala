@@ -9,12 +9,12 @@ object Build extends sbt.Build {
     base = file("."),
     settings = Defaults.defaultSettings ++ packSettings ++
       Seq(
+        scalaVersion := "2.10.0",
         // Mapping from program name -> Main class
         packMain := Map("launcher" -> "launcher.Main"),
         // Add custom settings here
         crossPaths := false,
-        resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
-        libraryDependencies += "org.xerial" % "xerial-lens" % "3.1-SNAPSHOT"
+        libraryDependencies += "org.xerial" % "xerial-lens" % "3.1"
       )
   )
 }
