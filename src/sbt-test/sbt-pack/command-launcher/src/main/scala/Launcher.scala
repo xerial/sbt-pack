@@ -1,13 +1,13 @@
 package launcher
 
 import xerial.core.log.Logger
-import xerial.lens.cui.{Launcher,option,argument,command,DefaultCommand}
+import xerial.lens.cui._
 import java.io.File
 import io.Source
 
 object Main {
   def main(args:Array[String]) {
-     Launcher.execute[Main](args)
+     Launcher.of[Main].execute(args)
   }
 }
 

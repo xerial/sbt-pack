@@ -21,7 +21,7 @@ Add `sbt-pack` plugin:
 
 **project/plugins.sbt**
 
-	addSbtPlugin("org.xerial.sbt" % "sbt-pack" % "0.1.4")
+	addSbtPlugin("org.xerial.sbt" % "sbt-pack" % "0.1.5")
 
 
 Import `xerial.sbt.Pack.packSettings` into your project settings. Then set `packMain` variable, a mapping from the your program names to their corresponding main classes. The main classes must be Scala objects that define `def main(args:Array[])` method:

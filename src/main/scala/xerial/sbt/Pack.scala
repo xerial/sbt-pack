@@ -31,11 +31,11 @@ object Pack extends sbt.Plugin {
     packDir := "pack",
     packMain := Map.empty,
     packExclude := Seq.empty,
-    packAllClasspaths <<= (thisProjectRef, buildStructure) flatMap getFromAllProjects(dependencyClasspath.task in Compile),
+    packAllClasspaths <<= (thisProjectRef, buildStructure) flatMap getFromAllProjects(dependencyClasspath.task in Runtime),
     packDependencies <<= packAllClasspaths.map {
       _.flatten.map(_.data).filter(ClasspathUtilities.isArchive).distinct
     },
-    packLibJars <<= (thisProjectRef, buildStructure, packExclude) flatMap getFromSelectedProjects(packageBin.task in Compile)
+    packLibJars <<= (thisProjectRef, buildStructure, packExclude) flatMap getFromSelectedProjects(packageBin.task in Runtime)
   ) ++ Seq(packTask)
 
   private def getFromAllProjects[T](targetTask: SettingKey[Task[T]])(currentProject: ProjectRef, structure: Load.BuildStructure): Task[Seq[T]] =
