@@ -55,20 +55,24 @@ object Pack extends sbt.Plugin {
     projects.flatMap(p => targetTask in p get structure.data).join
   }
 
-  private case class ModuleEntry(org:String, name:String, revision:String)
+  private case class ModuleEntry(org:String, name:String, revision:String) {
+    override def toString = "%s:%s:%s".format(org, name, revision)
+  }
+  private implicit def moduleEntryOrdering = Ordering.by[ModuleEntry, (String, String, String)](m => (m.org, m.name, m.revision))
 
   private def packTask = pack <<= 
   (name, packMain, packDir, version, packLibJars, streams, target, baseDirectory, packUpdateReports, packMacIconFile, packResourceDir) map {
       (name, mainTable, packDir, ver, libs, out, target, base, reports, macIcon, resourceDir) => {
 
-        val dependentJars = (for{
+        val dependentJars = collection.immutable.SortedMap.empty[ModuleEntry, File] ++ 
+        (for{
           r <- reports
           c <- r.configurations if c.configuration == "runtime"
           m <- c.modules
           (artifact, file) <- m.artifacts if DependencyFilter.allPass(c.configuration, m.module, artifact)} yield {
           val mid = m.module
           ModuleEntry(mid.organization, mid.name, mid.revision) -> file
-        }).toMap[ModuleEntry, File]
+        })
 
         def rpath(f:RichFile) = f.relativeTo(base) map { _.toString } getOrElse(f.toString)
 
@@ -82,7 +86,7 @@ object Pack extends sbt.Plugin {
         libDir.mkdirs()
         out.log.info("project jars:\n" + libs.mkString("\n"))
         libs.foreach(l => IO.copyFile(l, libDir / l.getName))
-        out.log.info("project dependencies:\n" + dependentJars.values.map(_.getPath).mkString("\n"))
+        out.log.info("project dependencies:\n" + dependentJars.keys.mkString("\n"))
         for((m, f) <- dependentJars) {
           IO.copyFile(f, libDir / "%s-%s.jar".format(m.name, m.revision))
         }
