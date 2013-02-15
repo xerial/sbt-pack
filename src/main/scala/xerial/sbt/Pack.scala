@@ -26,6 +26,8 @@ object Pack extends sbt.Plugin {
   val packAllClasspaths = TaskKey[Seq[Classpath]]("pack-all-classpaths")
   val packDependencies = TaskKey[Seq[File]]("pack-dependencies")
   val packLibJars = TaskKey[Seq[File]]("pack-lib-jars")
+  val packUpdateReports = TaskKey[Seq[sbt.UpdateReport]]("pack-dependent-modules")
+
 
   val packSettings = Seq[sbt.Project.Setting[_]](
     packDir := "pack",
@@ -35,7 +37,8 @@ object Pack extends sbt.Plugin {
     packDependencies <<= packAllClasspaths.map {
       _.flatten.map(_.data).filter(ClasspathUtilities.isArchive).distinct
     },
-    packLibJars <<= (thisProjectRef, buildStructure, packExclude) flatMap getFromSelectedProjects(packageBin.task in Runtime)
+    packLibJars <<= (thisProjectRef, buildStructure, packExclude) flatMap getFromSelectedProjects(packageBin.task in Runtime),
+    packUpdateReports <<= (thisProjectRef, buildStructure) flatMap getFromAllProjects(update.task in Runtime)
   ) ++ Seq(packTask)
 
   private def getFromAllProjects[T](targetTask: SettingKey[Task[T]])(currentProject: ProjectRef, structure: Load.BuildStructure): Task[Seq[T]] =
@@ -55,8 +58,17 @@ object Pack extends sbt.Plugin {
     } join
   }
 
-  private def packTask = pack <<= (name, packMain, packDir, update, version, packLibJars, packDependencies, streams, target, dependencyClasspath in Runtime, classDirectory in Compile, baseDirectory) map {
-      (name, mainTable, packDir, up, ver, libs, depJars, out, target, dependencies, classDirectory, base) => {
+  private def packTask = pack <<= (name, packMain, packDir, update, version, packLibJars, packDependencies, streams, target, dependencyClasspath in Runtime, classDirectory in Compile, baseDirectory, packUpdateReports) map {
+      (name, mainTable, packDir, up, ver, libs, depJars, out, target, dependencies, classDirectory, base, reports) => {
+
+        for(r <- reports; m <- r.allModules) {
+          out.log.info("module: %s, artifacts :%s".format(m, m.jar))
+
+
+
+        }
+
+
 
         def rpath(f:RichFile) = f.relativeTo(base) map { _.toString } getOrElse(f.toString)
 
@@ -69,9 +81,9 @@ object Pack extends sbt.Plugin {
         val libDir = distDir / "lib"
         out.log.info("Copying libraries to " + rpath(libDir))
         libDir.mkdirs()
-        (libs ++ depJars).foreach(l => IO.copyFile(l, libDir / l.getName))
         out.log.info("project jars:\n" + libs.mkString("\n"))
         out.log.info("project dependencies:\n" + depJars.mkString("\n"))
+        (libs ++ depJars).foreach(l => IO.copyFile(l, libDir / l.getName))
 
         val binDir = distDir / "bin"
         out.log.info("Create a bin folder: " + rpath(binDir))
