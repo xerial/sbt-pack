@@ -24,18 +24,20 @@ object Pack extends sbt.Plugin {
   val packDir: SettingKey[String] = SettingKey[String]("pack-dir")
   val packExclude = SettingKey[Seq[String]]("pack-exclude")
   val packAllClasspaths = TaskKey[Seq[Classpath]]("pack-all-classpaths")
-  val packDependencies = TaskKey[Seq[File]]("pack-dependencies")
   val packLibJars = TaskKey[Seq[File]]("pack-lib-jars")
+  val packUpdateReports = TaskKey[Seq[sbt.UpdateReport]]("pack-dependent-modules")
+  val packMacIconFile = SettingKey[String]("pack-mac-icon-file", "icon file name for Mac")
+  val packResourceDir = SettingKey[String]("pack-resource-dir", "pack resource directory. default = src/pack")
 
   val packSettings = Seq[sbt.Project.Setting[_]](
     packDir := "pack",
     packMain := Map.empty,
     packExclude := Seq.empty,
+    packMacIconFile := "icon-mac.png",
+    packResourceDir := "src/pack",
     packAllClasspaths <<= (thisProjectRef, buildStructure) flatMap getFromAllProjects(dependencyClasspath.task in Runtime),
-    packDependencies <<= packAllClasspaths.map {
-      _.flatten.map(_.data).filter(ClasspathUtilities.isArchive).distinct
-    },
-    packLibJars <<= (thisProjectRef, buildStructure, packExclude) flatMap getFromSelectedProjects(packageBin.task in Runtime)
+    packLibJars <<= (thisProjectRef, buildStructure, packExclude) flatMap getFromSelectedProjects(packageBin.task in Runtime),
+    packUpdateReports <<= (thisProjectRef, buildStructure, packExclude) flatMap getFromSelectedProjects(update.task)
   ) ++ Seq(packTask)
 
   private def getFromAllProjects[T](targetTask: SettingKey[Task[T]])(currentProject: ProjectRef, structure: Load.BuildStructure): Task[Seq[T]] =
@@ -50,13 +52,27 @@ object Pack extends sbt.Plugin {
     }
 
     val projects: Seq[ProjectRef] = allProjectRefs(currentProject)
-    projects.flatMap {
-      targetTask in _ get structure.data
-    } join
+    projects.flatMap(p => targetTask in p get structure.data).join
   }
 
-  private def packTask = pack <<= (name, packMain, packDir, update, version, packLibJars, packDependencies, streams, target, dependencyClasspath in Runtime, classDirectory in Compile, baseDirectory) map {
-      (name, mainTable, packDir, up, ver, libs, depJars, out, target, dependencies, classDirectory, base) => {
+  private case class ModuleEntry(org:String, name:String, revision:String) {
+    override def toString = "%s:%s:%s".format(org, name, revision)
+  }
+  private implicit def moduleEntryOrdering = Ordering.by[ModuleEntry, (String, String, String)](m => (m.org, m.name, m.revision))
+
+  private def packTask = pack <<= 
+  (name, packMain, packDir, version, packLibJars, streams, target, baseDirectory, packUpdateReports, packMacIconFile, packResourceDir) map {
+      (name, mainTable, packDir, ver, libs, out, target, base, reports, macIcon, resourceDir) => {
+
+        val dependentJars = collection.immutable.SortedMap.empty[ModuleEntry, File] ++ 
+        (for{
+          r <- reports
+          c <- r.configurations if c.configuration == "runtime"
+          m <- c.modules
+          (artifact, file) <- m.artifacts if DependencyFilter.allPass(c.configuration, m.module, artifact)} yield {
+          val mid = m.module
+          ModuleEntry(mid.organization, mid.name, mid.revision) -> file
+        })
 
         def rpath(f:RichFile) = f.relativeTo(base) map { _.toString } getOrElse(f.toString)
 
@@ -65,13 +81,15 @@ object Pack extends sbt.Plugin {
         IO.delete(distDir)
         distDir.mkdirs()
 
-
         val libDir = distDir / "lib"
         out.log.info("Copying libraries to " + rpath(libDir))
         libDir.mkdirs()
-        (libs ++ depJars).foreach(l => IO.copyFile(l, libDir / l.getName))
         out.log.info("project jars:\n" + libs.mkString("\n"))
-        out.log.info("project dependencies:\n" + depJars.mkString("\n"))
+        libs.foreach(l => IO.copyFile(l, libDir / l.getName))
+        out.log.info("project dependencies:\n" + dependentJars.keys.mkString("\n"))
+        for((m, f) <- dependentJars) {
+          IO.copyFile(f, libDir / "%s-%s.jar".format(m.name, m.revision))
+        }
 
         val binDir = distDir / "bin"
         out.log.info("Create a bin folder: " + rpath(binDir))
@@ -100,7 +118,7 @@ object Pack extends sbt.Plugin {
 
         val mains = for((name, mainClass) <- mainTable) yield {
           out.log.info("main class for %s: %s".format(name, mainClass))
-          Map[Any, String]("PROG_NAME"->name, "MAIN_CLASS"->mainClass)
+          Map[Any, String]("PROG_NAME"->name, "MAIN_CLASS"->mainClass, "MAC_ICON_FILE" -> macIcon)
         }
 
         for(m <- mains) {
@@ -116,7 +134,7 @@ object Pack extends sbt.Plugin {
           (for(p <- mainTable.keys) yield
             "\t" + """ln -sf "../$(PROG)/current/bin/%s" "$(PREFIX)/bin/%s"""".format(p, p)).mkString("\n") + "\n"
 
-        val otherResourceDir = base / "src/pack"
+        val otherResourceDir = base / resourceDir
         val binScriptsDir = otherResourceDir / "bin"
         val additionalLines : Array[String] = for(script <- Option(binScriptsDir.listFiles) getOrElse Array.empty) yield {
           "\t" + """ln -sf "../$(PROG)/current/bin/%s" "$(PREFIX)/bin/%s"""".format(script.getName, script.getName)
