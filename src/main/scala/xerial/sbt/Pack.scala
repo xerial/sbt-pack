@@ -57,10 +57,11 @@ object Pack extends sbt.Plugin {
   (name, packMain, packDir, version, packLibJars, streams, target, baseDirectory, packUpdateReports) map {
       (name, mainTable, packDir, ver, libs, out, target, base, reports) => {
 
-        val dependentJars = (for{r <- reports;
-            c <- r.configurations if c.configuration == "runtime";
-            m <- c.modules;
-            (artifact, file) <- m.artifacts if DependencyFilter.allPass(c.configuration, m.module, artifact) &&  artifact.`type` == "jar"} yield {
+        val dependentJars = (for{
+          r <- reports
+          c <- r.configurations if c.configuration == "runtime"
+          m <- c.modules
+          (artifact, file) <- m.artifacts if DependencyFilter.allPass(c.configuration, m.module, artifact)} yield {
           val mid = m.module
           ModuleEntry(mid.organization, mid.name, mid.revision) -> file
         }).toMap[ModuleEntry, File]
