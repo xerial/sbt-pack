@@ -24,21 +24,16 @@ object Pack extends sbt.Plugin {
   val packDir: SettingKey[String] = SettingKey[String]("pack-dir")
   val packExclude = SettingKey[Seq[String]]("pack-exclude")
   val packAllClasspaths = TaskKey[Seq[Classpath]]("pack-all-classpaths")
-  val packDependencies = TaskKey[Seq[File]]("pack-dependencies")
   val packLibJars = TaskKey[Seq[File]]("pack-lib-jars")
   val packUpdateReports = TaskKey[Seq[sbt.UpdateReport]]("pack-dependent-modules")
-
 
   val packSettings = Seq[sbt.Project.Setting[_]](
     packDir := "pack",
     packMain := Map.empty,
     packExclude := Seq.empty,
     packAllClasspaths <<= (thisProjectRef, buildStructure) flatMap getFromAllProjects(dependencyClasspath.task in Runtime),
-    packDependencies <<= packAllClasspaths.map {
-      _.flatten.map(_.data).filter(ClasspathUtilities.isArchive).distinct
-    },
     packLibJars <<= (thisProjectRef, buildStructure, packExclude) flatMap getFromSelectedProjects(packageBin.task in Runtime),
-    packUpdateReports <<= (thisProjectRef, buildStructure) flatMap getFromAllProjects(update.task in Runtime)
+    packUpdateReports <<= (thisProjectRef, buildStructure, packExclude) flatMap getFromSelectedProjects(update.task)
   ) ++ Seq(packTask)
 
   private def getFromAllProjects[T](targetTask: SettingKey[Task[T]])(currentProject: ProjectRef, structure: Load.BuildStructure): Task[Seq[T]] =
@@ -53,22 +48,22 @@ object Pack extends sbt.Plugin {
     }
 
     val projects: Seq[ProjectRef] = allProjectRefs(currentProject)
-    projects.flatMap {
-      targetTask in _ get structure.data
-    } join
+    projects.flatMap(p => targetTask in p get structure.data).join
   }
 
-  private def packTask = pack <<= (name, packMain, packDir, update, version, packLibJars, packDependencies, streams, target, dependencyClasspath in Runtime, classDirectory in Compile, baseDirectory, packUpdateReports) map {
-      (name, mainTable, packDir, up, ver, libs, depJars, out, target, dependencies, classDirectory, base, reports) => {
+  private case class ModuleEntry(org:String, name:String, revision:String)
 
-        for(r <- reports; m <- r.allModules) {
-          out.log.info("module: %s, artifacts :%s".format(m, m.jar))
+  private def packTask = pack <<= 
+  (name, packMain, packDir, version, packLibJars, streams, target, baseDirectory, packUpdateReports) map {
+      (name, mainTable, packDir, ver, libs, out, target, base, reports) => {
 
-
-
-        }
-
-
+        val dependentJars = (for{r <- reports;
+            c <- r.configurations if c.configuration == "runtime";
+            m <- c.modules;
+            (artifact, file) <- m.artifacts if DependencyFilter.allPass(c.configuration, m.module, artifact) &&  artifact.`type` == "jar"} yield {
+          val mid = m.module
+          ModuleEntry(mid.organization, mid.name, mid.revision) -> file
+        }).toMap[ModuleEntry, File]
 
         def rpath(f:RichFile) = f.relativeTo(base) map { _.toString } getOrElse(f.toString)
 
@@ -77,13 +72,15 @@ object Pack extends sbt.Plugin {
         IO.delete(distDir)
         distDir.mkdirs()
 
-
         val libDir = distDir / "lib"
         out.log.info("Copying libraries to " + rpath(libDir))
         libDir.mkdirs()
         out.log.info("project jars:\n" + libs.mkString("\n"))
-        out.log.info("project dependencies:\n" + depJars.mkString("\n"))
-        (libs ++ depJars).foreach(l => IO.copyFile(l, libDir / l.getName))
+        libs.foreach(l => IO.copyFile(l, libDir / l.getName))
+        out.log.info("project dependencies:\n" + dependentJars.values.map(_.getPath).mkString("\n"))
+        for((m, f) <- dependentJars) {
+          IO.copyFile(f, libDir / "%s-%s.jar".format(m.name, m.revision))
+        }
 
         val binDir = distDir / "bin"
         out.log.info("Create a bin folder: " + rpath(binDir))
