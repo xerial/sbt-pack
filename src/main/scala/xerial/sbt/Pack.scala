@@ -26,11 +26,15 @@ object Pack extends sbt.Plugin {
   val packAllClasspaths = TaskKey[Seq[Classpath]]("pack-all-classpaths")
   val packLibJars = TaskKey[Seq[File]]("pack-lib-jars")
   val packUpdateReports = TaskKey[Seq[sbt.UpdateReport]]("pack-dependent-modules")
+  val packMacIconFile = SettingKey[String]("pack-mac-icon-file", "icon file name for Mac")
+  val packResourceDir = SettingKey[String]("pack-resource-dir", "pack resource directory. default = src/pack")
 
   val packSettings = Seq[sbt.Project.Setting[_]](
     packDir := "pack",
     packMain := Map.empty,
     packExclude := Seq.empty,
+    packMacIconFile := "icon-mac.png",
+    packResourceDir := "src/pack",
     packAllClasspaths <<= (thisProjectRef, buildStructure) flatMap getFromAllProjects(dependencyClasspath.task in Runtime),
     packLibJars <<= (thisProjectRef, buildStructure, packExclude) flatMap getFromSelectedProjects(packageBin.task in Runtime),
     packUpdateReports <<= (thisProjectRef, buildStructure, packExclude) flatMap getFromSelectedProjects(update.task)
@@ -54,8 +58,8 @@ object Pack extends sbt.Plugin {
   private case class ModuleEntry(org:String, name:String, revision:String)
 
   private def packTask = pack <<= 
-  (name, packMain, packDir, version, packLibJars, streams, target, baseDirectory, packUpdateReports) map {
-      (name, mainTable, packDir, ver, libs, out, target, base, reports) => {
+  (name, packMain, packDir, version, packLibJars, streams, target, baseDirectory, packUpdateReports, packMacIconFile, packResourceDir) map {
+      (name, mainTable, packDir, ver, libs, out, target, base, reports, macIcon, resourceDir) => {
 
         val dependentJars = (for{
           r <- reports
@@ -110,7 +114,7 @@ object Pack extends sbt.Plugin {
 
         val mains = for((name, mainClass) <- mainTable) yield {
           out.log.info("main class for %s: %s".format(name, mainClass))
-          Map[Any, String]("PROG_NAME"->name, "MAIN_CLASS"->mainClass)
+          Map[Any, String]("PROG_NAME"->name, "MAIN_CLASS"->mainClass, "MAC_ICON_FILE" -> macIcon)
         }
 
         for(m <- mains) {
@@ -126,7 +130,7 @@ object Pack extends sbt.Plugin {
           (for(p <- mainTable.keys) yield
             "\t" + """ln -sf "../$(PROG)/current/bin/%s" "$(PREFIX)/bin/%s"""".format(p, p)).mkString("\n") + "\n"
 
-        val otherResourceDir = base / "src/pack"
+        val otherResourceDir = base / resourceDir
         val binScriptsDir = otherResourceDir / "bin"
         val additionalLines : Array[String] = for(script <- Option(binScriptsDir.listFiles) getOrElse Array.empty) yield {
           "\t" + """ln -sf "../$(PROG)/current/bin/%s" "$(PREFIX)/bin/%s"""".format(script.getName, script.getName)
