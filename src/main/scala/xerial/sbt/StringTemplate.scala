@@ -13,8 +13,7 @@ package xerial.sbt
 
 object StringTemplate {
 
-  def eval(template: String)(properties: Map[Any, String]) = new StringTemplate(template).eval(properties)
-
+  def eval(template: String)(properties: Map[String, String]) = new StringTemplate(template).eval(properties)
 
 }
 
@@ -24,19 +23,10 @@ object StringTemplate {
  */
 class StringTemplate(template: String) {
 
-  def eval(property: Map[Any, String]): String = apply(property)
+  def eval(property: Map[String, String]): String = apply(property)
 
-  private def convert(properties: Map[Any, String]): Map[Symbol, String] = {
-    (for ((k, v) <- properties) yield {
-      k match {
-        case s: Symbol => s -> v.toString
-        case _ => Symbol(k.toString) -> v.toString
-      }
-    }).toMap
-  }
-
-  def apply(property: Map[Any, String]): String = {
-    val p = convert(property)
+  def apply(property: Map[String, String]): String = {
+    val p = property
 
     val pattern = """\{\{([^\}]+)\}\}""".r
     val out = new StringBuilder
@@ -51,12 +41,10 @@ class StringTemplate(template: String) {
           out.append(line.substring(cursor, m.start))
         }
         val key = line.substring(m.start + 2, m.end-2)
-
-        val k = Symbol(key)
-        if (p.contains(k)) {
-          out.append(p(k))
+        if (p.contains(key)) {
+          out.append(p(key))
         }
-        cursor = m.end;
+        cursor = m.end
       }
 
       if (cursor < line.length)
