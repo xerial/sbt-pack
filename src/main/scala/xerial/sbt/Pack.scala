@@ -28,6 +28,8 @@ object Pack extends sbt.Plugin {
   val packUpdateReports = TaskKey[Seq[sbt.UpdateReport]]("pack-dependent-modules")
   val packMacIconFile = SettingKey[String]("pack-mac-icon-file", "icon file name for Mac")
   val packResourceDir = SettingKey[String]("pack-resource-dir", "pack resource directory. default = src/pack")
+  val packAllUnmanagedJars = TaskKey[Seq[Classpath]]("pack-all-unmanaged")
+
   val packSettings = Seq[sbt.Project.Setting[_]](
     packDir := "pack",
     packMain := Map.empty,
@@ -35,6 +37,7 @@ object Pack extends sbt.Plugin {
     packMacIconFile := "icon-mac.png",
     packResourceDir := "src/pack",
     packAllClasspaths <<= (thisProjectRef, buildStructure) flatMap getFromAllProjects(dependencyClasspath.task in Runtime),
+    packAllUnmanagedJars <<= (thisProjectRef, buildStructure, packExclude) flatMap getFromSelectedProjects(unmanagedJars.task in Compile),
     packLibJars <<= (thisProjectRef, buildStructure, packExclude) flatMap getFromSelectedProjects(packageBin.task in Runtime),
     packUpdateReports <<= (thisProjectRef, buildStructure, packExclude) flatMap getFromSelectedProjects(update.task)
   ) ++ Seq(packTask)
@@ -60,7 +63,7 @@ object Pack extends sbt.Plugin {
 
   private implicit def moduleEntryOrdering = Ordering.by[ModuleEntry, (String, String, String)](m => (m.org, m.name, m.revision))
 
-  private def packTask = pack <<= (name, packMain, packDir, version, packLibJars, streams, target, baseDirectory, packUpdateReports, packMacIconFile, packResourceDir, unmanagedJars) map {
+  private def packTask = pack <<= (name, packMain, packDir, version, packLibJars, streams, target, baseDirectory, packUpdateReports, packMacIconFile, packResourceDir, packAllUnmanagedJars) map {
     (name, mainTable, packDir, ver, libs, out, target, base, reports, macIcon, resourceDir, unmanaged) => {
 
       val dependentJars = collection.immutable.SortedMap.empty[ModuleEntry, File] ++    (for {
@@ -90,8 +93,9 @@ object Pack extends sbt.Plugin {
       for ((m, f) <- dependentJars) {
         IO.copyFile(f, libDir / "%s-%s.jar".format(m.name, m.revision))
       }
-      out.log.info("unmanaged dpenedencies:")
-      for(um <- unmanaged; f = um.data) {
+      out.log.info("unmanaged dependencies:")
+      for(m <- unmanaged; um <- m; f = um.data) {
+        out.log.info(f.getPath)
         IO.copyFile(f, libDir / f.getName)
       }
 
