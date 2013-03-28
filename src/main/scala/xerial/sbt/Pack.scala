@@ -29,7 +29,7 @@ object Pack extends sbt.Plugin {
   val packMacIconFile = SettingKey[String]("pack-mac-icon-file", "icon file name for Mac")
   val packResourceDir = SettingKey[String]("pack-resource-dir", "pack resource directory. default = src/pack")
   val packAllUnmanagedJars = TaskKey[Seq[Classpath]]("pack-all-unmanaged")
-  val packJvmOpts = SettingKey[Seq[String]]("pack-jvm-opts")
+  val packJvmOpts = SettingKey[Map[String, Seq[String]]]("pack-jvm-opts")
 
   val packSettings = Seq[sbt.Project.Setting[_]](
     packDir := "pack",
@@ -37,7 +37,7 @@ object Pack extends sbt.Plugin {
     packExclude := Seq.empty,
     packMacIconFile := "icon-mac.png",
     packResourceDir := "src/pack",
-    packJvmOpts := Seq.empty,
+    packJvmOpts := Map.empty,
     packAllClasspaths <<= (thisProjectRef, buildStructure) flatMap getFromAllProjects(dependencyClasspath.task in Runtime),
     packAllUnmanagedJars <<= (thisProjectRef, buildStructure, packExclude) flatMap getFromSelectedProjects(unmanagedJars.task in Compile),
     packLibJars <<= (thisProjectRef, buildStructure, packExclude) flatMap getFromSelectedProjects(packageBin.task in Runtime),
@@ -131,7 +131,11 @@ object Pack extends sbt.Plugin {
 
       for ((name, mainClass) <- mainTable) {
         out.log.info("main class for %s: %s".format(name, mainClass))
-        val m = Map("PROG_NAME" -> name, "MAIN_CLASS" -> mainClass, "MAC_ICON_FILE" -> macIcon, "JVM_OPTS" -> jvmOpts.map("\"%s\"".format(_)).mkString(" "))
+        val m = Map(
+          "PROG_NAME" -> name,
+          "MAIN_CLASS" -> mainClass,
+          "MAC_ICON_FILE" -> macIcon,
+          "JVM_OPTS" -> jvmOpts.getOrElse(name, Nil).map("\"%s\"".format(_)).mkString(" "))
         val launchScript = StringTemplate.eval(read("pack/script/launch.template"))(m)
         val progName = m("PROG_NAME").replaceAll(" ", "") // remove white spaces
         write("bin/%s".format(progName), launchScript)
