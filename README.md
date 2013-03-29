@@ -42,8 +42,8 @@ Import `xerial.sbt.Pack.packSettings` into your project settings. Then set `pack
             // Map from program name -> Main class (full path)
             packMain := Map("hello" -> "myprog.Hello"),
             // Add custom settings here
-	    // JVM options of scripts (program name -> JVM option)
-	    packJvmOpts := Map("hello" -> "-Xmx512m")
+	      // JVM options of scripts (program name -> JVM option)
+	      packJvmOpts := Map("hello" -> Seq("-Xmx512m"))
           )
       )
     }
