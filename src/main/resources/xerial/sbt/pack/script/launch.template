@@ -126,6 +126,4 @@ fi
 
 PROG_NAME={{PROG_NAME}}
 
-exec "$JAVACMD" ${JVM_OPT} {{JVM_OPTS}} -cp "${PROG_HOME}/lib/*${CLASSPATH_SUFFIX}" -Dprog.home="${PROG_HOME}" {{MAIN_CLASS}} $@
-
-
+exec "$JAVACMD" ${JVM_OPT} {{JVM_OPTS}} -cp "{{EXTRA_CLASSPATH}}${PROG_HOME}/lib/*${CLASSPATH_SUFFIX}" -Dprog.home="${PROG_HOME}" {{MAIN_CLASS}} $@
