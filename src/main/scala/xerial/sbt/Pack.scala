@@ -30,6 +30,7 @@ object Pack extends sbt.Plugin {
   val packResourceDir = SettingKey[String]("pack-resource-dir", "pack resource directory. default = src/pack")
   val packAllUnmanagedJars = TaskKey[Seq[Classpath]]("pack-all-unmanaged")
   val packJvmOpts = SettingKey[Map[String, Seq[String]]]("pack-jvm-opts")
+  val packExtraClasspath = SettingKey[Map[String, Seq[String]]]("pack-extra-classpath")
 
   val packSettings = Seq[sbt.Project.Setting[_]](
     packDir := "pack",
@@ -38,6 +39,7 @@ object Pack extends sbt.Plugin {
     packMacIconFile := "icon-mac.png",
     packResourceDir := "src/pack",
     packJvmOpts := Map.empty,
+    packExtraClasspath := Map.empty,
     packAllClasspaths <<= (thisProjectRef, buildStructure) flatMap getFromAllProjects(dependencyClasspath.task in Runtime),
     packAllUnmanagedJars <<= (thisProjectRef, buildStructure, packExclude) flatMap getFromSelectedProjects(unmanagedJars.task in Compile),
     packLibJars <<= (thisProjectRef, buildStructure, packExclude) flatMap getFromSelectedProjects(packageBin.task in Runtime),
@@ -65,8 +67,8 @@ object Pack extends sbt.Plugin {
 
   private implicit def moduleEntryOrdering = Ordering.by[ModuleEntry, (String, String, String)](m => (m.org, m.name, m.revision))
 
-  private def packTask = pack <<= (name, packMain, packDir, version, packLibJars, streams, target, baseDirectory, packUpdateReports, packMacIconFile, packResourceDir, packJvmOpts, packAllUnmanagedJars) map {
-    (name, mainTable, packDir, ver, libs, out, target, base, reports, macIcon, resourceDir, jvmOpts, unmanaged) => {
+  private def packTask = pack <<= (name, packMain, packDir, version, packLibJars, streams, target, baseDirectory, packUpdateReports, packMacIconFile, packResourceDir, packJvmOpts, packExtraClasspath, packAllUnmanagedJars) map {
+    (name, mainTable, packDir, ver, libs, out, target, base, reports, macIcon, resourceDir, jvmOpts, extraClasspath, unmanaged) => {
 
       val dependentJars = collection.immutable.SortedMap.empty[ModuleEntry, File] ++    (for {
           r <- reports
@@ -135,7 +137,8 @@ object Pack extends sbt.Plugin {
           "PROG_NAME" -> name,
           "MAIN_CLASS" -> mainClass,
           "MAC_ICON_FILE" -> macIcon,
-          "JVM_OPTS" -> jvmOpts.getOrElse(name, Nil).map("\"%s\"".format(_)).mkString(" "))
+          "JVM_OPTS" -> jvmOpts.getOrElse(name, Nil).map("\"%s\"".format(_)).mkString(" "),
+          "EXTRA_CLASSPATH" -> extraClasspath.getOrElse(name, Nil).mkString("", ":", ":").replaceAll("^:$", ""))
         val launchScript = StringTemplate.eval(read("pack/script/launch.template"))(m)
         val progName = m("PROG_NAME").replaceAll(" ", "") // remove white spaces
         write("bin/%s".format(progName), launchScript)
