@@ -12,6 +12,7 @@ import classpath.ClasspathUtilities
 import Keys._
 import xerial.core.io.Resource
 import java.io.ByteArrayOutputStream
+import java.io.File.pathSeparator
 
 /**
  * Plugin for packaging projects
@@ -138,7 +139,7 @@ object Pack extends sbt.Plugin {
           "MAIN_CLASS" -> mainClass,
           "MAC_ICON_FILE" -> macIcon,
           "JVM_OPTS" -> jvmOpts.getOrElse(name, Nil).map("\"%s\"".format(_)).mkString(" "),
-          "EXTRA_CLASSPATH" -> extraClasspath.getOrElse(name, Nil).mkString("", ":", ":").replaceAll("^:$", ""))
+          "EXTRA_CLASSPATH" -> extraClasspath.get(name).map(_.mkString("", pathSeparator, pathSeparator)).orElse(Some("")).get)
         val launchScript = StringTemplate.eval(read("pack/script/launch.template"))(m)
         val progName = m("PROG_NAME").replaceAll(" ", "") // remove white spaces
         write("bin/%s".format(progName), launchScript)
