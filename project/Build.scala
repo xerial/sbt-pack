@@ -23,6 +23,9 @@ import sbt.ScriptedPlugin._
 
 import sbtrelease.ReleasePlugin._
 
+import com.mojolly.scalate.ScalatePlugin._
+import ScalateKeys._
+
 object PackBuild extends Build {
 
   val SCALA_VERSION = "2.9.2"
@@ -43,7 +46,7 @@ object PackBuild extends Build {
     }
   }
 
-  lazy val buildSettings = Defaults.defaultSettings ++ releaseSettings ++ scriptedSettings ++ Seq[Setting[_]](
+  lazy val buildSettings = Defaults.defaultSettings ++ releaseSettings ++ scriptedSettings ++ scalateSettings ++ Seq[Setting[_]](
     organization := "org.xerial.sbt",
     organizationName := "Xerial project",
     organizationHomepage := Some(new URL("http://xerial.org/")),
@@ -63,6 +66,9 @@ object PackBuild extends Build {
     scriptedLaunchOpts ++= {
       import scala.collection.JavaConverters._
       management.ManagementFactory.getRuntimeMXBean().getInputArguments().asScala.filter(a => Seq("-Xmx","-Xms").contains(a) || a.startsWith("-XX")).toSeq
+    },
+    scalateTemplateConfig in Compile <<= (sourceDirectory in Compile) { base =>
+      Seq(TemplateConfig(base / "templates", Nil, Nil, Some("xerial.sbt.template")))
     },
     pomExtra := {
       <url>http://xerial.org/</url>
@@ -96,7 +102,8 @@ object PackBuild extends Build {
       Seq(libraryDependencies ++=
         Seq(
           "org.scalatest" %% "scalatest" % "2.0.M5" % "test",
-          "org.xerial" % "xerial-core" % "3.0"
+          "org.fusesource.scalate" % "scalate-core_2.9" % "1.6.1",
+          "org.slf4j" % "slf4j-nop" % "1.7.5"
         )
       )
   )
