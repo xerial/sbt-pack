@@ -28,38 +28,39 @@ Import `xerial.sbt.Pack.packSettings` into your project settings. Then set `pack
 
 **project/Build.scala**
 
-    import sbt._
-    import sbt.Keys._
-    import xerial.sbt.Pack._
+```scala
+import sbt._
+import sbt.Keys._
+import xerial.sbt.Pack._
+   
+object Build extends sbt.Build {
     
-    object Build extends sbt.Build {
-    
-      lazy val root = Project(
-        id = "myprog",
-        base = file("."),
-        settings = Defaults.defaultSettings ++ packSettings ++
-          Seq(
-            // Map from program name -> Main class (full path)
-            packMain := Map("hello" -> "myprog.Hello"),
-            // Add custom settings here
-	      // JVM options of scripts (program name -> JVM option)
-	      packJvmOpts := Map("hello" -> Seq("-Xmx512m"))
-          )
-      )
-    }
-
+  lazy val root = Project(
+    id = "myprog",
+    base = file("."),
+    settings = Defaults.defaultSettings ++ packSettings ++
+    Seq(
+      // Map from program name -> Main class (full path)
+      packMain := Map("hello" -> "myprog.Hello"),
+      // Add custom settings here
+      // JVM options of scripts (program name -> Seq(JVM option, …))
+      packJvmOpts := Map("hello" -> Seq("-Xmx512m"))
+    )
+ )
+}
+```
 
 **src/main/scala/Hello.scala**
 
-
-	package myprog
+```scala
+package myprog
     
-    object Hello {
-      def main(args:Array[String]) = {
-        println("Hello World!!")
-      }
-    }
-
+object Hello {
+  def main(args:Array[String]) = {
+    println("Hello World!!")
+  }
+}
+```
 
 **Create a package**
 
