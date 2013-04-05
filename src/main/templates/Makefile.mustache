@@ -24,7 +24,7 @@ all:
 
 # This file will be generated after 'make dist'
 
-PROG:={{PROG_NAME}}
+PROG:={{{PROG_NAME}}}
 
 # VERSION file must contain the 'version' variable
 include VERSION
@@ -42,6 +42,6 @@ install:
 	if [ -d "$(PROG_DIR)" ]; then rm -rf "$(PROG_DIR)"; fi
 	$(INSTALL) -d "$(PROG_DIR)"
 	cp -pr ./* $(PROG_DIR)
-	ln -sfn "{{PROG_NAME}}-$(version)" "$(PROG_BASE_DIR)/current"
+	ln -sfn "{{{PROG_NAME}}}-$(version)" "$(PROG_BASE_DIR)/current"
 	$(INSTALL) -d "$(PREFIX)/bin"
 

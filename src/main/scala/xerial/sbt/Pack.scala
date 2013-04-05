@@ -8,10 +8,11 @@
 package xerial.sbt
 
 import sbt._
+import org.fusesource.scalate.TemplateEngine
 import classpath.ClasspathUtilities
 import Keys._
-import xerial.core.io.Resource
 import java.io.ByteArrayOutputStream
+import java.io.File.pathSeparator
 
 /**
  * Plugin for packaging projects
@@ -30,6 +31,7 @@ object Pack extends sbt.Plugin {
   val packResourceDir = SettingKey[String]("pack-resource-dir", "pack resource directory. default = src/pack")
   val packAllUnmanagedJars = TaskKey[Seq[Classpath]]("pack-all-unmanaged")
   val packJvmOpts = SettingKey[Map[String, Seq[String]]]("pack-jvm-opts")
+  val packExtraClasspath = SettingKey[Map[String, Seq[String]]]("pack-extra-classpath")
 
   val packSettings = Seq[sbt.Project.Setting[_]](
     packDir := "pack",
@@ -38,6 +40,7 @@ object Pack extends sbt.Plugin {
     packMacIconFile := "icon-mac.png",
     packResourceDir := "src/pack",
     packJvmOpts := Map.empty,
+    packExtraClasspath := Map.empty,
     packAllClasspaths <<= (thisProjectRef, buildStructure) flatMap getFromAllProjects(dependencyClasspath.task in Runtime),
     packAllUnmanagedJars <<= (thisProjectRef, buildStructure, packExclude) flatMap getFromSelectedProjects(unmanagedJars.task in Compile),
     packLibJars <<= (thisProjectRef, buildStructure, packExclude) flatMap getFromSelectedProjects(packageBin.task in Runtime),
@@ -65,8 +68,8 @@ object Pack extends sbt.Plugin {
 
   private implicit def moduleEntryOrdering = Ordering.by[ModuleEntry, (String, String, String)](m => (m.org, m.name, m.revision))
 
-  private def packTask = pack <<= (name, packMain, packDir, version, packLibJars, streams, target, baseDirectory, packUpdateReports, packMacIconFile, packResourceDir, packJvmOpts, packAllUnmanagedJars) map {
-    (name, mainTable, packDir, ver, libs, out, target, base, reports, macIcon, resourceDir, jvmOpts, unmanaged) => {
+  private def packTask = pack <<= (name, packMain, packDir, version, packLibJars, streams, target, baseDirectory, packUpdateReports, packMacIconFile, packResourceDir, packJvmOpts, packExtraClasspath, packAllUnmanagedJars) map {
+    (name, mainTable, packDir, ver, libs, out, target, base, reports, macIcon, resourceDir, jvmOpts, extraClasspath, unmanaged) => {
 
       val dependentJars = collection.immutable.SortedMap.empty[ModuleEntry, File] ++    (for {
           r <- reports
@@ -105,18 +108,6 @@ object Pack extends sbt.Plugin {
       out.log.info("Create a bin folder: " + rpath(binDir))
       binDir.mkdirs()
 
-      def read(path: String): String = Resource.open(this.getClass, path) {
-        f =>
-          val b = new ByteArrayOutputStream
-          val buf = new Array[Byte](8192)
-          var ret = 0
-          while ({ret = f.read(buf, 0, buf.length); ret != -1}) {
-            b.write(buf, 0, ret)
-          }
-          new String(b.toByteArray)
-      }
-
-
       def write(path: String, content: String) {
         val p = distDir / path
         out.log.info("Generating %s".format(rpath(p)))
@@ -129,14 +120,17 @@ object Pack extends sbt.Plugin {
         out.log.warn("No mapping (progran name) -> MainClass is defined. Please set packMain variable (Map[String, String]) in your sbt project settings.")
       }
 
+      val engine = new TemplateEngine
+
       for ((name, mainClass) <- mainTable) {
         out.log.info("main class for %s: %s".format(name, mainClass))
         val m = Map(
           "PROG_NAME" -> name,
           "MAIN_CLASS" -> mainClass,
           "MAC_ICON_FILE" -> macIcon,
-          "JVM_OPTS" -> jvmOpts.getOrElse(name, Nil).map("\"%s\"".format(_)).mkString(" "))
-        val launchScript = StringTemplate.eval(read("pack/script/launch.template"))(m)
+          "JVM_OPTS" -> jvmOpts.getOrElse(name, Nil).map("\"%s\"".format(_)).mkString(" "),
+          "EXTRA_CLASSPATH" -> extraClasspath.get(name).map(_.mkString("", pathSeparator, pathSeparator)).orElse(Some("")).get)
+        val launchScript = engine.layout("/xerial/sbt/template/launch.mustache", m)
         val progName = m("PROG_NAME").replaceAll(" ", "") // remove white spaces
         write("bin/%s".format(progName), launchScript)
       }
@@ -145,7 +139,7 @@ object Pack extends sbt.Plugin {
       val makefile = {
         val globalVar = Map("PROG_NAME" -> name)
         val b = new StringBuilder
-        b.append(StringTemplate.eval(read("pack/script/Makefile.template"))(globalVar))
+        b.append(engine.layout("/xerial/sbt/template/Makefile.mustache", globalVar))
         for(p <- mainTable.keys) {
           b.append("\t")
           b.append("""ln -sf "../$(PROG)/current/bin/%s" "$(PREFIX)/bin/%s"""".format(p, p))
