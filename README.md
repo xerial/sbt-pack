@@ -46,7 +46,7 @@ object Build extends sbt.Build {
       // JVM options of scripts (program name -> Seq(JVM option, …))
       packJvmOpts := Map("hello" -> Seq("-Xmx512m"))
     )
- )
+  )
 }
 ```
 
