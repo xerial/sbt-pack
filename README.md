@@ -44,7 +44,9 @@ object Build extends sbt.Build {
       packMain := Map("hello" -> "myprog.Hello"),
       // Add custom settings here
       // JVM options of scripts (program name -> Seq(JVM option, ...))
-      packJvmOpts := Map("hello" -> Seq("-Xmx512m"))
+      packJvmOpts := Map("hello" -> Seq("-Xmx512m")),
+      // Extra class paths to look when launching a program
+      packExtraClasspath := Map("hello" -> Seq("${PROG_HOME}/etc"))
     )
   )
 }
