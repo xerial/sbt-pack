@@ -103,6 +103,7 @@ object PackBuild extends Build {
         Seq(
           "org.scalatest" %% "scalatest" % "2.0.M5" % "test",
           "org.fusesource.scalate" % "scalate-core_2.9" % "1.6.1",
+          "org.kamranzafar" % "jtar" % "2.2",
           "org.slf4j" % "slf4j-nop" % "1.7.5"
         )
       )
