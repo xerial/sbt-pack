@@ -168,9 +168,7 @@ object Pack extends sbt.Plugin {
       IO.copyDirectory(otherResourceDir, distDir)
 
       // chmod +x the bin directory
-      if (!System.getProperty("os.name", "").contains("Windows")) {
-        scala.sys.process.Process("chmod -R +x %s".format(binDir)).run
-      }
+      binDir.listFiles.foreach(_.setExecutable(true, false))
 
       // Create tgz archive
       val archiveName = name + "-" + ver
