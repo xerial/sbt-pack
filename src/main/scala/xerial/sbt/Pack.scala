@@ -12,7 +12,16 @@ import org.fusesource.scalate.TemplateEngine
 import classpath.ClasspathUtilities
 import Keys._
 import java.io.ByteArrayOutputStream
+import java.io.BufferedInputStream
+import java.io.BufferedOutputStream
+import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.io.InputStream
 import java.io.File.pathSeparator
+import java.util.zip.Deflater
+import java.util.zip.GZIPOutputStream
+import org.kamranzafar.jtar.TarOutputStream
+import org.kamranzafar.jtar.TarEntry
 
 /**
  * Plugin for packaging projects
@@ -155,17 +164,47 @@ object Pack extends sbt.Plugin {
         "\t" + """ln -sf "../$(PROG)/current/bin/%s" "$(PREFIX)/bin/%s"""".format(script.getName, script.getName)
       }
 
-      write("Makefile", makefile + additionalLines.mkString("\n") + "\n")
-
       // Copy other scripts
       IO.copyDirectory(otherResourceDir, distDir)
 
       // chmod +x the bin directory
-      if (!System.getProperty("os.name", "").contains("Windows")) {
-        scala.sys.process.Process("chmod -R +x %s".format(binDir)).run
+      binDir.listFiles.foreach(_.setExecutable(true, false))
+
+      // Create tgz archive
+      val archiveName = name + "-" + ver
+      out.log.info("Generating " + rpath(target / (archiveName  + ".tar.gz")))
+      val tarfile = new TarOutputStream(new BufferedOutputStream(new GZIPOutputStream(new FileOutputStream(target / (archiveName + ".tar.gz"))) {
+        `def`.setLevel(Deflater.BEST_COMPRESSION)
+      }))
+      def tarEntry(src: File, dst: String) {
+        val tarEntry = new TarEntry(src, dst)
+        tarEntry.setIds(0, 0)
+        tarEntry.setUserName("")
+        tarEntry.setGroupName("")
+        if(src.getAbsolutePath startsWith binDir.getAbsolutePath)
+          tarEntry.getHeader.mode = 0755
+        tarfile.putNextEntry(tarEntry)
       }
+      tarEntry(new File("."), archiveName)
+      val buffer = Array.fill(1024 * 1024)(0: Byte)
+      def addFilesToTar(dir: File): Unit = dir.listFiles.foreach { file =>
+        tarEntry(file, archiveName ++ file.getAbsolutePath.drop(distDir.getAbsolutePath.size))
+        if(file.isDirectory) addFilesToTar(file)
+        else {
+          def copy(input: InputStream): Unit = input.read(buffer) match {
+            case length if length < 0 => input.close()
+            case length =>
+              tarfile.write(buffer, 0, length)
+              copy(input)
+          }
+          copy(new BufferedInputStream(new FileInputStream(file)))
+        }
+      }
+      addFilesToTar(distDir)
+      tarfile.close()
 
       // Output the version number
+      write("Makefile", makefile + additionalLines.mkString("\n") + "\n")
       write("VERSION", "version:=" + ver + "\n")
       out.log.info("done.")
       distDir
