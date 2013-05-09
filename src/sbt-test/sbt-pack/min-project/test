@@ -1,2 +1,6 @@
+> 'set version := "0.1"'
 > pack
+$ exists target/pack/bin/hello
 $ exec sh ./target/pack/bin/hello
+> pack-archive
+$ exists target/min-project-0.1.tar.gz

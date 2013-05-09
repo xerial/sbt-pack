@@ -12,7 +12,16 @@ import org.fusesource.scalate.TemplateEngine
 import classpath.ClasspathUtilities
 import Keys._
 import java.io.ByteArrayOutputStream
+import java.io.BufferedInputStream
+import java.io.BufferedOutputStream
+import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.io.InputStream
 import java.io.File.pathSeparator
+import java.util.zip.Deflater
+import java.util.zip.GZIPOutputStream
+import org.kamranzafar.jtar.TarOutputStream
+import org.kamranzafar.jtar.TarEntry
 
 /**
  * Plugin for packaging projects
@@ -21,6 +30,7 @@ import java.io.File.pathSeparator
 object Pack extends sbt.Plugin {
 
   val pack: TaskKey[File] = TaskKey[File]("pack", "create a distributable package of the project")
+  val packArchive: TaskKey[File] = TaskKey[File]("pack-archive", "create an archive of the distributable package")
   val packMain: SettingKey[Map[String, String]] = SettingKey[Map[String, String]]("packMain", "prog_name -> main class table")
   val packDir: SettingKey[String] = SettingKey[String]("pack-dir")
   val packExclude = SettingKey[Seq[String]]("pack-exclude")
@@ -45,7 +55,7 @@ object Pack extends sbt.Plugin {
     packAllUnmanagedJars <<= (thisProjectRef, buildStructure, packExclude) flatMap getFromSelectedProjects(unmanagedJars.task in Compile),
     packLibJars <<= (thisProjectRef, buildStructure, packExclude) flatMap getFromSelectedProjects(packageBin.task in Runtime),
     packUpdateReports <<= (thisProjectRef, buildStructure, packExclude) flatMap getFromSelectedProjects(update.task)
-  ) ++ Seq(packTask)
+  ) ++ Seq(packTask, packArchiveTask)
 
   private def getFromAllProjects[T](targetTask: SettingKey[Task[T]])(currentProject: ProjectRef, structure: Load.BuildStructure): Task[Seq[T]] =
     getFromSelectedProjects(targetTask)(currentProject, structure, Seq.empty)
@@ -68,6 +78,48 @@ object Pack extends sbt.Plugin {
 
   private implicit def moduleEntryOrdering = Ordering.by[ModuleEntry, (String, String, String)](m => (m.org, m.name, m.revision))
 
+  private def rpath(base: File, f: RichFile) = f.relativeTo(base).getOrElse(f).toString
+
+  private def packArchiveTask = packArchive <<= (pack in Compile, name, version, streams, target, baseDirectory) map { (distDir, name, ver, out, target, base) =>
+    val binDir = distDir / "bin"
+    val archiveRoot = name + "-" + ver
+    val archiveName = archiveRoot + ".tar.gz"
+    out.log.info("Generating " + rpath(base, target / archiveName))
+    val tarfile = new TarOutputStream(new BufferedOutputStream(new GZIPOutputStream(new FileOutputStream(target / (archiveRoot + ".tar.gz"))) {
+      `def`.setLevel(Deflater.BEST_COMPRESSION)
+    }))
+    def tarEntry(src: File, dst: String) {
+      val tarEntry = new TarEntry(src, dst)
+      tarEntry.setIds(0, 0)
+      tarEntry.setUserName("")
+      tarEntry.setGroupName("")
+      if(src.getAbsolutePath startsWith binDir.getAbsolutePath)
+        tarEntry.getHeader.mode = 0755
+      tarfile.putNextEntry(tarEntry)
+    }
+    tarEntry(new File("."), archiveRoot)
+    val excludeFiles = Set("Makefile", "VERSION")
+    val buffer = Array.fill(1024 * 1024)(0: Byte)
+    def addFilesToTar(dir: File): Unit = dir.listFiles.
+      filterNot(f => excludeFiles.contains(rpath(distDir, f))).foreach { file =>
+        tarEntry(file, archiveRoot ++ "/" ++ rpath(distDir, file))
+        if(file.isDirectory) addFilesToTar(file)
+        else {
+          def copy(input: InputStream): Unit = input.read(buffer) match {
+            case length if length < 0 => input.close()
+            case length =>
+              tarfile.write(buffer, 0, length)
+              copy(input)
+          }
+          copy(new BufferedInputStream(new FileInputStream(file)))
+        }
+      }
+    addFilesToTar(distDir)
+    tarfile.close()
+
+    target / archiveName
+  }
+
   private def packTask = pack <<= (name, packMain, packDir, version, packLibJars, streams, target, baseDirectory, packUpdateReports, packMacIconFile, packResourceDir, packJvmOpts, packExtraClasspath, packAllUnmanagedJars) map {
     (name, mainTable, packDir, ver, libs, out, target, base, reports, macIcon, resourceDir, jvmOpts, extraClasspath, unmanaged) => {
 
@@ -80,17 +132,13 @@ object Pack extends sbt.Plugin {
           ModuleEntry(mid.organization, mid.name, mid.revision) -> file
         })
 
-      def rpath(f: RichFile) = f.relativeTo(base) map {
-        _.toString
-      } getOrElse (f.toString)
-
       val distDir = target / packDir
-      out.log.info("Creating a distributable package in " + rpath(distDir))
+      out.log.info("Creating a distributable package in " + rpath(base, distDir))
       IO.delete(distDir)
       distDir.mkdirs()
 
       val libDir = distDir / "lib"
-      out.log.info("Copying libraries to " + rpath(libDir))
+      out.log.info("Copying libraries to " + rpath(base, libDir))
       libDir.mkdirs()
       out.log.info("project jars:\n" + libs.mkString("\n"))
       libs.foreach(l => IO.copyFile(l, libDir / l.getName))
@@ -105,12 +153,12 @@ object Pack extends sbt.Plugin {
       }
 
       val binDir = distDir / "bin"
-      out.log.info("Create a bin folder: " + rpath(binDir))
+      out.log.info("Create a bin folder: " + rpath(base, binDir))
       binDir.mkdirs()
 
       def write(path: String, content: String) {
         val p = distDir / path
-        out.log.info("Generating %s".format(rpath(p)))
+        out.log.info("Generating %s".format(rpath(base, p)))
         IO.write(p, content)
       }
 
@@ -154,16 +202,13 @@ object Pack extends sbt.Plugin {
       val additionalLines: Array[String] = for (script <- Option(binScriptsDir.listFiles) getOrElse Array.empty) yield {
         "\t" + """ln -sf "../$(PROG)/current/bin/%s" "$(PREFIX)/bin/%s"""".format(script.getName, script.getName)
       }
-
       write("Makefile", makefile + additionalLines.mkString("\n") + "\n")
 
       // Copy other scripts
       IO.copyDirectory(otherResourceDir, distDir)
 
       // chmod +x the bin directory
-      if (!System.getProperty("os.name", "").contains("Windows")) {
-        scala.sys.process.Process("chmod -R +x %s".format(binDir)).run
-      }
+      binDir.listFiles.foreach(_.setExecutable(true, false))
 
       // Output the version number
       write("VERSION", "version:=" + ver + "\n")
