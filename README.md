@@ -91,9 +91,10 @@ Your program package will be generated in `target/pack` folder.
     $ /usr/local/bin/hello
     Hello World!
 
-** Create tar.gz archive of your Scala program package **
 
-   $ sbt pack-archive
+**Create tar.gz archive of your Scala program package**
+
+    $ sbt pack-archive
 
 ### Example projects
 
