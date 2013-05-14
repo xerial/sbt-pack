@@ -13,7 +13,8 @@ sbt-pack plugin do the following things:
 - To create a tar.gz archive of the package, run `sbt pack-archive` command, which creates a tar.gz archive `target/{program name}-{version}.tar.gz`.
 - You can run programs using a script generated in `target/pack/bin/{program name}`
 - You can install your Scala programs to local machine via `cd target/pack; make install`. Then you can run the command with `~/local/bin/{program name}`
-- The above install Makefile script uses a separate folder for each program version (e.g., `~/local/{project name}/{project version}`), so you can have several versions of your program in a system. The latest one is linked from `~/local/{project name}/current`
+- You can install multiple versions of your program.
+  - The above Makefile script uses a separate folder for installing each version (e.g., `~/local/{project name}/{project version}`). The latest one is linked from `~/local/{project name}/current`
 - You can add other resources to be packed in `src/pack` folder. 
 
 ### Usage
@@ -42,7 +43,7 @@ object Build extends sbt.Build {
     base = file("."),
     settings = Defaults.defaultSettings ++ packSettings ++
     Seq(
-      // Specify mappings from program name -> Main class (full path)
+      // Specify mappings from program name -> Main class (full package path)
       packMain := Map("hello" -> "myprog.Hello"),
       // Add custom settings here
       // [Optional] JVM options of scripts (program name -> Seq(JVM option, ...))
