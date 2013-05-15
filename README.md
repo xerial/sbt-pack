@@ -70,6 +70,8 @@ object Hello {
 }
 ```
 
+#### Command Examples
+
 **Create a package**
 
     $ sbt pack
