@@ -53,10 +53,10 @@ class Main(@option(prefix="-h,--help", description="Display help messages", isHe
                       @argument
                       otherArg:String
                        ) {
-    info("min:%s, max:%s", min, max)
-    info("card:%s", card getOrElse ("no card is selected"))
-    info("flag:%s", flag)
-    info("other arg:%s", otherArg)
+    info(s"min:$min, max:$max")
+    info(s"card:${card getOrElse ("no card is selected")}")
+    info(s"flag:$flag")
+    info(s"other arg:${otherArg}")
   }
 
 }
