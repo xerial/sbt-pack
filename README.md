@@ -9,7 +9,7 @@ A sbt plugin for creating distributable Scala packages that include dependent ja
   - All dependent jars, including scala-library, are collected in `target/pack/lib` folder. This process is much faster than creating a single-jar as in `sbt-assembly` or `proguard` plugins. 
   - Multi-module projects are supported.
 - Generates program launch scripts `target/pack/bin/{program name}`
-  - To run the program, no need to install Scala, since it is included in the lib folder. Only java command needs to be found in the system.
+  - To run the program no need exists to install Scala, since it is included in the lib folder. Only java command needs to be found in the system.
 - `sbt pack-archive` command creates a tar.gz archive, `target/{program name}-{version}.tar.gz`. 
 - You can install your Scala programs to local machine via `cd target/pack; make install`. Then you can run the command with `~/local/bin/{program name}`
 - You can install multiple versions of your program in the system.
