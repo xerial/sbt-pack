@@ -28,7 +28,6 @@ import ScalateKeys._
 
 object PackBuild extends Build {
 
-  val SCALA_VERSION = "2.9.2"
 
   def releaseResolver(v: String): Resolver = {
     val profile = System.getProperty("xerial.profile", "default")
@@ -50,8 +49,7 @@ object PackBuild extends Build {
     organization := "org.xerial.sbt",
     organizationName := "Xerial project",
     organizationHomepage := Some(new URL("http://xerial.org/")),
-    description := "A sbt plugin for packaging distributable Scala code",
-    scalaVersion := SCALA_VERSION,
+    description := "A sbt plugin for creating distributable Scala program packages",
     publishMavenStyle := true,
     publishArtifact in Test := false,
     publishTo <<= version { (v) => Some(releaseResolver(v)) },
@@ -60,8 +58,10 @@ object PackBuild extends Build {
     },
     sbtPlugin := true,
     parallelExecution := true,
-    crossPaths := false,
-    scalacOptions ++= Seq("-encoding", "UTF-8", "-deprecation", "-unchecked", "-target:jvm-1.5"),
+    //scalaVersion := "2.9.2",
+    crossScalaVersions := Seq("2.9.2", "2.9.3"),  // Do we need to include "2.10.1"?
+    //crossPaths := false,
+    scalacOptions ++= Seq("-encoding", "UTF-8", "-deprecation", "-unchecked"),
     scriptedBufferLog := false,
     scriptedLaunchOpts ++= {
       import scala.collection.JavaConverters._
@@ -101,7 +101,7 @@ object PackBuild extends Build {
     settings = buildSettings ++
       Seq(libraryDependencies ++=
         Seq(
-          "org.scalatest" %% "scalatest" % "2.0.M5" % "test",
+          "org.scalatest" %% "scalatest" % "2.0.M5b" % "test",
           "org.fusesource.scalate" % "scalate-core_2.9" % "1.6.1",
           "org.kamranzafar" % "jtar" % "2.2",
           "org.slf4j" % "slf4j-nop" % "1.7.5"

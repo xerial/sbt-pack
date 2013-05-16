@@ -94,7 +94,7 @@ object Pack extends sbt.Plugin {
       tarEntry.setUserName("")
       tarEntry.setGroupName("")
       if(src.getAbsolutePath startsWith binDir.getAbsolutePath)
-        tarEntry.getHeader.mode = 0755
+        tarEntry.getHeader.mode = Integer.parseInt("755", 8)
       tarfile.putNextEntry(tarEntry)
     }
     tarEntry(new File("."), archiveRoot)
