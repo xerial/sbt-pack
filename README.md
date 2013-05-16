@@ -1,20 +1,28 @@
 sbt-pack plugin
 ========
 
-A sbt plugin for creating distributable packages that include dependent jars and launch scripts.
+A sbt plugin for creating distributable Scala packages that include dependent jars and launch scripts.
 
 ### Features
 
-sbt-pack plugin do the following things:
-
 - `sbt pack` creates a distributable package in `target/pack` folder.
-  - All dependent jars are collected in `target/pack/lib` folder. This process is much faster than creating a single-jar as in `sbt-assembly` or `proguard` plugins. 
+  - All dependent jars, including scala-library, are collected in `target/pack/lib` folder. This process is much faster than creating a single-jar as in `sbt-assembly` or `proguard` plugins. 
   - Multi-module projects are supported.
-- To create a tar.gz archive of the package, run `sbt pack-archive` command, which creates `target/{program name}-{version}.tar.gz`.
-- You can run programs using a script generated in `target/pack/bin/{program name}`
-- You can install your Scala programs to local machine `cd target/pack; make install`. Then you can run the command with `~/local/bin/{program name}`
-- The above install Makefile script uses a separate folder for each program version (e.g., `~/local/{project name}/{project version}`), so you can have several versions of your program in a system. The latest one is linked from `~/local/{project name}/current`
+- Generates program launch scripts `target/pack/bin/{program name}`
+  - To run the program no need exists to install Scala, since it is included in the lib folder. Only java command needs to be found in the system.
+- `sbt pack-archive` command creates a tar.gz archive, `target/{program name}-{version}.tar.gz`. 
+- You can install your Scala programs to local machine via `cd target/pack; make install`. Then you can run the command with `~/local/bin/{program name}`
+- You can install multiple versions of your program in the system.
+  - The above Makefile script uses a separate folder for each version (e.g., `~/local/{project name}/{project version}`). 
+  - The latest version is linked from `~/local/{project name}/current`
 - You can add other resources to be packed in `src/pack` folder. 
+
+### Release Notes
+- May 16, 2013 - Version 0.2 release
+  - Stable version
+  - Delete only lib folder when `make install`
+- May 9, 2013 - Version 0.1.10 release
+  - Add pack-archive command
 
 ### Usage
 
@@ -23,8 +31,9 @@ Add `sbt-pack` plugin to your sbt configuration:
 **project/plugins.sbt**
 
 ```scala
-addSbtPlugin("org.xerial.sbt" % "sbt-pack" % "0.1.10")
+addSbtPlugin("org.xerial.sbt" % "sbt-pack" % "0.2")
 ```
+- sbt 0.12.x or higher is required.
 
 Import `xerial.sbt.Pack.packSettings` into your project settings. Then set `packMain` variable, a mapping from the your program names to their corresponding main classes. The main classes must be Scala objects that define `def main(args:Array[])` method:
 
@@ -42,7 +51,7 @@ object Build extends sbt.Build {
     base = file("."),
     settings = Defaults.defaultSettings ++ packSettings ++
     Seq(
-      // Specify mappings from program name -> Main class (full path)
+      // Specify mappings from program name -> Main class (full package path)
       packMain := Map("hello" -> "myprog.Hello"),
       // Add custom settings here
       // [Optional] JVM options of scripts (program name -> Seq(JVM option, ...))
@@ -65,6 +74,8 @@ object Hello {
   }
 }
 ```
+
+#### Command Examples
 
 **Create a package**
 
@@ -89,6 +100,11 @@ Your program package will be generated in `target/pack` folder.
     $ sudo make install PREFIX="/usr/local"
     $ /usr/local/bin/hello
     Hello World!
+
+
+**Create tar.gz archive of your Scala program package**
+
+    $ sbt pack-archive
 
 ### Example projects
 

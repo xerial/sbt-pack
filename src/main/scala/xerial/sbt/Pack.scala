@@ -183,35 +183,30 @@ object Pack extends sbt.Plugin {
         write("bin/%s".format(progName), launchScript)
       }
 
-      // Create Makefile
-      val makefile = {
-        val globalVar = Map("PROG_NAME" -> name)
-        val b = new StringBuilder
-        b.append(engine.layout("/xerial/sbt/template/Makefile.mustache", globalVar))
-        for(p <- mainTable.keys) {
-          b.append("\t")
-          b.append("""ln -sf "../$(PROG)/current/bin/%s" "$(PREFIX)/bin/%s"""".format(p, p))
-          b.append("+n")
-        }
-        b.result
-      }
-
-
       val otherResourceDir = base / resourceDir
       val binScriptsDir = otherResourceDir / "bin"
-      val additionalLines: Array[String] = for (script <- Option(binScriptsDir.listFiles) getOrElse Array.empty) yield {
-        "\t" + """ln -sf "../$(PROG)/current/bin/%s" "$(PREFIX)/bin/%s"""".format(script.getName, script.getName)
+
+      def linkToScript(name:String) = 
+         "\t" + """ln -sf "../$(PROG)/current/bin/%s" "$(PREFIX)/bin/%s"""".format(name, name)
+
+      // Create Makefile
+      val makefile = {
+        val additinalScripts = (Option(binScriptsDir.listFiles) getOrElse Array.empty).map(_.getName)
+        val symlink = (mainTable.keys ++ additinalScripts).map(linkToScript).mkString("\n")
+        val globalVar = Map("PROG_NAME" -> name, "PROG_SYMLINK" -> symlink)
+        engine.layout("/xerial/sbt/template/Makefile.mustache", globalVar)
       }
-      write("Makefile", makefile + additionalLines.mkString("\n") + "\n")
+      write("Makefile", makefile)
+
+      // Output the version number
+      write("VERSION", "version:=" + ver + "\n")
 
       // Copy other scripts
       IO.copyDirectory(otherResourceDir, distDir)
 
-      // chmod +x the bin directory
+      // chmod +x the scripts in bin directory
       binDir.listFiles.foreach(_.setExecutable(true, false))
 
-      // Output the version number
-      write("VERSION", "version:=" + ver + "\n")
       out.log.info("done.")
       distDir
    }
