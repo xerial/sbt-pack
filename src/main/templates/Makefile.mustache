@@ -17,16 +17,15 @@
 PREFIX:=${HOME}/local
 INSTALL:=install
 
-.PHONY: all install 
+.PHONY: all install archive
 
 all: 
 	@echo "Run make install"
 
-# This file will be generated after 'make dist'
-
+# program package name
 PROG:={{{PROG_NAME}}}
 
-# VERSION file must contain the 'version' variable
+# VERSION file will be generated after 'sbt pack'. This file contains 'version' variable
 include VERSION
 
 PROG_BASE_DIR:=$(PREFIX)/$(PROG)
@@ -39,9 +38,10 @@ target/$(PROG_NAME)-$(version).tar.gz:
 	tar --exclude=target/* -cvzf $@ .
 
 install:
-	if [ -d "$(PROG_DIR)" ]; then rm -rf "$(PROG_DIR)"; fi
+	@echo "Clean up $(PROG_DIR)/lib folder"
+	if [ -d "$(PROG_DIR)/lib" ]; then rm -rf "$(PROG_DIR)/lib"; fi
 	$(INSTALL) -d "$(PROG_DIR)"
-	cp -pr ./* $(PROG_DIR)
+	cp -pr ./* "$(PROG_DIR)"
 	ln -sfn "{{{PROG_NAME}}}-$(version)" "$(PROG_BASE_DIR)/current"
 	$(INSTALL) -d "$(PREFIX)/bin"
-
+{{{PROG_SYMLINK}}}
