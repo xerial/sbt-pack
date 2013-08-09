@@ -144,7 +144,7 @@ object Pack extends sbt.Plugin {
       libs.foreach(l => IO.copyFile(l, libDir / l.getName))
       out.log.info("project dependencies:\n" + dependentJars.keys.mkString("\n"))
       for ((m, f) <- dependentJars) {
-        IO.copyFile(f, libDir / "%s-%s.jar".format(m.name, m.revision))
+        IO.copyFile(f, libDir / f.getName)
       }
       out.log.info("unmanaged dependencies:")
       for(m <- unmanaged; um <- m; f = um.data) {
