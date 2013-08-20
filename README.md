@@ -18,6 +18,9 @@ A sbt plugin for creating distributable Scala packages that include dependent ja
 - You can add other resources to be packed in `src/pack` folder. 
 
 ### Release Notes
+- August 20, 2013 - 0.2.1 release
+  * Add a sample multi-module project
+  * Fixes #11, #12
 - May 16, 2013 - Version 0.2 release
   - Stable version
   - Delete only lib folder when `make install`
@@ -31,7 +34,7 @@ Add `sbt-pack` plugin to your sbt configuration:
 **project/plugins.sbt**
 
 ```scala
-addSbtPlugin("org.xerial.sbt" % "sbt-pack" % "0.2")
+addSbtPlugin("org.xerial.sbt" % "sbt-pack" % "0.2.1")
 ```
 - sbt 0.12.x or higher is required.
 
