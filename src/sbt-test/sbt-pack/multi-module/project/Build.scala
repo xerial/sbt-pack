@@ -10,6 +10,7 @@ object Build extends sbt.Build {
     settings = Defaults.defaultSettings ++ packSettings ++
       Seq(
         scalaVersion := "2.10.1",
+        packMain := Map("m1" -> "sample.Module1", "m2" -> "sample.Module2"),
         // custom settings here
         crossPaths := false
       )
