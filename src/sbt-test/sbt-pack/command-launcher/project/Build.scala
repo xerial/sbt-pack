@@ -15,7 +15,7 @@ object Build extends sbt.Build {
         // Add custom settings here
         crossPaths := false,
         libraryDependencies ++= Seq(
-          "org.xerial" % "xerial-lens" % "3.2.0" classifier "" classifier "sources"
+          "org.xerial" % "xerial-lens" % "3.2.0" jar() classifier("sources")
         )
       )
   )

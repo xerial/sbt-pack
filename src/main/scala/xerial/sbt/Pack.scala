@@ -72,13 +72,14 @@ object Pack extends sbt.Plugin {
     projects.flatMap(p => targetTask in p get structure.data).join
   }
 
-  private case class ModuleEntry(org: String, name: String, revision: String, classifier:Option[String]) {
+  private case class ModuleEntry(org: String, name: String, revision: String, classifier:Option[String], originalFileName:String) {
     private def classifierSuffix = classifier.map("-" + _).getOrElse("")
     override def toString = "%s:%s:%s%s".format(org, name, revision, classifierSuffix)
     def jarName = "%s-%s%s.jar".format(name, revision, classifierSuffix)
+
   }
 
-  private implicit def moduleEntryOrdering = Ordering.by[ModuleEntry, (String, String, String)](m => (m.org, m.name, m.revision))
+  private implicit def moduleEntryOrdering = Ordering.by[ModuleEntry, (String, String, String, Option[String])](m => (m.org, m.name, m.revision, m.classifier))
 
   private def rpath(base: File, f: RichFile) = f.relativeTo(base).getOrElse(f).toString
 
@@ -131,9 +132,9 @@ object Pack extends sbt.Plugin {
           m <- c.modules
           (artifact, file) <- m.artifacts if DependencyFilter.allPass(c.configuration, m.module, artifact)} yield {
           val mid = m.module
-          ModuleEntry(mid.organization, mid.name, mid.revision, artifact.classifier) -> file
+          val me = ModuleEntry(mid.organization, mid.name, mid.revision, artifact.classifier, file.getName)
+          me -> file
         })
-
       val distDir = target / packDir
       out.log.info("Creating a distributable package in " + rpath(base, distDir))
       IO.delete(distDir)
