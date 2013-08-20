@@ -117,3 +117,12 @@ in the source code. It contains several Scala project examples using sbt-pack.
  - A minimal project to start writing Scala programs. 
 
 	
+### For developers
+
+To test sbt-pack plugin, run
+
+    $ bin/sbt scripted
+
+Run a single test project, e.g., `src/sbt-test/sbt-pack/multi-module`:
+
+    $ bin/sbt "scripted sbt-pack/multi-module"
