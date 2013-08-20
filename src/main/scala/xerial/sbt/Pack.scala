@@ -72,8 +72,10 @@ object Pack extends sbt.Plugin {
     projects.flatMap(p => targetTask in p get structure.data).join
   }
 
-  private case class ModuleEntry(org: String, name: String, revision: String) {
-    override def toString = "%s:%s:%s".format(org, name, revision)
+  private case class ModuleEntry(org: String, name: String, revision: String, classifier:Option[String]) {
+    private def classifierSuffix = classifier.map("-" + _).getOrElse("")
+    override def toString = "%s:%s:%s%s".format(org, name, revision, classifierSuffix)
+    def jarName = "%s-%s%s.jar".format(name, revision, classifierSuffix)
   }
 
   private implicit def moduleEntryOrdering = Ordering.by[ModuleEntry, (String, String, String)](m => (m.org, m.name, m.revision))
@@ -129,7 +131,7 @@ object Pack extends sbt.Plugin {
           m <- c.modules
           (artifact, file) <- m.artifacts if DependencyFilter.allPass(c.configuration, m.module, artifact)} yield {
           val mid = m.module
-          ModuleEntry(mid.organization, mid.name, mid.revision) -> file
+          ModuleEntry(mid.organization, mid.name, mid.revision, artifact.classifier) -> file
         })
 
       val distDir = target / packDir
@@ -144,7 +146,7 @@ object Pack extends sbt.Plugin {
       libs.foreach(l => IO.copyFile(l, libDir / l.getName))
       out.log.info("project dependencies:\n" + dependentJars.keys.mkString("\n"))
       for ((m, f) <- dependentJars) {
-        IO.copyFile(f, libDir / "%s-%s.jar".format(m.name, m.revision))
+        IO.copyFile(f, libDir / m.jarName)
       }
       out.log.info("unmanaged dependencies:")
       for(m <- unmanaged; um <- m; f = um.data) {

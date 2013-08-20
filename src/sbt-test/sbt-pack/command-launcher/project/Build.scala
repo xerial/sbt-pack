@@ -14,7 +14,9 @@ object Build extends sbt.Build {
         packMain := Map("launcher" -> "launcher.Main"),
         // Add custom settings here
         crossPaths := false,
-        libraryDependencies += "org.xerial" % "xerial-lens" % "3.2.0"
+        libraryDependencies ++= Seq(
+          "org.xerial" % "xerial-lens" % "3.2.0" classifier "" classifier "sources"
+        )
       )
   )
 }
