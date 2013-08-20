@@ -42,6 +42,7 @@ object Pack extends sbt.Plugin {
   val packAllUnmanagedJars = TaskKey[Seq[Classpath]]("pack-all-unmanaged")
   val packJvmOpts = SettingKey[Map[String, Seq[String]]]("pack-jvm-opts")
   val packExtraClasspath = SettingKey[Map[String, Seq[String]]]("pack-extra-classpath")
+  val packPreserveOriginalJarName = SettingKey[Boolean]("pack-preserve-jarname", "preserve the original jar file names. default = false")
 
   val packSettings = Seq[sbt.Project.Setting[_]](
     packDir := "pack",
@@ -54,7 +55,8 @@ object Pack extends sbt.Plugin {
     packAllClasspaths <<= (thisProjectRef, buildStructure) flatMap getFromAllProjects(dependencyClasspath.task in Runtime),
     packAllUnmanagedJars <<= (thisProjectRef, buildStructure, packExclude) flatMap getFromSelectedProjects(unmanagedJars.task in Compile),
     packLibJars <<= (thisProjectRef, buildStructure, packExclude) flatMap getFromSelectedProjects(packageBin.task in Runtime),
-    packUpdateReports <<= (thisProjectRef, buildStructure, packExclude) flatMap getFromSelectedProjects(update.task)
+    packUpdateReports <<= (thisProjectRef, buildStructure, packExclude) flatMap getFromSelectedProjects(update.task),
+    packPreserveOriginalJarName := false
   ) ++ Seq(packTask, packArchiveTask)
 
   private def getFromAllProjects[T](targetTask: SettingKey[Task[T]])(currentProject: ProjectRef, structure: Load.BuildStructure): Task[Seq[T]] =
@@ -123,8 +125,8 @@ object Pack extends sbt.Plugin {
     target / archiveName
   }
 
-  private def packTask = pack <<= (name, packMain, packDir, version, packLibJars, streams, target, baseDirectory, packUpdateReports, packMacIconFile, packResourceDir, packJvmOpts, packExtraClasspath, packAllUnmanagedJars) map {
-    (name, mainTable, packDir, ver, libs, out, target, base, reports, macIcon, resourceDir, jvmOpts, extraClasspath, unmanaged) => {
+  private def packTask = pack <<= (name, packMain, packDir, version, packLibJars, streams, target, baseDirectory, packUpdateReports, packMacIconFile, packResourceDir, packJvmOpts, packExtraClasspath, packAllUnmanagedJars, packPreserveOriginalJarName) map {
+    (name, mainTable, packDir, ver, libs, out, target, base, reports, macIcon, resourceDir, jvmOpts, extraClasspath, unmanaged, preserve) => {
 
       val dependentJars = collection.immutable.SortedMap.empty[ModuleEntry, File] ++    (for {
           r <- reports
@@ -147,7 +149,8 @@ object Pack extends sbt.Plugin {
       libs.foreach(l => IO.copyFile(l, libDir / l.getName))
       out.log.info("project dependencies:\n" + dependentJars.keys.mkString("\n"))
       for ((m, f) <- dependentJars) {
-        IO.copyFile(f, libDir / m.jarName)
+        val targetFileName = if(preserve) m.originalFileName else m.jarName
+        IO.copyFile(f, libDir / targetFileName)
       }
       out.log.info("unmanaged dependencies:")
       for(m <- unmanaged; um <- m; f = um.data) {
