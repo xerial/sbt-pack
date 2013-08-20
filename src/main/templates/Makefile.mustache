@@ -31,9 +31,9 @@ include VERSION
 PROG_BASE_DIR:=$(PREFIX)/$(PROG)
 PROG_DIR:=$(PROG_BASE_DIR)/$(PROG)-$(version)
 
-archive: target/$(PROG_NAME)-$(version).tar.gz
+archive: target/$(PROG)-$(version).tar.gz
 
-target/$(PROG_NAME)-$(version).tar.gz:
+target/$(PROG)-$(version).tar.gz:
 	-mkdir -p $(@D)
 	tar --exclude=target/* -cvzf $@ .
 
