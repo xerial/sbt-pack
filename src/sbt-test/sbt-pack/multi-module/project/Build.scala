@@ -20,6 +20,7 @@ object Build extends sbt.Build {
     id = "module1",
     base = file("module1"),
     settings = Defaults.defaultSettings ++ Seq(
+      crossPaths := false,
       libraryDependencies += "org.xerial" % "xerial-core" % "3.2.0"
     )
   )
@@ -28,6 +29,7 @@ object Build extends sbt.Build {
     id = "module2",
     base = file("module2"),
     settings = Defaults.defaultSettings ++ packSettings ++ Seq(
+      crossPaths := false,
       libraryDependencies += "org.xerial.snappy" % "snappy-java" % "1.1.0-M1"
     )
   )
