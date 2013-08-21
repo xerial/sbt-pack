@@ -18,6 +18,8 @@ A sbt plugin for creating distributable Scala packages that include dependent ja
 - You can add other resources to be packed in `src/pack` folder. 
 
 ### Release Notes
+- August 21, 2013 - 0.2.2 release
+  * Refine log messages
 - August 20, 2013 - 0.2.1 release
   * Add a sample multi-module project
   * Fixes #11, #12
