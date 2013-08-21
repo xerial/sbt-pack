@@ -73,7 +73,7 @@ object Pack extends sbt.Plugin {
       (currentProject +: (children flatMap (allProjectRefs(_)))) filterNot (isExcluded)
     }
 
-    val projects: Seq[ProjectRef] = allProjectRefs(currentProject)
+    val projects: Seq[ProjectRef] = allProjectRefs(currentProject).distinct
     projects.flatMap(p => targetTask in p get structure.data).join
   }
 
