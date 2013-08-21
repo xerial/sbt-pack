@@ -67,7 +67,7 @@ object Pack extends sbt.Plugin {
     def allProjectRefs(currentProject: ProjectRef): Seq[ProjectRef] = {
       def isExcluded(p: ProjectRef) = exclude.contains(p.project)
       val children = Project.getProject(currentProject, structure).toSeq.flatMap{ p=>
-        (p.aggregate ++ p.uses).distinct
+        p.uses
       }
 
       (currentProject +: (children flatMap (allProjectRefs(_)))) filterNot (isExcluded)
