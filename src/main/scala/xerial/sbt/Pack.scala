@@ -66,7 +66,9 @@ object Pack extends sbt.Plugin {
   private def getFromSelectedProjects[T](targetTask: SettingKey[Task[T]])(currentProject: ProjectRef, structure: Load.BuildStructure, exclude: Seq[String]): Task[Seq[T]] = {
     def allProjectRefs(currentProject: ProjectRef): Seq[ProjectRef] = {
       def isExcluded(p: ProjectRef) = exclude.contains(p.project)
-      val children = Project.getProject(currentProject, structure).toSeq.flatMap(p => p.aggregate ++ p.uses)
+      val children = Project.getProject(currentProject, structure).toSeq.flatMap{ p=>
+        (p.aggregate ++ p.uses).distinct
+      }
 
       (currentProject +: (children flatMap (allProjectRefs(_)))) filterNot (isExcluded)
     }
