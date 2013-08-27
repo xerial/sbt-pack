@@ -31,19 +31,22 @@ object Pack extends sbt.Plugin {
 
   private case class ModuleEntry(org: String, name: String, revision: String, classifier: Option[String], originalFileName: String) {
     private def classifierSuffix = classifier.map("-" + _).getOrElse("")
+
     override def toString = "%s:%s:%s%s".format(org, name, revision, classifierSuffix)
+
     def jarName = "%s-%s%s.jar".format(name, revision, classifierSuffix)
   }
 
   private implicit def moduleEntryOrdering = Ordering.by[ModuleEntry, (String, String, String, Option[String])](m => (m.org, m.name, m.revision, m.classifier))
+
   val runtimeFilter = ScopeFilter(inAnyProject, inConfigurations(Runtime))
 
   val pack = taskKey[File]("create a distributable package of the project")
   val packDir = settingKey[String]("pack-dir")
-  val packUpdateReports = taskKey[Seq[sbt.UpdateReport]]("pack-dependent-modules")
+  val packUpdateReports = taskKey[Seq[sbt.UpdateReport]]("only for retrieving dependent module names")
   val packArchive = TaskKey[File]("pack-archive", "create a tar.gz archive of the distributable package")
   val packMain = settingKey[Map[String, String]]("prog_name -> main class table")
-  val packExclude = SettingKey[Seq[String]]("pack-exclude")
+  val packExclude = SettingKey[Seq[String]]("pack-exclude", "specify projects to exclude when packaging")
   val packAllClasspaths = TaskKey[Seq[Classpath]]("pack-all-classpaths")
   val packLibJars = TaskKey[Seq[File]]("pack-lib-jars")
 
@@ -69,9 +72,9 @@ object Pack extends sbt.Plugin {
     packPreserveOriginalJarName := false,
     pack := {
       val dependentJars = collection.immutable.SortedMap.empty[ModuleEntry, File] ++ (
-        for{
-          r : sbt.UpdateReport <- packUpdateReports.all(runtimeFilter).value.flatten
-          c <- r.configurations
+        for {
+          r: sbt.UpdateReport <- packUpdateReports.value
+          c <- r.configurations if c.configuration == "runtime"
           m <- c.modules
           (artifact, file) <- m.artifacts if DependencyFilter.allPass(c.configuration, m.module, artifact)}
         yield {
@@ -81,7 +84,7 @@ object Pack extends sbt.Plugin {
         })
 
       val out = streams.value
-      val distDir : File = target.value / packDir.value
+      val distDir: File = target.value / packDir.value
       out.log.info("Creating a distributable package in " + rpath(baseDirectory.value, distDir))
       IO.delete(distDir)
       distDir.mkdirs()
@@ -91,10 +94,10 @@ object Pack extends sbt.Plugin {
       libDir.mkdirs()
 
       // Copy project jars
-      val base : File = baseDirectory.value
+      val base: File = baseDirectory.value
       out.log.info("Copying libraries to " + rpath(base, libDir))
-      val libs : Seq[File] = packLibJars.value
-      out.log.info("project jars:\n" + libs.mkString("\n"))
+      val libs: Seq[File] = packLibJars.value
+      out.log.info("project jars:\n" + libs.map(path => rpath(base, path)).mkString("\n"))
       libs.foreach(l => IO.copyFile(l, libDir / l.getName))
 
       // Copy dependent jars
@@ -124,7 +127,7 @@ object Pack extends sbt.Plugin {
 
       // Create launch scripts
       out.log.info("Generating launch scripts")
-      val mainTable : Map[String, String] = packMain.value
+      val mainTable: Map[String, String] = packMain.value
       if (mainTable.isEmpty) {
         out.log.warn("No mapping (program name) -> MainClass is defined. Please set packMain variable (Map[String, String]) in your sbt project settings.")
       }
@@ -171,50 +174,50 @@ object Pack extends sbt.Plugin {
       out.log.info("done.")
       distDir
     },
-     packArchive := {
-       val out = streams.value
-       val targetDir : File = target.value
-       val distDir : File = pack.value
-       val binDir = distDir / "bin"
-       val archiveRoot = name.value + "-" + version.value
-       val archiveName = archiveRoot + ".tar.gz"
-       out.log.info("Generating " + rpath(baseDirectory.value, targetDir / archiveName))
-       val tarfile = new TarOutputStream(new BufferedOutputStream(new GZIPOutputStream(new FileOutputStream(targetDir / (archiveRoot + ".tar.gz"))) {
-         `def`.setLevel(Deflater.BEST_COMPRESSION)
-       }))
-       def tarEntry(src: File, dst: String) {
-         val tarEntry = new TarEntry(src, dst)
-         tarEntry.setIds(0, 0)
-         tarEntry.setUserName("")
-         tarEntry.setGroupName("")
-         if (src.getAbsolutePath startsWith binDir.getAbsolutePath)
-           tarEntry.getHeader.mode = Integer.parseInt("0755", 8)
-         tarfile.putNextEntry(tarEntry)
-       }
-       tarEntry(new File("."), archiveRoot)
-       val excludeFiles = Set("Makefile", "VERSION")
-       val buffer = Array.fill(1024 * 1024)(0: Byte)
-       def addFilesToTar(dir: File): Unit = dir.listFiles.
-         filterNot(f => excludeFiles.contains(rpath(distDir, f))).foreach {
-         file =>
-           tarEntry(file, archiveRoot ++ "/" ++ rpath(distDir, file))
-           if (file.isDirectory) addFilesToTar(file)
-           else {
-             def copy(input: InputStream): Unit = input.read(buffer) match {
-               case length if length < 0 => input.close()
-               case length =>
-                 tarfile.write(buffer, 0, length)
-                 copy(input)
-             }
-             copy(new BufferedInputStream(new FileInputStream(file)))
-           }
-       }
-       addFilesToTar(distDir)
-       tarfile.close()
+    packArchive := {
+      val out = streams.value
+      val targetDir: File = target.value
+      val distDir: File = pack.value
+      val binDir = distDir / "bin"
+      val archiveRoot = name.value + "-" + version.value
+      val archiveName = archiveRoot + ".tar.gz"
+      out.log.info("Generating " + rpath(baseDirectory.value, targetDir / archiveName))
+      val tarfile = new TarOutputStream(new BufferedOutputStream(new GZIPOutputStream(new FileOutputStream(targetDir / (archiveRoot + ".tar.gz"))) {
+        `def`.setLevel(Deflater.BEST_COMPRESSION)
+      }))
+      def tarEntry(src: File, dst: String) {
+        val tarEntry = new TarEntry(src, dst)
+        tarEntry.setIds(0, 0)
+        tarEntry.setUserName("")
+        tarEntry.setGroupName("")
+        if (src.getAbsolutePath startsWith binDir.getAbsolutePath)
+          tarEntry.getHeader.mode = Integer.parseInt("0755", 8)
+        tarfile.putNextEntry(tarEntry)
+      }
+      tarEntry(new File("."), archiveRoot)
+      val excludeFiles = Set("Makefile", "VERSION")
+      val buffer = Array.fill(1024 * 1024)(0: Byte)
+      def addFilesToTar(dir: File): Unit = dir.listFiles.
+        filterNot(f => excludeFiles.contains(rpath(distDir, f))).foreach {
+        file =>
+          tarEntry(file, archiveRoot ++ "/" ++ rpath(distDir, file))
+          if (file.isDirectory) addFilesToTar(file)
+          else {
+            def copy(input: InputStream): Unit = input.read(buffer) match {
+              case length if length < 0 => input.close()
+              case length =>
+                tarfile.write(buffer, 0, length)
+                copy(input)
+            }
+            copy(new BufferedInputStream(new FileInputStream(file)))
+          }
+      }
+      addFilesToTar(distDir)
+      tarfile.close()
 
-       val archiveFile : File = target.value / archiveName
-       archiveFile
-     }
+      val archiveFile: File = target.value / archiveName
+      archiveFile
+    }
   )
 
   private def getFromAllProjects[T](targetTask: SettingKey[Task[T]])(currentProject: ProjectRef, structure: BuildStructure): Task[Seq[T]] =
@@ -238,7 +241,6 @@ object Pack extends sbt.Plugin {
 
 
   private def rpath(base: File, f: RichFile) = f.relativeTo(base).getOrElse(f).toString
-
 
 
 }
