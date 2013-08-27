@@ -1,13 +1,14 @@
 sbt-pack plugin
 ========
 
-A sbt plugin for creating distributable Scala packages that include dependent jars and launch scripts.
+A sbt plugin for creating a distributable Scala package that includes dependent jars and launch scripts.
 
 ### Features
 
 - `sbt pack` creates a distributable package in `target/pack` folder.
-  - All dependent jars, including scala-library, are collected in `target/pack/lib` folder. This process is much faster than creating a single-jar as in `sbt-assembly` or `proguard` plugins. 
-  - Multi-module projects are supported.
+  - All dependent jars including scala-library.jar are collected in `target/pack/lib` folder. This process is much faster than creating a single-jar as in `sbt-assembly` or `proguard` plugins. 
+  - sbt-pack supports multi-module projects.
+  - `tar.gz` archive generation via `sbt pack-archive` command.
 - Generates program launch scripts `target/pack/bin/{program name}`
   - To run the program no need exists to install Scala, since it is included in the lib folder. Only java command needs to be found in the system.
 - `sbt pack-archive` command creates a tar.gz archive, `target/{program name}-{version}.tar.gz`. 
@@ -15,9 +16,17 @@ A sbt plugin for creating distributable Scala packages that include dependent ja
 - You can install multiple versions of your program in the system.
   - The above Makefile script uses a separate folder for each version (e.g., `~/local/{project name}/{project version}`). 
   - The latest version is linked from `~/local/{project name}/current`
-- You can add other resources to be packed in `src/pack` folder. 
+- You can add other resources pack in `src/pack` folder. 
+  - All resources in this folder will be copied to `target/pack`.
 
 ### Release Notes
+- August 21, 2013 - 0.3.0 release (only for sbt-0.13 or higher)
+ 
+- August 21, 2013 - 0.2.4 release (for sbt-0.12.x)
+  * Refine log messages
+- August 20, 2013 - 0.2.1 release
+  * Add a sample multi-module project
+  * Fixes #11, #12
 - May 16, 2013 - Version 0.2 release
   - Stable version
   - Delete only lib folder when `make install`
@@ -31,9 +40,10 @@ Add `sbt-pack` plugin to your sbt configuration:
 **project/plugins.sbt**
 
 ```scala
-addSbtPlugin("org.xerial.sbt" % "sbt-pack" % "0.2")
+addSbtPlugin("org.xerial.sbt" % "sbt-pack" % "0.2.4")  // for sbt-0.12.x
+
+addSbtPlugin("org.xerial.sbt" % "sbt-pack" % "0.3.0")  // for sbt-0.13.x or higher
 ```
-- sbt 0.12.x or higher is required.
 
 Import `xerial.sbt.Pack.packSettings` into your project settings. Then set `packMain` variable, a mapping from the your program names to their corresponding main classes. The main classes must be Scala objects that define `def main(args:Array[])` method:
 
@@ -117,3 +127,16 @@ in the source code. It contains several Scala project examples using sbt-pack.
  - A minimal project to start writing Scala programs. 
 
 	
+### For developers
+
+Creating IntelliJ project:
+
+    $ bin/sbt "gen-idea sbt-classifiers"
+
+To test sbt-pack plugin, run
+
+    $ bin/sbt scripted
+
+Run a single test project, e.g., `src/sbt-test/sbt-pack/multi-module`:
+
+    $ bin/sbt "scripted sbt-pack/multi-module"
