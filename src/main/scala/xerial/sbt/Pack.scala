@@ -133,8 +133,7 @@ object Pack extends sbt.Plugin {
       target / archiveName
   }
 
-  private def packTask = pack <<=
-    (name, packMain, packDir, version, packLibJars, streams, target, baseDirectory,
+  private def packTask = pack <<= (name, packMain, packDir, version, packLibJars, streams, target, baseDirectory,
       packUpdateReports, packMacIconFile, packResourceDir, packJvmOpts, packExtraClasspath,
       packAllUnmanagedJars, packPreserveOriginalJarName) map {
       (name, mainTable, packDir, ver, libs, out, target, base, reports, macIcon, resourceDir, jvmOpts, extraClasspath, unmanaged, preserve) => {
