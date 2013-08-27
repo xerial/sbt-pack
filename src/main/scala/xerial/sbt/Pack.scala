@@ -66,8 +66,9 @@ object Pack extends sbt.Plugin {
   private def getFromSelectedProjects[T](targetTask: SettingKey[Task[T]])(currentProject: ProjectRef, structure: Load.BuildStructure, exclude: Seq[String]): Task[Seq[T]] = {
     def allProjectRefs(currentProject: ProjectRef): Seq[ProjectRef] = {
       def isExcluded(p: ProjectRef) = exclude.contains(p.project)
-      val children = Project.getProject(currentProject, structure).toSeq.flatMap{ p=>
-        p.uses
+      val children = Project.getProject(currentProject, structure).toSeq.flatMap {
+        p =>
+          p.uses
       }
 
       (currentProject +: (children flatMap (allProjectRefs(_)))) filterNot (isExcluded)
@@ -77,9 +78,11 @@ object Pack extends sbt.Plugin {
     projects.flatMap(p => targetTask in p get structure.data).join
   }
 
-  private case class ModuleEntry(org: String, name: String, revision: String, classifier:Option[String], originalFileName:String) {
+  private case class ModuleEntry(org: String, name: String, revision: String, classifier: Option[String], originalFileName: String) {
     private def classifierSuffix = classifier.map("-" + _).getOrElse("")
+
     override def toString = "%s:%s:%s%s".format(org, name, revision, classifierSuffix)
+
     def jarName = "%s-%s%s.jar".format(name, revision, classifierSuffix)
 
   }
@@ -88,50 +91,55 @@ object Pack extends sbt.Plugin {
 
   private def rpath(base: File, f: RichFile) = f.relativeTo(base).getOrElse(f).toString
 
-  private def packArchiveTask = packArchive <<= (pack in Compile, name, version, streams, target, baseDirectory) map { (distDir, name, ver, out, target, base) =>
-    val binDir = distDir / "bin"
-    val archiveRoot = name + "-" + ver
-    val archiveName = archiveRoot + ".tar.gz"
-    out.log.info("Generating " + rpath(base, target / archiveName))
-    val tarfile = new TarOutputStream(new BufferedOutputStream(new GZIPOutputStream(new FileOutputStream(target / (archiveRoot + ".tar.gz"))) {
-      `def`.setLevel(Deflater.BEST_COMPRESSION)
-    }))
-    def tarEntry(src: File, dst: String) {
-      val tarEntry = new TarEntry(src, dst)
-      tarEntry.setIds(0, 0)
-      tarEntry.setUserName("")
-      tarEntry.setGroupName("")
-      if(src.getAbsolutePath startsWith binDir.getAbsolutePath)
-        tarEntry.getHeader.mode = 0755
-      tarfile.putNextEntry(tarEntry)
-    }
-    tarEntry(new File("."), archiveRoot)
-    val excludeFiles = Set("Makefile", "VERSION")
-    val buffer = Array.fill(1024 * 1024)(0: Byte)
-    def addFilesToTar(dir: File): Unit = dir.listFiles.
-      filterNot(f => excludeFiles.contains(rpath(distDir, f))).foreach { file =>
-        tarEntry(file, archiveRoot ++ "/" ++ rpath(distDir, file))
-        if(file.isDirectory) addFilesToTar(file)
-        else {
-          def copy(input: InputStream): Unit = input.read(buffer) match {
-            case length if length < 0 => input.close()
-            case length =>
-              tarfile.write(buffer, 0, length)
-              copy(input)
-          }
-          copy(new BufferedInputStream(new FileInputStream(file)))
-        }
+  private def packArchiveTask = packArchive <<= (pack in Compile, name, version, streams, target, baseDirectory) map {
+    (distDir, name, ver, out, target, base) =>
+      val binDir = distDir / "bin"
+      val archiveRoot = name + "-" + ver
+      val archiveName = archiveRoot + ".tar.gz"
+      out.log.info("Generating " + rpath(base, target / archiveName))
+      val tarfile = new TarOutputStream(new BufferedOutputStream(new GZIPOutputStream(new FileOutputStream(target / (archiveRoot + ".tar.gz"))) {
+        `def`.setLevel(Deflater.BEST_COMPRESSION)
+      }))
+      def tarEntry(src: File, dst: String) {
+        val tarEntry = new TarEntry(src, dst)
+        tarEntry.setIds(0, 0)
+        tarEntry.setUserName("")
+        tarEntry.setGroupName("")
+        if (src.getAbsolutePath startsWith binDir.getAbsolutePath)
+          tarEntry.getHeader.mode = Integer.parseInt("0755", 8)
+        tarfile.putNextEntry(tarEntry)
       }
-    addFilesToTar(distDir)
-    tarfile.close()
+      tarEntry(new File("."), archiveRoot)
+      val excludeFiles = Set("Makefile", "VERSION")
+      val buffer = Array.fill(1024 * 1024)(0: Byte)
+      def addFilesToTar(dir: File): Unit = dir.listFiles.
+        filterNot(f => excludeFiles.contains(rpath(distDir, f))).foreach {
+        file =>
+          tarEntry(file, archiveRoot ++ "/" ++ rpath(distDir, file))
+          if (file.isDirectory) addFilesToTar(file)
+          else {
+            def copy(input: InputStream): Unit = input.read(buffer) match {
+              case length if length < 0 => input.close()
+              case length =>
+                tarfile.write(buffer, 0, length)
+                copy(input)
+            }
+            copy(new BufferedInputStream(new FileInputStream(file)))
+          }
+      }
+      addFilesToTar(distDir)
+      tarfile.close()
 
-    target / archiveName
+      target / archiveName
   }
 
-  private def packTask = pack <<= (name, packMain, packDir, version, packLibJars, streams, target, baseDirectory, packUpdateReports, packMacIconFile, packResourceDir, packJvmOpts, packExtraClasspath, packAllUnmanagedJars, packPreserveOriginalJarName) map {
-    (name, mainTable, packDir, ver, libs, out, target, base, reports, macIcon, resourceDir, jvmOpts, extraClasspath, unmanaged, preserve) => {
+  private def packTask = pack <<=
+    (name, packMain, packDir, version, packLibJars, streams, target, baseDirectory,
+      packUpdateReports, packMacIconFile, packResourceDir, packJvmOpts, packExtraClasspath,
+      packAllUnmanagedJars, packPreserveOriginalJarName) map {
+      (name, mainTable, packDir, ver, libs, out, target, base, reports, macIcon, resourceDir, jvmOpts, extraClasspath, unmanaged, preserve) => {
 
-      val dependentJars = collection.immutable.SortedMap.empty[ModuleEntry, File] ++    (for {
+        val dependentJars = collection.immutable.SortedMap.empty[ModuleEntry, File] ++ (for {
           r <- reports
           c <- r.configurations if c.configuration == "runtime"
           m <- c.modules
@@ -140,86 +148,86 @@ object Pack extends sbt.Plugin {
           val me = ModuleEntry(mid.organization, mid.name, mid.revision, artifact.classifier, file.getName)
           me -> file
         })
-      val distDir = target / packDir
-      out.log.info("Creating a distributable package in " + rpath(base, distDir))
-      IO.delete(distDir)
-      distDir.mkdirs()
+        val distDir = target / packDir
+        out.log.info("Creating a distributable package in " + rpath(base, distDir))
+        IO.delete(distDir)
+        distDir.mkdirs()
 
-      val libDir = distDir / "lib"
-      out.log.info("Copying libraries to " + rpath(base, libDir))
-      libDir.mkdirs()
-      out.log.info("project jars:\n" + libs.mkString("\n"))
-      libs.foreach(l => IO.copyFile(l, libDir / l.getName))
-      out.log.info("project dependencies:\n" + dependentJars.keys.mkString("\n"))
-      for ((m, f) <- dependentJars) {
-        val targetFileName = if(preserve) m.originalFileName else m.jarName
-        IO.copyFile(f, libDir / targetFileName)
+        val libDir = distDir / "lib"
+        out.log.info("Copying libraries to " + rpath(base, libDir))
+        libDir.mkdirs()
+        out.log.info("project jars:\n" + libs.mkString("\n"))
+        libs.foreach(l => IO.copyFile(l, libDir / l.getName))
+        out.log.info("project dependencies:\n" + dependentJars.keys.mkString("\n"))
+        for ((m, f) <- dependentJars) {
+          val targetFileName = if (preserve) m.originalFileName else m.jarName
+          IO.copyFile(f, libDir / targetFileName)
+        }
+        out.log.info("unmanaged dependencies:")
+        for (m <- unmanaged; um <- m; f = um.data) {
+          out.log.info(f.getPath)
+          IO.copyFile(f, libDir / f.getName)
+        }
+
+        val binDir = distDir / "bin"
+        out.log.info("Create a bin folder: " + rpath(base, binDir))
+        binDir.mkdirs()
+
+        def write(path: String, content: String) {
+          val p = distDir / path
+          out.log.info("Generating %s".format(rpath(base, p)))
+          IO.write(p, content)
+        }
+
+        // Create launch scripts
+        out.log.info("Generating launch scripts")
+        if (mainTable.isEmpty) {
+          out.log.warn("No mapping (program name) -> MainClass is defined. Please set packMain variable (Map[String, String]) in your sbt project settings.")
+        }
+
+        val engine = new TemplateEngine
+
+        for ((name, mainClass) <- mainTable) {
+          out.log.info("main class for %s: %s".format(name, mainClass))
+          val m = Map(
+            "PROG_NAME" -> name,
+            "MAIN_CLASS" -> mainClass,
+            "MAC_ICON_FILE" -> macIcon,
+            "JVM_OPTS" -> jvmOpts.getOrElse(name, Nil).map("\"%s\"".format(_)).mkString(" "),
+            "EXTRA_CLASSPATH" -> extraClasspath.get(name).map(_.mkString("", pathSeparator, pathSeparator)).orElse(Some("")).get)
+          val launchScript = engine.layout("/xerial/sbt/template/launch.mustache", m)
+          val progName = m("PROG_NAME").replaceAll(" ", "") // remove white spaces
+          write("bin/%s".format(progName), launchScript)
+        }
+
+        val otherResourceDir = base / resourceDir
+        val binScriptsDir = otherResourceDir / "bin"
+
+        def linkToScript(name: String) =
+          "\t" + """ln -sf "../$(PROG)/current/bin/%s" "$(PREFIX)/bin/%s"""".format(name, name)
+
+        // Create Makefile
+        val makefile = {
+          val additinalScripts = (Option(binScriptsDir.listFiles) getOrElse Array.empty).map(_.getName)
+          val symlink = (mainTable.keys ++ additinalScripts).map(linkToScript).mkString("\n")
+          val globalVar = Map("PROG_NAME" -> name, "PROG_SYMLINK" -> symlink)
+          engine.layout("/xerial/sbt/template/Makefile.mustache", globalVar)
+        }
+        write("Makefile", makefile)
+
+        // Output the version number
+        write("VERSION", "version:=" + ver + "\n")
+
+        // Copy other scripts
+        IO.copyDirectory(otherResourceDir, distDir)
+
+        // chmod +x the scripts in bin directory
+        binDir.listFiles.foreach(_.setExecutable(true, false))
+
+        out.log.info("done.")
+        distDir
       }
-      out.log.info("unmanaged dependencies:")
-      for(m <- unmanaged; um <- m; f = um.data) {
-        out.log.info(f.getPath)
-        IO.copyFile(f, libDir / f.getName)
-      }
-
-      val binDir = distDir / "bin"
-      out.log.info("Create a bin folder: " + rpath(base, binDir))
-      binDir.mkdirs()
-
-      def write(path: String, content: String) {
-        val p = distDir / path
-        out.log.info("Generating %s".format(rpath(base, p)))
-        IO.write(p, content)
-      }
-
-      // Create launch scripts
-      out.log.info("Generating launch scripts")
-      if (mainTable.isEmpty) {
-        out.log.warn("No mapping (progran name) -> MainClass is defined. Please set packMain variable (Map[String, String]) in your sbt project settings.")
-      }
-
-      val engine = new TemplateEngine
-
-      for ((name, mainClass) <- mainTable) {
-        out.log.info("main class for %s: %s".format(name, mainClass))
-        val m = Map(
-          "PROG_NAME" -> name,
-          "MAIN_CLASS" -> mainClass,
-          "MAC_ICON_FILE" -> macIcon,
-          "JVM_OPTS" -> jvmOpts.getOrElse(name, Nil).map("\"%s\"".format(_)).mkString(" "),
-          "EXTRA_CLASSPATH" -> extraClasspath.get(name).map(_.mkString("", pathSeparator, pathSeparator)).orElse(Some("")).get)
-        val launchScript = engine.layout("/xerial/sbt/template/launch.mustache", m)
-        val progName = m("PROG_NAME").replaceAll(" ", "") // remove white spaces
-        write("bin/%s".format(progName), launchScript)
-      }
-
-      val otherResourceDir = base / resourceDir
-      val binScriptsDir = otherResourceDir / "bin"
-
-      def linkToScript(name:String) = 
-         "\t" + """ln -sf "../$(PROG)/current/bin/%s" "$(PREFIX)/bin/%s"""".format(name, name)
-
-      // Create Makefile
-      val makefile = {
-        val additinalScripts = (Option(binScriptsDir.listFiles) getOrElse Array.empty).map(_.getName)
-        val symlink = (mainTable.keys ++ additinalScripts).map(linkToScript).mkString("\n")
-        val globalVar = Map("PROG_NAME" -> name, "PROG_SYMLINK" -> symlink)
-        engine.layout("/xerial/sbt/template/Makefile.mustache", globalVar)
-      }
-      write("Makefile", makefile)
-
-      // Output the version number
-      write("VERSION", "version:=" + ver + "\n")
-
-      // Copy other scripts
-      IO.copyDirectory(otherResourceDir, distDir)
-
-      // chmod +x the scripts in bin directory
-      binDir.listFiles.foreach(_.setExecutable(true, false))
-
-      out.log.info("done.")
-      distDir
-   }
-  }
+    }
 
 
 }

@@ -28,7 +28,7 @@ import ScalateKeys._
 
 object PackBuild extends Build {
 
-  val SCALA_VERSION = "2.9.2"
+  val SCALA_VERSION = "2.10.2"
 
   def releaseResolver(v: String): Resolver = {
     val profile = System.getProperty("xerial.profile", "default")
@@ -61,7 +61,7 @@ object PackBuild extends Build {
     sbtPlugin := true,
     parallelExecution := true,
     crossPaths := false,
-    scalacOptions ++= Seq("-encoding", "UTF-8", "-deprecation", "-unchecked", "-target:jvm-1.5"),
+    scalacOptions ++= Seq("-encoding", "UTF-8", "-deprecation", "-unchecked", "-target:jvm-1.6"),
     scriptedBufferLog := false,
     scriptedLaunchOpts ++= {
       import scala.collection.JavaConverters._
@@ -101,8 +101,7 @@ object PackBuild extends Build {
     settings = buildSettings ++
       Seq(libraryDependencies ++=
         Seq(
-          "org.scalatest" %% "scalatest" % "2.0.M5" % "test",
-          "org.fusesource.scalate" % "scalate-core_2.9" % "1.6.1",
+          "org.fusesource.scalate" % "scalate-core_2.10" % "1.6.1",
           "org.kamranzafar" % "jtar" % "2.2",
           "org.slf4j" % "slf4j-nop" % "1.7.5"
         )
