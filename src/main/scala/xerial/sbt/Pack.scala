@@ -29,22 +29,24 @@ import org.kamranzafar.jtar.TarEntry
  */
 object Pack extends sbt.Plugin {
 
-  val pack: TaskKey[File] = TaskKey[File]("pack", "create a distributable package of the project")
+  val pack = taskKey[File]("create a distributable package of the project")
+  val packDir = settingKey[String]("pack-dir")
+  val packUpdateReports = taskKey[Seq[sbt.UpdateReport]]("pack-dependent-modules")
+
   val packArchive: TaskKey[File] = TaskKey[File]("pack-archive", "create an archive of the distributable package")
-  val packMain: SettingKey[Map[String, String]] = SettingKey[Map[String, String]]("packMain", "prog_name -> main class table")
-  val packDir: SettingKey[String] = SettingKey[String]("pack-dir")
+  val packMain = settingKey[Map[String, String]]("prog_name -> main class table")
   val packExclude = SettingKey[Seq[String]]("pack-exclude")
   val packAllClasspaths = TaskKey[Seq[Classpath]]("pack-all-classpaths")
   val packLibJars = TaskKey[Seq[File]]("pack-lib-jars")
-  val packUpdateReports = TaskKey[Seq[sbt.UpdateReport]]("pack-dependent-modules")
+
   val packMacIconFile = SettingKey[String]("pack-mac-icon-file", "icon file name for Mac")
   val packResourceDir = SettingKey[String]("pack-resource-dir", "pack resource directory. default = src/pack")
-  val packAllUnmanagedJars = TaskKey[Seq[Classpath]]("pack-all-unmanaged")
+  val packAllUnmanagedJars = taskKey[Seq[Classpath]]("all unmanaged jar files")
   val packJvmOpts = SettingKey[Map[String, Seq[String]]]("pack-jvm-opts")
   val packExtraClasspath = SettingKey[Map[String, Seq[String]]]("pack-extra-classpath")
   val packPreserveOriginalJarName = SettingKey[Boolean]("pack-preserve-jarname", "preserve the original jar file names. default = false")
 
-  val packSettings = Seq[sbt.Project.Setting[_]](
+  val packSettings = Seq[Def.Setting[_]](
     packDir := "pack",
     packMain := Map.empty,
     packExclude := Seq.empty,
@@ -57,13 +59,13 @@ object Pack extends sbt.Plugin {
     packLibJars <<= (thisProjectRef, buildStructure, packExclude) flatMap getFromSelectedProjects(packageBin.task in Runtime),
     packUpdateReports <<= (thisProjectRef, buildStructure, packExclude) flatMap getFromSelectedProjects(update.task),
     packPreserveOriginalJarName := false
-  ) ++ Seq(packTask, packArchiveTask)
+  ) ++ Seq(pack, packArchiveTask)
 
-  private def getFromAllProjects[T](targetTask: SettingKey[Task[T]])(currentProject: ProjectRef, structure: Load.BuildStructure): Task[Seq[T]] =
+  private def getFromAllProjects[T](targetTask: SettingKey[Task[T]])(currentProject: ProjectRef, structure: BuildStructure): Task[Seq[T]] =
     getFromSelectedProjects(targetTask)(currentProject, structure, Seq.empty)
 
 
-  private def getFromSelectedProjects[T](targetTask: SettingKey[Task[T]])(currentProject: ProjectRef, structure: Load.BuildStructure, exclude: Seq[String]): Task[Seq[T]] = {
+  private def getFromSelectedProjects[T](targetTask: SettingKey[Task[T]])(currentProject: ProjectRef, structure: BuildStructure, exclude: Seq[String]): Task[Seq[T]] = {
     def allProjectRefs(currentProject: ProjectRef): Seq[ProjectRef] = {
       def isExcluded(p: ProjectRef) = exclude.contains(p.project)
       val children = Project.getProject(currentProject, structure).toSeq.flatMap {
@@ -133,100 +135,121 @@ object Pack extends sbt.Plugin {
       target / archiveName
   }
 
-  private def packTask = pack <<= (name, packMain, packDir, version, packLibJars, streams, target, baseDirectory,
-      packUpdateReports, packMacIconFile, packResourceDir, packJvmOpts, packExtraClasspath,
-      packAllUnmanagedJars, packPreserveOriginalJarName) map {
-      (name, mainTable, packDir, ver, libs, out, target, base, reports, macIcon, resourceDir, jvmOpts, extraClasspath, unmanaged, preserve) => {
+//  (name, packMain, packDir, version, packLibJars, streams, target, baseDirectory,
+//    packUpdateReports, packMacIconFile, packResourceDir, packJvmOpts, packExtraClasspath,
+//    packAllUnmanagedJars, packPreserveOriginalJarName) map {
+//    (name, mainTable, packDir, ver, libs, out, target, base, reports, macIcon, resourceDir, jvmOpts, extraClasspath, unmanaged, preserve) => {
+//
+//
+//
+//    }
 
-        val dependentJars = collection.immutable.SortedMap.empty[ModuleEntry, File] ++ (for {
-          r <- reports
-          c <- r.configurations if c.configuration == "runtime"
-          m <- c.modules
-          (artifact, file) <- m.artifacts if DependencyFilter.allPass(c.configuration, m.module, artifact)} yield {
-          val mid = m.module
-          val me = ModuleEntry(mid.organization, mid.name, mid.revision, artifact.classifier, file.getName)
-          me -> file
-        })
-        val distDir = target / packDir
-        out.log.info("Creating a distributable package in " + rpath(base, distDir))
-        IO.delete(distDir)
-        distDir.mkdirs()
+  val runtimeFilter = ScopeFilter(inAnyProject, inConfigurations(Runtime))
 
-        val libDir = distDir / "lib"
-        out.log.info("Copying libraries to " + rpath(base, libDir))
-        libDir.mkdirs()
-        out.log.info("project jars:\n" + libs.mkString("\n"))
-        libs.foreach(l => IO.copyFile(l, libDir / l.getName))
-        out.log.info("project dependencies:\n" + dependentJars.keys.mkString("\n"))
-        for ((m, f) <- dependentJars) {
-          val targetFileName = if (preserve) m.originalFileName else m.jarName
-          IO.copyFile(f, libDir / targetFileName)
-        }
-        out.log.info("unmanaged dependencies:")
-        for (m <- unmanaged; um <- m; f = um.data) {
-          out.log.info(f.getPath)
-          IO.copyFile(f, libDir / f.getName)
-        }
+  pack := {
+    val dependentJars = collection.immutable.SortedMap.empty[ModuleEntry, File] ++ (
+      for{
+        r : sbt.UpdateReport <- packUpdateReports.all(runtimeFilter).value.head
+        c <- r.configurations
+        m <- c.modules
+        (artifact, file) <- m.artifacts if DependencyFilter.allPass(c.configuration, m.module, artifact)}
+      yield {
+        val mid = m.module
+        val me = ModuleEntry(mid.organization, mid.name, mid.revision, artifact.classifier, file.getName)
+        me -> file
+      })
 
-        val binDir = distDir / "bin"
-        out.log.info("Create a bin folder: " + rpath(base, binDir))
-        binDir.mkdirs()
+    val out = streams.value
+    val distDir : File = target.value / packDir.value
+    out.log.info("Creating a distributable package in " + rpath(baseDirectory.value, distDir))
+    IO.delete(distDir)
+    distDir.mkdirs()
 
-        def write(path: String, content: String) {
-          val p = distDir / path
-          out.log.info("Generating %s".format(rpath(base, p)))
-          IO.write(p, content)
-        }
+    // Create target/pack/lib folder
+    val libDir = distDir / "lib"
+    libDir.mkdirs()
 
-        // Create launch scripts
-        out.log.info("Generating launch scripts")
-        if (mainTable.isEmpty) {
-          out.log.warn("No mapping (program name) -> MainClass is defined. Please set packMain variable (Map[String, String]) in your sbt project settings.")
-        }
+    // Copy project jars
+    val base : File = baseDirectory.value
+    out.log.info("Copying libraries to " + rpath(base, libDir))
+    val libs : Seq[File] = packLibJars.value
+    out.log.info("project jars:\n" + libs.mkString("\n"))
+    libs.foreach(l => IO.copyFile(l, libDir / l.getName))
 
-        val engine = new TemplateEngine
-
-        for ((name, mainClass) <- mainTable) {
-          out.log.info("main class for %s: %s".format(name, mainClass))
-          val m = Map(
-            "PROG_NAME" -> name,
-            "MAIN_CLASS" -> mainClass,
-            "MAC_ICON_FILE" -> macIcon,
-            "JVM_OPTS" -> jvmOpts.getOrElse(name, Nil).map("\"%s\"".format(_)).mkString(" "),
-            "EXTRA_CLASSPATH" -> extraClasspath.get(name).map(_.mkString("", pathSeparator, pathSeparator)).orElse(Some("")).get)
-          val launchScript = engine.layout("/xerial/sbt/template/launch.mustache", m)
-          val progName = m("PROG_NAME").replaceAll(" ", "") // remove white spaces
-          write("bin/%s".format(progName), launchScript)
-        }
-
-        val otherResourceDir = base / resourceDir
-        val binScriptsDir = otherResourceDir / "bin"
-
-        def linkToScript(name: String) =
-          "\t" + """ln -sf "../$(PROG)/current/bin/%s" "$(PREFIX)/bin/%s"""".format(name, name)
-
-        // Create Makefile
-        val makefile = {
-          val additinalScripts = (Option(binScriptsDir.listFiles) getOrElse Array.empty).map(_.getName)
-          val symlink = (mainTable.keys ++ additinalScripts).map(linkToScript).mkString("\n")
-          val globalVar = Map("PROG_NAME" -> name, "PROG_SYMLINK" -> symlink)
-          engine.layout("/xerial/sbt/template/Makefile.mustache", globalVar)
-        }
-        write("Makefile", makefile)
-
-        // Output the version number
-        write("VERSION", "version:=" + ver + "\n")
-
-        // Copy other scripts
-        IO.copyDirectory(otherResourceDir, distDir)
-
-        // chmod +x the scripts in bin directory
-        binDir.listFiles.foreach(_.setExecutable(true, false))
-
-        out.log.info("done.")
-        distDir
-      }
+    // Copy dependent jars
+    out.log.info("project dependencies:\n" + dependentJars.keys.mkString("\n"))
+    for ((m, f) <- dependentJars) {
+      val targetFileName = if (packPreserveOriginalJarName.value) m.originalFileName else m.jarName
+      IO.copyFile(f, libDir / targetFileName)
     }
+
+    // Copy unmanaged jars in ${baseDir}/lib folder
+    out.log.info("unmanaged dependencies:")
+    for (m <- packAllUnmanagedJars.value; um <- m; f = um.data) {
+      out.log.info(f.getPath)
+      IO.copyFile(f, libDir / f.getName)
+    }
+
+    // Create target/pack/bin folder
+    val binDir = distDir / "bin"
+    out.log.info("Create a bin folder: " + rpath(base, binDir))
+    binDir.mkdirs()
+
+    def write(path: String, content: String) {
+      val p = distDir / path
+      out.log.info("Generating %s".format(rpath(base, p)))
+      IO.write(p, content)
+    }
+
+    // Create launch scripts
+    out.log.info("Generating launch scripts")
+    val mainTable : Map[String, String] = packMain.value
+    if (mainTable.isEmpty) {
+      out.log.warn("No mapping (program name) -> MainClass is defined. Please set packMain variable (Map[String, String]) in your sbt project settings.")
+    }
+    // Render script via Scalate template
+    val engine = new TemplateEngine
+    for ((name, mainClass) <- mainTable) {
+      out.log.info("main class for %s: %s".format(name, mainClass))
+      val m = Map(
+        "PROG_NAME" -> name,
+        "MAIN_CLASS" -> mainClass,
+        "MAC_ICON_FILE" -> packMacIconFile.value,
+        "JVM_OPTS" -> packJvmOpts.value.getOrElse(name, Nil).map("\"%s\"".format(_)).mkString(" "),
+        "EXTRA_CLASSPATH" -> packExtraClasspath.value.get(name).map(_.mkString("", pathSeparator, pathSeparator)).orElse(Some("")).get)
+      val launchScript = engine.layout("/xerial/sbt/template/launch.mustache", m)
+      val progName = m("PROG_NAME").replaceAll(" ", "") // remove white spaces
+      write("bin/%s".format(progName), launchScript)
+    }
+
+    // Copy resources in src/pack folder
+    val otherResourceDir = base / packResourceDir.value
+    val binScriptsDir = otherResourceDir / "bin"
+
+    def linkToScript(name: String) =
+      "\t" + """ln -sf "../$(PROG)/current/bin/%s" "$(PREFIX)/bin/%s"""".format(name, name)
+
+    // Create Makefile
+    val makefile = {
+      val additinalScripts = (Option(binScriptsDir.listFiles) getOrElse Array.empty).map(_.getName)
+      val symlink = (mainTable.keys ++ additinalScripts).map(linkToScript).mkString("\n")
+      val globalVar = Map("PROG_NAME" -> name, "PROG_SYMLINK" -> symlink)
+      engine.layout("/xerial/sbt/template/Makefile.mustache", globalVar)
+    }
+    write("Makefile", makefile)
+
+    // Output the version number
+    write("VERSION", "version:=" + version.value + "\n")
+
+    // Copy other scripts
+    IO.copyDirectory(otherResourceDir, distDir)
+
+    // chmod +x the scripts in bin directory
+    binDir.listFiles.foreach(_.setExecutable(true, false))
+
+    out.log.info("done.")
+    distDir
+  }
 
 
 }
