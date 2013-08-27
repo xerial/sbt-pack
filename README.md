@@ -21,12 +21,11 @@ A sbt plugin for creating a distributable Scala package that includes dependent 
 
 ### Release Notes
 - August 21, 2013 - 0.3.0 release (only for sbt-0.13 or higher)
- 
 - August 21, 2013 - 0.2.4 release (for sbt-0.12.x)
-  * Refine log messages
+  - Refine log messages
 - August 20, 2013 - 0.2.1 release
-  * Add a sample multi-module project
-  * Fixes #11, #12
+  - Add a sample multi-module project
+  - Fixes #11, #12
 - May 16, 2013 - Version 0.2 release
   - Stable version
   - Delete only lib folder when `make install`
