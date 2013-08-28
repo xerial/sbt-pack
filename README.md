@@ -20,7 +20,7 @@ A sbt plugin for creating a distributable Scala package that includes dependent 
   - All resources in this folder will be copied to `target/pack`.
 
 ### Release Notes
-- August 21, 2013 - 0.3.0 release (only for sbt-0.13 or higher)
+- August 28, 2013 - 0.3.1 release (only for sbt-0.13 or higher)
 - August 21, 2013 - 0.2.4 release (for sbt-0.12.x)
   - Refine log messages
 - August 20, 2013 - 0.2.1 release
@@ -41,7 +41,7 @@ Add `sbt-pack` plugin to your sbt configuration:
 ```scala
 addSbtPlugin("org.xerial.sbt" % "sbt-pack" % "0.2.4")  // for sbt-0.12.x
 
-addSbtPlugin("org.xerial.sbt" % "sbt-pack" % "0.3.0")  // for sbt-0.13.x or higher
+addSbtPlugin("org.xerial.sbt" % "sbt-pack" % "0.3.1")  // for sbt-0.13.x or higher
 ```
 
 Import `xerial.sbt.Pack.packSettings` into your project settings. Then set `packMain` variable, a mapping from the your program names to their corresponding main classes. The main classes must be Scala objects that define `def main(args:Array[])` method:
