@@ -104,14 +104,14 @@ object Pack extends sbt.Plugin {
       out.log.info("project dependencies:\n" + dependentJars.keys.mkString("\n"))
       for ((m, f) <- dependentJars) {
         val targetFileName = if (packPreserveOriginalJarName.value) m.originalFileName else m.jarName
-        IO.copyFile(f, libDir / targetFileName)
+        IO.copyFile(f, libDir / targetFileName, true)
       }
 
       // Copy unmanaged jars in ${baseDir}/lib folder
       out.log.info("unmanaged dependencies:")
       for (m <- packAllUnmanagedJars.value; um <- m; f = um.data) {
         out.log.info(f.getPath)
-        IO.copyFile(f, libDir / f.getName)
+        IO.copyFile(f, libDir / f.getName, true)
       }
 
       // Create target/pack/bin folder
@@ -157,7 +157,7 @@ object Pack extends sbt.Plugin {
       val makefile = {
         val additinalScripts = (Option(binScriptsDir.listFiles) getOrElse Array.empty).map(_.getName)
         val symlink = (mainTable.keys ++ additinalScripts).map(linkToScript).mkString("\n")
-        val globalVar = Map("PROG_NAME" -> name, "PROG_SYMLINK" -> symlink)
+        val globalVar = Map("PROG_NAME" -> name.value, "PROG_SYMLINK" -> symlink)
         engine.layout("/xerial/sbt/template/Makefile.mustache", globalVar)
       }
       write("Makefile", makefile)
@@ -166,7 +166,7 @@ object Pack extends sbt.Plugin {
       write("VERSION", "version:=" + version.value + "\n")
 
       // Copy other scripts
-      IO.copyDirectory(otherResourceDir, distDir)
+      IO.copyDirectory(otherResourceDir, distDir, overwrite=true, preserveLastModified=true)
 
       // chmod +x the scripts in bin directory
       binDir.listFiles.foreach(_.setExecutable(true, false))

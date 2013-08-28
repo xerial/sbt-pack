@@ -42,6 +42,6 @@ install:
 	if [ -d "$(PROG_DIR)/lib" ]; then rm -rf "$(PROG_DIR)/lib"; fi
 	$(INSTALL) -d "$(PROG_DIR)"
 	cp -pr ./* "$(PROG_DIR)"
-	ln -sfn "{{{PROG_NAME}}}-$(version)" "$(PROG_BASE_DIR)/current"
+	ln -sfn "$(PROG)-$(version)" "$(PROG_BASE_DIR)/current"
 	$(INSTALL) -d "$(PREFIX)/bin"
 {{{PROG_SYMLINK}}}
