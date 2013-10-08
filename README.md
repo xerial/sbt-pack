@@ -16,7 +16,7 @@ A sbt plugin for creating distributable Scala packages that include dependent ja
 - You can install multiple versions of your program in the system.
   - The above Makefile script uses a separate folder for each version (e.g., `~/local/{project name}/{project version}`). 
   - The latest version is linked from `~/local/{project name}/current`
-- You can add other resources pack in `src/pack` folder. 
+- You can add other resources in `src/pack` folder. 
   - All resources in this folder will be copied to `target/pack`.
 
 ### Release Notes
