@@ -17,7 +17,6 @@ import java.io.BufferedOutputStream
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.InputStream
-import java.io.File.pathSeparator
 import java.util.zip.Deflater
 import java.util.zip.GZIPOutputStream
 import org.kamranzafar.jtar.TarOutputStream
@@ -57,7 +56,7 @@ object Pack extends sbt.Plugin {
   val packExtraClasspath = SettingKey[Map[String, Seq[String]]]("pack-extra-classpath")
   val packPreserveOriginalJarName = SettingKey[Boolean]("pack-preserve-jarname", "preserve the original jar file names. default = false")
 
-  val packSettings = Seq[Def.Setting[_]](
+  lazy val packSettings = Seq[Def.Setting[_]](
     packDir := "pack",
     packMain := Map.empty,
     packExclude := Seq.empty,
@@ -131,6 +130,9 @@ object Pack extends sbt.Plugin {
       if (mainTable.isEmpty) {
         out.log.warn("No mapping (program name) -> MainClass is defined. Please set packMain variable (Map[String, String]) in your sbt project settings.")
       }
+
+
+      val pathSeparator = "${PSEP}"
       // Render script via Scalate template
       val engine = new TemplateEngine
       for ((name, mainClass) <- mainTable) {
