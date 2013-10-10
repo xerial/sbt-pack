@@ -57,7 +57,7 @@ object Pack extends sbt.Plugin {
   val packExtraClasspath = SettingKey[Map[String, Seq[String]]]("pack-extra-classpath")
   val packPreserveOriginalJarName = SettingKey[Boolean]("pack-preserve-jarname", "preserve the original jar file names. default = false")
 
-  val packSettings = Seq[Def.Setting[_]](
+  lazy val packSettings = Seq[Def.Setting[_]](
     packDir := "pack",
     packMain := Map.empty,
     packExclude := Seq.empty,

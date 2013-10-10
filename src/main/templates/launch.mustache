@@ -45,8 +45,10 @@ cygwin=false
 mingw=false
 darwin=false
 case "`uname`" in
-  CYGWIN*) cygwin=true;;
-  MINGW*) mingw=true;;
+  CYGWIN*) cygwin=true
+          ;;
+  MINGW*) mingw=true
+          ;;
   Darwin*) darwin=true
            if [ -z "$JAVA_VERSION" ] ; then
              JAVA_VERSION="CurrentJDK"
@@ -102,6 +104,8 @@ if [ -z "$JAVA_HOME" ] ; then
 fi
 
 CLASSPATH_SUFFIX=""
+# Path separator used in EXTRA_CLASSPATH
+PSEP=":"
 
 # For Cygwin, switch paths to Windows-mixed format before running java
 if $cygwin; then
@@ -110,8 +114,7 @@ if $cygwin; then
   [ -n "$JAVA_HOME" ] &&
     JAVA_HOME=`cygpath -am "$JAVA_HOME"`
   CLASSPATH_SUFFIX=";"
-#  [ -n "$HOME" ] &&
-#    HOME=`cygpath --path --windows "$HOME"`
+  PSEP=";"
 fi
 
 # For Migwn, ensure paths are in UNIX format before anything is touched
@@ -120,7 +123,8 @@ if $mingw ; then
     PROG_HOME="`(cd "$PROG_HOME"; pwd)`"
   [ -n "$JAVA_HOME" ] &&
     JAVA_HOME="`(cd "$JAVA_HOME"; pwd)`"
-  # TODO classpath?
+  CLASSPATH_SUFFIX=";"
+  PSEP=";"
 fi
 
 
