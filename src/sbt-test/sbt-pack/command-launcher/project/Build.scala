@@ -9,14 +9,16 @@ object Build extends sbt.Build {
     base = file("."),
     settings = Defaults.defaultSettings ++ packSettings ++
       Seq(
-        scalaVersion := "2.10.2",
+        scalaVersion := "2.10.3",
+        scalacOptions ++= Seq("-deprecation", "-feature"),
         // Mapping from program name -> Main class
         packMain := Map("launcher" -> "launcher.Main"),
         // Add custom settings here
         crossPaths := false,
         libraryDependencies ++= Seq(
           // include both jar and source.jar
-          "org.xerial" % "xerial-lens" % "3.2.1" jar() classifier("sources")
+          "org.xerial" % "xerial-lens" % "3.2.1" jar() classifier("sources"),
+          "org.xerial" % "xerial-core" % "3.2.1"
         )
       )
   )

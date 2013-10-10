@@ -73,7 +73,7 @@ object Card {
 
   val values = IndexedSeq(Spade, Diamond, Heart, Clover)
 
-  lazy private val index = (values.map { c => c.name.toLowerCase -> c}) toMap
+  lazy private val index = (values.map { c => c.name.toLowerCase -> c}).toMap
 
   def unapply(s:String) : Option[Card] = index.get(s.toLowerCase)
 }

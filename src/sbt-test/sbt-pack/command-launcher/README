@@ -3,7 +3,7 @@ You can define multiple commands using a single main(args:Array[String]) entry:
 
 To create a package, do:
    
-    $ bin/sbt pack
+    $ ./sbt pack
 
 Then, launch a command:
 
