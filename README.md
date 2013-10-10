@@ -8,9 +8,9 @@ A sbt plugin for creating distributable Scala packages that include dependent ja
 - `sbt pack` creates a distributable package in `target/pack` folder.
   - All dependent jars including scala-library.jar are collected in `target/pack/lib` folder. This process is much faster than creating a single-jar as in `sbt-assembly` or `proguard` plugins. 
   - Supporting multi-module projects.
-- `sbt pack-archive` generates `tar.gz` archive of your project.
-  - `target/{program name}-{version}.tar.gz`.
-- Generates program launch scripts `target/pack/bin/{program name}`
+- `sbt pack-archive` generates `tar.gz` archive of the distributable project.
+  - The archive is `target/{program name}-{version}.tar.gz`
+- `sbt pack` generates program launch scripts `target/pack/bin/{program name}`
   - To run the program no need exists to install Scala, since it is included in the lib folder. Only java command needs to be found in the system.
 - Generates a Makefile for program installation.
   - Do `cd target/pack; make install`. Then you can run your program with `~/local/bin/{program name}`
@@ -131,12 +131,12 @@ in the source code. It contains several Scala project examples using sbt-pack.
 
 Creating IntelliJ project:
 
-    $ bin/sbt "gen-idea sbt-classifiers"
+    $ ./sbt "gen-idea sbt-classifiers"
 
 To test sbt-pack plugin, run
 
-    $ bin/sbt scripted
+    $ ./sbt scripted
 
 Run a single test project, e.g., `src/sbt-test/sbt-pack/multi-module`:
 
-    $ bin/sbt "scripted sbt-pack/multi-module"
+    $ ./sbt "scripted sbt-pack/multi-module"
