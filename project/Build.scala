@@ -28,7 +28,7 @@ import ScalateKeys._
 
 object PackBuild extends Build {
 
-  val SCALA_VERSION = "2.10.2"
+  val SCALA_VERSION = "2.10.3"
 
   def releaseResolver(v: String): Resolver = {
     val profile = System.getProperty("xerial.profile", "default")
