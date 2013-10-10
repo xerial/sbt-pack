@@ -17,7 +17,6 @@ import java.io.BufferedOutputStream
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.InputStream
-import java.io.File.pathSeparator
 import java.util.zip.Deflater
 import java.util.zip.GZIPOutputStream
 import org.kamranzafar.jtar.TarOutputStream
@@ -131,6 +130,9 @@ object Pack extends sbt.Plugin {
       if (mainTable.isEmpty) {
         out.log.warn("No mapping (program name) -> MainClass is defined. Please set packMain variable (Map[String, String]) in your sbt project settings.")
       }
+
+
+      val pathSeparator = "${PSEP}"
       // Render script via Scalate template
       val engine = new TemplateEngine
       for ((name, mainClass) <- mainTable) {
