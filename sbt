@@ -26,7 +26,7 @@ get_mem_opts () {
   (( $perm < 1024 )) || perm=1024
   local codecache=$(( $perm / 2 ))
   
-  echo "-Xms${mem}m -Xmx${mem}m -XX:MaxPermSize=${perm}m -XX:ReservedCodeCacheSize=${codecache}m"
+  echo "-Xms512m -Xmx${mem}m -XX:MaxPermSize=${perm}m"
 }
 
 die() {
@@ -240,7 +240,7 @@ Usage: $script_name [options]
   -scala-home <path>        use the scala build at the specified directory
   -scala-version <version>  use the specified version of scala
 
-  # java version (default: java from PATH, currently \$(java -version |& grep version))
+  # java version (default: java from PATH, currently $(java -version |& grep version))
   -java-home <path>         alternate JAVA_HOME
 
   # jvm options and output control
@@ -415,7 +415,7 @@ esac
     sbt_tmpdir=`cygpath -wa "$sbt_tmpdir"`
     extra_jvm_opts=-Djava.io.tmpdir="$sbt_tmpdir"
   fi
-  addJava "-Dsbt.global.base=$sbt_dir"
+  addJava "-Dsbt.global.base=$sbt_dir -Dsbt.boot.directory=$sbt_dir/boot/"
   echo "Using $sbt_dir as sbt dir, -sbt-dir to override."
 }
 
@@ -433,4 +433,5 @@ esac
   -jar "$sbt_jar" \
   "${sbt_commands[@]}" \
   "${residual_args[@]}"
+
 
