@@ -29,7 +29,7 @@ Add `sbt-pack` plugin to your sbt configuration:
 **project/plugins.sbt**
 
 ```scala
-addSbtPlugin("org.xerial.sbt" % "sbt-pack" % "0.3.2")  // for sbt-0.13.x or higher
+addSbtPlugin("org.xerial.sbt" % "sbt-pack" % "0.3.3")  // for sbt-0.13.x or higher
 
 addSbtPlugin("org.xerial.sbt" % "sbt-pack" % "0.2.4")  // for sbt-0.12.x (will not be maintained)
 ```
