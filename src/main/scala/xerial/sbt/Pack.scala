@@ -131,7 +131,7 @@ object Pack extends sbt.Plugin {
         out.log.warn("No mapping (program name) -> MainClass is defined. Please set packMain variable (Map[String, String]) in your sbt project settings.")
       }
 
-
+      val progVersion = version.value
       val pathSeparator = "${PSEP}"
       // Render script via Scalate template
       val engine = new TemplateEngine
@@ -139,6 +139,7 @@ object Pack extends sbt.Plugin {
         out.log.info("main class for %s: %s".format(name, mainClass))
         val m = Map(
           "PROG_NAME" -> name,
+          "PROG_VERSION" -> progVersion,
           "MAIN_CLASS" -> mainClass,
           "MAC_ICON_FILE" -> packMacIconFile.value,
           "JVM_OPTS" -> packJvmOpts.value.getOrElse(name, Nil).map("\"%s\"".format(_)).mkString(" "),
@@ -165,7 +166,7 @@ object Pack extends sbt.Plugin {
       write("Makefile", makefile)
 
       // Output the version number
-      write("VERSION", "version:=" + version.value + "\n")
+      write("VERSION", "version:=" + progVersion + "\n")
 
       // Copy other scripts
       IO.copyDirectory(otherResourceDir, distDir, overwrite=true, preserveLastModified=true)
