@@ -1,0 +1,13 @@
+### Release Notes
+- October 10, 2013 - 0.3.2 release (Fix for Windows)
+- August 28, 2013 - 0.3.1 release (only for sbt-0.13 or higher)
+- August 21, 2013 - 0.2.4 release (for sbt-0.12.x)
+  - Refine log messages
+- August 20, 2013 - 0.2.1 release
+  - Add a sample multi-module project
+  - Fixes #11, #12
+- May 16, 2013 - Version 0.2 release
+  - Stable version
+  - Delete only lib folder when `make install`
+- May 9, 2013 - Version 0.1.10 release
+  - Add pack-archive command
