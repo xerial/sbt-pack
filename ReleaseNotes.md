@@ -1,5 +1,5 @@
 ### Release Notes
-- October 15, 2013 - 0.3.2 release
+- October 15, 2013 - 0.3.3 release
   - Add prog.version JVM option
 - October 10, 2013 - 0.3.2 release (Fix for Windows)
 - August 28, 2013 - 0.3.1 release (only for sbt-0.13 or higher)
