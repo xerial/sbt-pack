@@ -107,7 +107,7 @@ Your program package will be generated in `target/pack` folder.
 
 ### Example projects
 
-See also [examples](https://github.com/xerial/sbt-pack/tree/master/src/sbt-test/sbt-pack) folder
+See also [examples](src/sbt-test/sbt-pack) folder
 in the source code. It contains several Scala project examples using sbt-pack.
 
 ### Use case
