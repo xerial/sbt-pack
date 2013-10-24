@@ -2,7 +2,7 @@ Minimal project settings example.
 
 To create a package, do:
    
-    $ bin/sbt pack
+    $ ./sbt pack
 
 Then, launch a command:
 

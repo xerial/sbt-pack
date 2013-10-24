@@ -26,7 +26,7 @@ get_mem_opts () {
   (( $perm < 1024 )) || perm=1024
   local codecache=$(( $perm / 2 ))
   
-  echo "-Xms${mem}m -Xmx${mem}m -XX:MaxPermSize=${perm}m -XX:ReservedCodeCacheSize=${codecache}m"
+  echo "-Xms512m -Xmx${mem}m -XX:MaxPermSize=${perm}m"
 }
 
 die() {
@@ -35,21 +35,21 @@ die() {
 }
 
 # todo - make this dynamic
-declare -r sbt_release_version=0.12.0
+declare -r sbt_release_version=0.13.0
 unset sbt_rc_version
-declare -r sbt_rc_version=0.12.0
-declare -r sbt_snapshot_version=0.12.0
+declare -r sbt_rc_version=0.13.0
+declare -r sbt_snapshot_version=0.13.0-SNAPSHOT
 declare -r sbt_snapshot_baseurl="http://typesafe.artifactoryonline.com/typesafe/ivy-snapshots/org.scala-sbt/sbt-launch/"
 
 declare default_jvm_opts="-Dfile.encoding=UTF8"
-declare -r default_sbt_opts="-XX:+CMSClassUnloadingEnabled "
+declare -r default_sbt_opts="-XX:+CMSClassUnloadingEnabled -XX:ReservedCodeCacheSize=128m"
 declare -r default_sbt_mem=1536
 declare -r noshare_opts="-Dsbt.global.base=project/.sbtboot -Dsbt.boot.directory=project/.boot -Dsbt.ivy.home=project/.ivy"
 declare -r sbt_opts_file=".sbtopts"
 declare -r jvm_opts_file=".jvmopts"
 declare -r latest_28="2.8.2"
 declare -r latest_29="2.9.2"
-declare -r latest_210="2.10.0-M1"
+declare -r latest_210="2.10.2"
 
 declare -r script_path=$(get_script_path "$BASH_SOURCE")
 
@@ -334,7 +334,7 @@ process_args ()
             -S*) addScalac "${1:2}" && shift ;;
             -28) addSbt "++ $latest_28" && shift ;;
             -29) addSbt "++ $latest_29" && shift ;;
-           -210) addSnapshotRepo ; addSbt "++ $latest_210" && shift ;;
+           -210) addSbt "++ $latest_210" && shift ;;
 
               *) addResidual "$1" && shift ;;
     esac
@@ -415,7 +415,7 @@ esac
     sbt_tmpdir=`cygpath -wa "$sbt_tmpdir"`
     extra_jvm_opts=-Djava.io.tmpdir="$sbt_tmpdir"
   fi
-  addJava "-Dsbt.global.base=$sbt_dir"
+  addJava "-Dsbt.global.base=$sbt_dir -Dsbt.boot.directory=$sbt_dir/boot/"
   echo "Using $sbt_dir as sbt dir, -sbt-dir to override."
 }
 
@@ -423,7 +423,6 @@ esac
 (( ${#residual_args[@]} == 0 )) && residual_args=( "shell" )
 
 # run sbt
-stty -icanon min 1 -echo > /dev/null 2>&1
 "$java_cmd" \
   $(get_mem_opts $sbt_mem) \
   $(get_jvm_opts) \
@@ -434,5 +433,5 @@ stty -icanon min 1 -echo > /dev/null 2>&1
   -jar "$sbt_jar" \
   "${sbt_commands[@]}" \
   "${residual_args[@]}"
-stty icanon echo > /dev/null 2>&1
+
 
