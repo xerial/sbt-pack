@@ -1,4 +1,6 @@
 ### Release Notes
+- October 24, 2013 - 0.3.4 release
+  - Fixes #15
 - October 15, 2013 - 0.3.3 release
   - Add prog.version JVM option
 - October 10, 2013 - 0.3.2 release (Fix for Windows)
