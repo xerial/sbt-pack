@@ -31,7 +31,7 @@ Add `sbt-pack` plugin to your sbt configuration:
 ```scala
 addSbtPlugin("org.xerial.sbt" % "sbt-pack" % "0.3.4")  // for sbt-0.13.x or higher
 
-addSbtPlugin("org.xerial.sbt" % "sbt-pack" % "0.2.5")  // for sbt-0.12.x (will not be maintained)
+addSbtPlugin("org.xerial.sbt" % "sbt-pack" % "0.2.5")  // for sbt-0.12.x (New features will not be supported in this version.)
 ```
 
 Import `xerial.sbt.Pack.packSettings` into your project settings. Then set `packMain` variable, a mapping from the your program names to their corresponding main classes. The main classes must be Scala objects that define `def main(args:Array[])` method:
