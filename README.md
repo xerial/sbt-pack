@@ -41,7 +41,7 @@ addSbtPlugin("org.xerial.sbt" % "sbt-pack" % "0.2.5")  // for sbt-0.12.x (New fe
 packSettings
 
 // [Optional: Mappings from a program name to the corresponding Main class ]
-packMain := Map("hello" -> "myprog.Hello"),
+packMain := Map("hello" -> "myprog.Hello")
 ```
 
 Now you can use `sbt pack` command in your project.
