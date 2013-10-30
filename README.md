@@ -57,7 +57,9 @@ object Build extends sbt.Build {
       packJvmOpts := Map("hello" -> Seq("-Xmx512m")),
       // [Optional] Extra class paths to look when launching a program
       packExtraClasspath := Map("hello" -> Seq("${PROG_HOME}/etc"))
-    )
+    ) 
+    // To publish tar.gz archive to a repository, add the following line
+    // ++ addArtifact(Artifact("myprog", "arch", "tar.gz"), packArchive).settings
   )
 }
 ```
