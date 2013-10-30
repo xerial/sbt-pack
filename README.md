@@ -34,6 +34,20 @@ addSbtPlugin("org.xerial.sbt" % "sbt-pack" % "0.3.5")  // for sbt-0.13.x or high
 addSbtPlugin("org.xerial.sbt" % "sbt-pack" % "0.2.5")  // for sbt-0.12.x (New features will not be supported in this version.)
 ```
 
+#### Minimum configuration
+
+**build.sbt**
+```scala
+packSettings
+
+// [Optional: Mappings from a program name to the corresponding Main class ]
+packMain := Map("hello" -> "myprog.Hello"),
+```
+
+Now you can use `sbt pack` command in your project.
+
+#### Full build configuration
+
 Import `xerial.sbt.Pack.packSettings` into your project settings. Then set `packMain` variable, a mapping from the your program names to their corresponding main classes. The main classes must be Scala objects that define `def main(args:Array[])` method:
 
 **project/Build.scala**
@@ -48,16 +62,17 @@ object Build extends sbt.Build {
   lazy val root = Project(
     id = "myprog",
     base = file("."),
-    settings = Defaults.defaultSettings ++ packSettings ++
-    Seq(
-      // Specify mappings from program name -> Main class (full package path)
-      packMain := Map("hello" -> "myprog.Hello"),
-      // Add custom settings here
-      // [Optional] JVM options of scripts (program name -> Seq(JVM option, ...))
-      packJvmOpts := Map("hello" -> Seq("-Xmx512m")),
-      // [Optional] Extra class paths to look when launching a program
-      packExtraClasspath := Map("hello" -> Seq("${PROG_HOME}/etc"))
-    ) 
+    settings = Defaults.defaultSettings 
+      ++ packSettings 
+      ++ Seq(
+        // [Optional] Specify mappings from program name -> Main class (full package path)
+        packMain := Map("hello" -> "myprog.Hello"),
+        // Add custom settings here
+        // [Optional] JVM options of scripts (program name -> Seq(JVM option, ...))
+        packJvmOpts := Map("hello" -> Seq("-Xmx512m")),
+        // [Optional] Extra class paths to look when launching a program
+        packExtraClasspath := Map("hello" -> Seq("${PROG_HOME}/etc"))
+      ) 
     // To publish tar.gz archive to a repository, add the following line
     // ++ addArtifact(Artifact("myprog", "arch", "tar.gz"), packArchive).settings
   )
