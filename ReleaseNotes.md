@@ -1,4 +1,6 @@
 ### Release Notes
+- October 30, 2013 - 0.3.5 release
+  - Fix prog.version JVM option generation
 - October 24, 2013 - 0.3.4 release
   - Fixes #15
 - October 15, 2013 - 0.3.3 release
