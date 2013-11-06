@@ -1,7 +1,7 @@
 sbt-pack plugin
 ========
 
-A sbt plugin for creating distributable Scala packages that include dependent jars and launch scripts.
+An sbt plugin for creating distributable Scala packages that include dependent jars and launch scripts.
 
 ### Features
 
@@ -9,7 +9,7 @@ A sbt plugin for creating distributable Scala packages that include dependent ja
   - All dependent jars including scala-library.jar are collected in `target/pack/lib` folder. This process is much faster than creating a single-jar as in `sbt-assembly` or `proguard` plugins. 
   - Supporting multi-module projects.
 - `sbt pack-archive` generates `tar.gz` archive that is ready to distribute. 
-  - The archive name is `target/{program name}-{version}.tar.gz`
+  - The archive name is `target/{project name}-{version}.tar.gz`
 - `sbt pack` generates program launch scripts `target/pack/bin/{program name}`
   - To run the program no need exists to install Scala, since it is included in the lib folder. Only java command needs to be found in the system.
 - Generates a Makefile for program installation.
