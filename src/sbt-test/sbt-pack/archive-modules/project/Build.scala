@@ -5,7 +5,12 @@ import xerial.sbt.Pack._
 
 object Build extends sbt.Build {
 
-  val commonSettings = Defaults.defaultSettings ++ packSettings ++ publishPackArchive ++ Seq(
+  val commonSettings = Defaults.defaultSettings ++
+    // Add pack, pack-archive commands
+    packSettings ++
+    // publish tar.gz archive to the repository
+    publishPackArchive ++
+    Seq(
      scalaVersion := "2.10.3",
      version := "0.1",
      crossPaths := false
@@ -15,12 +20,6 @@ object Build extends sbt.Build {
     val m1 = Map("m1" -> "sample.Module1")
     val m2 = Map("m2" -> "sample.Module2")
   }
-
-//  def addArchive: SettingsDefinition =
-//  {
-//    val pkgd = packagedArtifacts := packagedArtifacts.value updated (Artifact(name.value, "arch", "tar.gz"), packArchive.value)
-//    seq( artifacts += a, pkgd )
-//  }
 
   lazy val root = Project(
     id = "archive-modules",

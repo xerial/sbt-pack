@@ -227,6 +227,7 @@ object Pack extends sbt.Plugin {
     }
   )
 
+
   def publishPackArchive : SettingsDefinition = {
     val pkgd = packagedArtifacts := packagedArtifacts.value updated (packArchiveArtifact.value, packArchive.value)
     Seq( artifacts += packArchiveArtifact.value, pkgd )
