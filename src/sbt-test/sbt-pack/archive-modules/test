@@ -1,0 +1,13 @@
+> 'set version := "0.1"'
+> pack-archive
+$ exists target/archive-modules-0.1.tar.gz
+$ exists target/pack/bin/m1
+$ exec sh ./target/pack/bin/m1
+$ exists target/pack/bin/m2
+$ exec sh ./target/pack/bin/m2
+$ exists module2/target/module2-0.1.tar.gz
+$ exists module2/target/pack/bin/m2
+$ exec sh ./module2/target/pack/bin/m2
+$ exists module1/target/module1-0.1.tar.gz
+$ exists module1/target/pack/bin/m1
+$ exec sh ./module1/target/pack/bin/m1
