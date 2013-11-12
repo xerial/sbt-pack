@@ -1,4 +1,7 @@
 ### Release Notes
+- November 12, 2013 - 0.3.6 release
+  - Add publichPackArchive 
+  - Add packArchivePrefix settings (packArchivePrefix:default=project name)-(version).tar.gz will be generated.
 - October 30, 2013 - 0.3.5 release
   - Fix prog.version JVM option generation
 - October 24, 2013 - 0.3.4 release
