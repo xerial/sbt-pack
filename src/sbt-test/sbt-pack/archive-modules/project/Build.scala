@@ -24,30 +24,30 @@ object Build extends sbt.Build {
   lazy val root = Project(
     id = "archive-modules",
     base = file("."),
-    settings = commonSettings
-      ++ Seq(
-      packMain := ProgMap.m1 ++ ProgMap.m2
-    )
+    settings = commonSettings ++
+      Seq(
+        packMain := ProgMap.m1 ++ ProgMap.m2
+      )
   ) aggregate(module1, module2)
 
   lazy val module1 = Project(
     id = "module1",
     base = file("module1"),
-    settings = commonSettings
-      ++ Seq(
-      packMain := ProgMap.m1,
-      libraryDependencies += "org.xerial" % "xerial-core" % "3.2.1"
-    )
+    settings = commonSettings ++
+      Seq(
+        packMain := ProgMap.m1,
+        libraryDependencies += "org.xerial" % "xerial-core" % "3.2.1"
+      )
   )
 
   lazy val module2 = Project(
     id = "module2",
     base = file("module2"),
-    settings = commonSettings
-      ++ Seq(
-      packMain := ProgMap.m2,
-      libraryDependencies += "org.xerial.snappy" % "snappy-java" % "1.1.0"
-    )
+    settings = commonSettings ++
+      Seq(
+        packMain := ProgMap.m2,
+        libraryDependencies += "org.xerial.snappy" % "snappy-java" % "1.1.0"
+      )
   )
 
 }
