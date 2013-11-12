@@ -63,7 +63,7 @@ object Build extends sbt.Build {
     id = "myprog",
     base = file("."),
     settings = Defaults.defaultSettings 
-      ++ packSettings 
+      ++ packSettings // This settings add pack and pack-archive commands to sbt
       ++ Seq(
         // [Optional] Specify mappings from program name -> Main class (full package path)
         packMain := Map("hello" -> "myprog.Hello"),
@@ -73,7 +73,7 @@ object Build extends sbt.Build {
         // [Optional] Extra class paths to look when launching a program
         packExtraClasspath := Map("hello" -> Seq("${PROG_HOME}/etc"))
       ) 
-    // To publish tar.gz archive to a repository, add the following line (since 0.3.6)
+    // To publish tar.gz archive to the repository, add the following line (since 0.3.6)
     // ++ publishPackArchive  
     // Before 0.3.6, use below:
     // ++ addArtifact(Artifact("myprog", "arch", "tar.gz"), packArchive).settings
