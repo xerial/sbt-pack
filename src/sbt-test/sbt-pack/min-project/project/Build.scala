@@ -9,7 +9,7 @@ object Build extends sbt.Build {
     base = file("."),
     settings = Defaults.defaultSettings ++ packSettings ++
       Seq(
-        scalaVersion := "2.10.2",
+        scalaVersion := "2.10.3",
         // Mapping from program name -> Main class
         packMain := Map("hello" -> "minproject.Hello"),
         // custom settings here
