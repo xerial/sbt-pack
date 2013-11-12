@@ -8,7 +8,7 @@ object Build extends sbt.Build {
   val commonSettings = Defaults.defaultSettings ++
     // Add pack, pack-archive commands
     packSettings ++
-    // publish tar.gz archive to the repository
+    // publish tar.gz archive to the repository (since sbt-pack-0.3.6)
     publishPackArchive ++
     Seq(
      scalaVersion := "2.10.3",
