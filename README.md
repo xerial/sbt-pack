@@ -8,8 +8,8 @@ A sbt plugin for creating distributable Scala packages that include dependent ja
 - `sbt pack` creates a distributable package in `target/pack` folder.
   - All dependent jars including scala-library.jar are collected in `target/pack/lib` folder. This process is much faster than creating a single-jar as in `sbt-assembly` or `proguard` plugins. 
   - Supporting multi-module projects.
-- `sbt pack-archive` generates `tar.gz` archive of the distributable project.
-  - The archive is `target/{program name}-{version}.tar.gz`
+- `sbt pack-archive` generates `tar.gz` archive that is ready to distribute. 
+  - The archive name is `target/{project name}-{version}.tar.gz`
 - `sbt pack` generates program launch scripts `target/pack/bin/{program name}`
   - To run the program no need exists to install Scala, since it is included in the lib folder. Only java command needs to be found in the system.
 - Generates a Makefile for program installation.
@@ -29,10 +29,24 @@ Add `sbt-pack` plugin to your sbt configuration:
 **project/plugins.sbt**
 
 ```scala
-addSbtPlugin("org.xerial.sbt" % "sbt-pack" % "0.3.4")  // for sbt-0.13.x or higher
+addSbtPlugin("org.xerial.sbt" % "sbt-pack" % "0.3.6")  // for sbt-0.13.x or higher
 
 addSbtPlugin("org.xerial.sbt" % "sbt-pack" % "0.2.5")  // for sbt-0.12.x (New features will not be supported in this version.)
 ```
+
+#### Minimum configuration
+
+**build.sbt**
+```scala
+packSettings
+
+// [Optional: Mappings from a program name to the corresponding Main class ]
+packMain := Map("hello" -> "myprog.Hello")
+```
+
+Now you can use `sbt pack` command in your project.
+
+#### Full build configuration
 
 Import `xerial.sbt.Pack.packSettings` into your project settings. Then set `packMain` variable, a mapping from the your program names to their corresponding main classes. The main classes must be Scala objects that define `def main(args:Array[])` method:
 
@@ -48,16 +62,21 @@ object Build extends sbt.Build {
   lazy val root = Project(
     id = "myprog",
     base = file("."),
-    settings = Defaults.defaultSettings ++ packSettings ++
-    Seq(
-      // Specify mappings from program name -> Main class (full package path)
-      packMain := Map("hello" -> "myprog.Hello"),
-      // Add custom settings here
-      // [Optional] JVM options of scripts (program name -> Seq(JVM option, ...))
-      packJvmOpts := Map("hello" -> Seq("-Xmx512m")),
-      // [Optional] Extra class paths to look when launching a program
-      packExtraClasspath := Map("hello" -> Seq("${PROG_HOME}/etc"))
-    )
+    settings = Defaults.defaultSettings 
+      ++ packSettings // This settings add pack and pack-archive commands to sbt
+      ++ Seq(
+        // [Optional] Specify mappings from program name -> Main class (full package path)
+        packMain := Map("hello" -> "myprog.Hello"),
+        // Add custom settings here
+        // [Optional] JVM options of scripts (program name -> Seq(JVM option, ...))
+        packJvmOpts := Map("hello" -> Seq("-Xmx512m")),
+        // [Optional] Extra class paths to look when launching a program
+        packExtraClasspath := Map("hello" -> Seq("${PROG_HOME}/etc"))
+      ) 
+    // To publish tar.gz archive to the repository, add the following line (since 0.3.6)
+    // ++ publishPackArchive  
+    // Before 0.3.6, use below:
+    // ++ addArtifact(Artifact("myprog", "arch", "tar.gz"), packArchive).settings
   )
 }
 ```
