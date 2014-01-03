@@ -1,4 +1,6 @@
 ### Release Notes
+- January 3rd, 2014 - 0.4.0 release
+  - Add .bat file generation
 - November 12, 2013 - 0.3.6 release
   - Add publichPackArchive 
   - Add packArchivePrefix settings (packArchivePrefix:default=project name)-(version).tar.gz will be generated.
