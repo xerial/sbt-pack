@@ -73,8 +73,8 @@ object Build extends sbt.Build {
         packJvmOpts := Map("hello" -> Seq("-Xmx512m")),
         // [Optional] Extra class paths to look when launching a program
         packExtraClasspath := Map("hello" -> Seq("${PROG_HOME}/etc")), 
-        // [Optional] (if you do not need to genrate .bat file for Windows. The default value is true)
-        packGenerateWindowsBatFile := false
+        // [Optional] (Generate .bat files for Windows. The default value is true)
+        packGenerateWindowsBatFile := true
       ) 
     // To publish tar.gz archive to the repository, add the following line (since 0.3.6)
     // ++ publishPackArchive  
