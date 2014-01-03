@@ -85,6 +85,7 @@ goto Win9xApp
 :endInit
 
 SET PROG_HOME=%~dp0..
+SET PSEP=;
 
 @REM Start Java program
 :runm2
@@ -106,6 +107,7 @@ if "%OS%"=="Windows_NT" goto endNT
 set JAVA_EXE=
 set CMD_LINE_ARGS=
 set CMDLINE=
+set PSEP=
 goto postExec
 
 :endNT

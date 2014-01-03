@@ -157,7 +157,8 @@ object Pack extends sbt.Plugin {
 
         // Create BAT file
         if(packGenerateWindowsBatFile.value) {
-          val propForWin : Map[String, Any] = m + ("EXTRA_CLASSPATH" -> extraClasspath("""\""").replaceAll("""\/""", """\"""))
+          val extraPath = extraClasspath("%PSEP%").replaceAll("""\$\{PROG_HOME\}""", "%PROG_HOME%").replaceAll("/", """\\""")
+          val propForWin : Map[String, Any] = m + ("EXTRA_CLASSPATH" -> extraPath)
           val batScript = engine.layout("/xerial/sbt/template/launch-bat.mustache", propForWin)
           write(s"bin/${progName}.bat", batScript)
         }
