@@ -35,10 +35,9 @@ if "%OS%"=="Windows_NT" @setlocal
 if not "%JAVA_HOME%" == "" goto OkJHome
 
 for /f %%j in ("java.exe") do (
-  set JAVA_EXE=%%~dp$PATH:j
+  set JAVA_EXE=%%~$PATH:j
   goto init
 )
-
 
 :OkJHome
 if exist "%JAVA_HOME%\bin\java.exe" (
@@ -85,12 +84,12 @@ goto Win9xApp
 @REM Reaching here means variables are defined and arguments have been captured
 :endInit
 
-SET PROG_HOME="%~dp0"
-SET PSEP=";"
+SET PROG_HOME=%~dp0..
+SET PSEP=;
 
 @REM Start Java program
 :runm2
-SET CMDLINE=%JAVA_EXE% %JVM_OPT% {{{JVM_OPTS}}} -cp "{{{EXTRA_CLASSPATH}}}${PROG_HOME}/lib/*;" -Dprog.home="%PROG_HOME%" -Dprog.version="{{{PROG_VERSION}}}" {{{MAIN_CLASS}}} %CMD_LINE_ARGS%
+SET CMDLINE=%JAVA_EXE% %JVM_OPT% {{{JVM_OPTS}}} -cp "{{{EXTRA_CLASSPATH}}}${PROG_HOME}\..\lib\*;" -Dprog.home="%PROG_HOME%" -Dprog.version="{{{PROG_VERSION}}}" {{{MAIN_CLASS}}} %CMD_LINE_ARGS%
 %CMDLINE%
 if ERRORLEVEL 1 goto error
 goto end

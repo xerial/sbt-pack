@@ -139,6 +139,9 @@ object Pack extends sbt.Plugin {
       val pathSeparator = "${PSEP}"
       // Render script via Scalate template
       val engine = new TemplateEngine
+
+      def extraClasspath(sep:String) = packExtraClasspath.value.get(name).map(_.mkString("", pathSeparator, pathSeparator)).orElse(Some("")).get)
+
       for ((name, mainClass) <- mainTable) {
         out.log.info("main class for %s: %s".format(name, mainClass))
         val m = Map(
@@ -147,14 +150,15 @@ object Pack extends sbt.Plugin {
           "MAIN_CLASS" -> mainClass,
           "MAC_ICON_FILE" -> packMacIconFile.value,
           "JVM_OPTS" -> packJvmOpts.value.getOrElse(name, Nil).map("\"%s\"".format(_)).mkString(" "),
-          "EXTRA_CLASSPATH" -> packExtraClasspath.value.get(name).map(_.mkString("", pathSeparator, pathSeparator)).orElse(Some("")).get)
+          "EXTRA_CLASSPATH" -> extraClasspath(pathSeparator))
         val launchScript = engine.layout("/xerial/sbt/template/launch.mustache", m)
         val progName = m("PROG_NAME").replaceAll(" ", "") // remove white spaces
         write(s"bin/$progName", launchScript)
 
         // Create BAT file
         if(packGenerateWindowsBatFile.value) {
-          val batScript = engine.layout("/xerial/sbt/template/launch-bat.mustache", m)
+          val propForWin = m ++ "EXTRA_CLASSPATH" -> extraClasspath("""\""")
+          val batScript = engine.layout("/xerial/sbt/template/launch-bat.mustache", propForWin)
           write(s"bin/${progName}.bat", batScript)
         }
       }
