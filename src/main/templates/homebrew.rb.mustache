@@ -1,0 +1,16 @@
+require 'formula'
+
+class {{{PROG_NAME}}} < Formula
+  url 'http://repo1.maven.org/repository/artifact/{{{PROG_ORG}}}/{{{PROG_NAME}}}/{{{PROG_VERSION}}}/{{{PROG_NAME}}}-{{{PROG_VERSION}}}.tar.gz'
+  sha1 '{{{SHA1}}}}'
+  version '1.5.9'
+  
+  def install
+     libexec.install Dir['*']
+     bin.install_symlink "#{libexec}/bin/{{{PROG_NAME}}}"
+  end
+
+  def test
+    system "#{bin}/{{{PROG_NAME}}}"
+  end
+end
