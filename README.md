@@ -12,6 +12,7 @@ A sbt plugin for creating distributable Scala packages that include dependent ja
   - The archive name is `target/{project name}-{version}.tar.gz`
 - `sbt pack` generates program launch scripts `target/pack/bin/{program name}`
   - To run the program no need exists to install Scala, since it is included in the lib folder. Only java command needs to be found in the system.
+  - It also generates `.bat` launch scripts for Windows users. 
 - Generates a Makefile for program installation.
   - Do `cd target/pack; make install`. Then you can run your program with `~/local/bin/{program name}`
 - You can install multiple versions of your program in the system.
@@ -29,7 +30,7 @@ Add `sbt-pack` plugin to your sbt configuration:
 **project/plugins.sbt**
 
 ```scala
-addSbtPlugin("org.xerial.sbt" % "sbt-pack" % "0.3.6")  // for sbt-0.13.x or higher
+addSbtPlugin("org.xerial.sbt" % "sbt-pack" % "0.4.0")  // for sbt-0.13.x or higher
 
 addSbtPlugin("org.xerial.sbt" % "sbt-pack" % "0.2.5")  // for sbt-0.12.x (New features will not be supported in this version.)
 ```
@@ -71,7 +72,9 @@ object Build extends sbt.Build {
         // [Optional] JVM options of scripts (program name -> Seq(JVM option, ...))
         packJvmOpts := Map("hello" -> Seq("-Xmx512m")),
         // [Optional] Extra class paths to look when launching a program
-        packExtraClasspath := Map("hello" -> Seq("${PROG_HOME}/etc"))
+        packExtraClasspath := Map("hello" -> Seq("${PROG_HOME}/etc")), 
+        // [Optional] (if you do not need to genrate .bat file for Windows. The default value is true)
+        packGenerateWindowsBatFile := false
       ) 
     // To publish tar.gz archive to the repository, add the following line (since 0.3.6)
     // ++ publishPackArchive  
