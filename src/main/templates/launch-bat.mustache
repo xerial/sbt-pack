@@ -85,11 +85,10 @@ goto Win9xApp
 :endInit
 
 SET PROG_HOME=%~dp0..
-SET PSEP=;
 
 @REM Start Java program
 :runm2
-SET CMDLINE=%JAVA_EXE% %JVM_OPT% {{{JVM_OPTS}}} -cp "{{{EXTRA_CLASSPATH}}}${PROG_HOME}\..\lib\*;" -Dprog.home="%PROG_HOME%" -Dprog.version="{{{PROG_VERSION}}}" {{{MAIN_CLASS}}} %CMD_LINE_ARGS%
+SET CMDLINE=%JAVA_EXE% %JVM_OPT% {{{JVM_OPTS}}} -cp "{{{EXTRA_CLASSPATH}}}%PROG_HOME%\..\lib\*;" -Dprog.home="%PROG_HOME%" -Dprog.version="{{{PROG_VERSION}}}" {{{MAIN_CLASS}}} %CMD_LINE_ARGS%
 %CMDLINE%
 if ERRORLEVEL 1 goto error
 goto end
@@ -107,7 +106,6 @@ if "%OS%"=="Windows_NT" goto endNT
 set JAVA_EXE=
 set CMD_LINE_ARGS=
 set CMDLINE=
-set PSEP=
 goto postExec
 
 :endNT

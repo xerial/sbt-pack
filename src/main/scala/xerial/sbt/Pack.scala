@@ -141,7 +141,6 @@ object Pack extends sbt.Plugin {
       val engine = new TemplateEngine
 
 
-
       for ((name, mainClass) <- mainTable) {
         out.log.info("main class for %s: %s".format(name, mainClass))
         def extraClasspath(sep:String) : String = packExtraClasspath.value.get(name).map(_.mkString("", sep, sep)).getOrElse("")
@@ -158,7 +157,7 @@ object Pack extends sbt.Plugin {
 
         // Create BAT file
         if(packGenerateWindowsBatFile.value) {
-          val propForWin : Map[String, Any] = m + ("EXTRA_CLASSPATH" -> extraClasspath("""\"""))
+          val propForWin : Map[String, Any] = m + ("EXTRA_CLASSPATH" -> extraClasspath("""\""").replaceAll("""\/""", """\"""))
           val batScript = engine.layout("/xerial/sbt/template/launch-bat.mustache", propForWin)
           write(s"bin/${progName}.bat", batScript)
         }
