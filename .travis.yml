@@ -1,0 +1,10 @@
+language: scala
+scala:
+  - 2.10.3
+
+script: sbt ++$TRAVIS_SCALA_VERSION scripted
+
+branches:
+  only:
+    - develop
+    - feature/sbt-0.12.x
