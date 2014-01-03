@@ -35,21 +35,16 @@ if "%OS%"=="Windows_NT" @setlocal
 if not "%JAVA_HOME%" == "" goto OkJHome
 
 for /f %%j in ("java.exe") do (
-    set JAVA_HOME=%%~dp$PATH:j
-)
-
-if %JAVA_HOME%.==. (
-   @echo ERROR: JAVA_HOME not found in your environment.
-   @echo Please set the JAVA_HOME variable in your environment to match the
-   @echo location of your Java installation
-   goto error
-) else (
-   @echo JAVA_HOME = %JAVA_HOME%
+  set JAVA_EXE=%%~dp$PATH:j
+  goto init
 )
 
 
 :OkJHome
-if exist "%JAVA_HOME%\bin\java.exe" goto chkMHome
+if exist "%JAVA_HOME%\bin\java.exe" (
+ SET JAVA_EXE="%JAVA_HOME%\bin\java.exe"
+ goto init
+)
 
 echo.
 echo ERROR: JAVA_HOME is set to an invalid directory.
@@ -58,10 +53,6 @@ echo Please set the JAVA_HOME variable in your environment to match the
 echo location of your Java installation
 echo.
 goto error
-
-:init
-@REM Decide how to startup depending on the version of windows
-
 
 :init
 @REM Decide how to startup depending on the version of windows
@@ -94,7 +85,6 @@ goto Win9xApp
 @REM Reaching here means variables are defined and arguments have been captured
 :endInit
 
-SET JAVA_EXE="%JAVA_HOME%\bin\java.exe"
 SET PROG_HOME="%~dp0"
 SET PSEP=";"
 
