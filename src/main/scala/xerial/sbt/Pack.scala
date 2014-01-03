@@ -50,6 +50,7 @@ object Pack extends sbt.Plugin {
   val packExclude = SettingKey[Seq[String]]("pack-exclude", "specify projects to exclude when packaging")
   val packAllClasspaths = TaskKey[Seq[Classpath]]("pack-all-classpaths")
   val packLibJars = TaskKey[Seq[File]]("pack-lib-jars")
+  val packGenerateWindowsBatFile = settingKey[Boolean]("Generate BAT file launch scripts for Windows")
 
   val packMacIconFile = SettingKey[String]("pack-mac-icon-file", "icon file name for Mac")
   val packResourceDir = SettingKey[String]("pack-resource-dir", "pack resource directory. default = src/pack")
@@ -71,6 +72,7 @@ object Pack extends sbt.Plugin {
     packLibJars <<= (thisProjectRef, buildStructure, packExclude) flatMap getFromSelectedProjects(packageBin.task in Runtime),
     packUpdateReports <<= (thisProjectRef, buildStructure, packExclude) flatMap getFromSelectedProjects(update.task),
     packPreserveOriginalJarName := false,
+    packGenerateWindowsBatFile := true,
     pack := {
       val dependentJars = collection.immutable.SortedMap.empty[ModuleEntry, File] ++ (
         for {
@@ -137,18 +139,29 @@ object Pack extends sbt.Plugin {
       val pathSeparator = "${PSEP}"
       // Render script via Scalate template
       val engine = new TemplateEngine
+
+
       for ((name, mainClass) <- mainTable) {
         out.log.info("main class for %s: %s".format(name, mainClass))
+        def extraClasspath(sep:String) : String = packExtraClasspath.value.get(name).map(_.mkString("", sep, sep)).getOrElse("")
         val m = Map(
           "PROG_NAME" -> name,
           "PROG_VERSION" -> progVersion,
           "MAIN_CLASS" -> mainClass,
           "MAC_ICON_FILE" -> packMacIconFile.value,
           "JVM_OPTS" -> packJvmOpts.value.getOrElse(name, Nil).map("\"%s\"".format(_)).mkString(" "),
-          "EXTRA_CLASSPATH" -> packExtraClasspath.value.get(name).map(_.mkString("", pathSeparator, pathSeparator)).orElse(Some("")).get)
+          "EXTRA_CLASSPATH" -> extraClasspath(pathSeparator))
         val launchScript = engine.layout("/xerial/sbt/template/launch.mustache", m)
         val progName = m("PROG_NAME").replaceAll(" ", "") // remove white spaces
-        write("bin/%s".format(progName), launchScript)
+        write(s"bin/$progName", launchScript)
+
+        // Create BAT file
+        if(packGenerateWindowsBatFile.value) {
+          val extraPath = extraClasspath("%PSEP%").replaceAll("""\$\{PROG_HOME\}""", "%PROG_HOME%").replaceAll("/", """\\""")
+          val propForWin : Map[String, Any] = m + ("EXTRA_CLASSPATH" -> extraPath)
+          val batScript = engine.layout("/xerial/sbt/template/launch-bat.mustache", propForWin)
+          write(s"bin/${progName}.bat", batScript)
+        }
       }
 
       // Copy resources in src/pack folder
