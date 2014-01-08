@@ -2,14 +2,24 @@
 set PROG_HOME=..
 set PROG_NAME={{{PROG_NAME}}}
 set PROG_VERSION={{{PROG_VERSION}}}
+set CONF_FOLDER=%PROG_HOME%\conf
+
+echo using EXECUTION_ENV=%EXECUTION_ENV%
+if "%EXECUTION_ENV%"=="" (
+    set LOG_CONFIG_FILE=%CONF_FOLDER%\logback.xml
+    set JVM_PROPS_FILE=%CONF_FOLDER%\.jvm-opts
+) else (
+    set LOG_CONFIG_FILE=%CONF_FOLDER%\logback.%EXECUTION_ENV%.xml
+    set JVM_PROPS_FILE=%CONF_FOLDER%\.jvm-opts.%EXECUTION_ENV%
+)
 
 (
 set /p JAVA_OPTS=
-)<.jvm-opts
+)<%JVM_PROPS_FILE%
 echo JAVA_OPTS=%JAVA_OPTS%
 
-set PROG_OPTS=-Dapplication.home=%PROG_HOME% -Dapplication.executionEnv=%EXECUTION_ENV% -Dprog.version=%PROG_VERSION% -Dprog.name=%PROG_NAME%
+set PROG_OPTS=-Dapplication.home=%PROG_HOME% -Dapplication.executionEnv=%EXECUTION_ENV% -Dprog.version=%PROG_VERSION% -Dprog.name=%PROG_NAME% -Dlogback.configurationFile="%LOG_CONFIG_FILE%"
 
-set PROG_CLASSPATH={{{EXTRA_CLASSPATH}}}%PROG_HOME%\conf\%EXECUTION_ENV%;%PROG_HOME%\lib\*
+set PROG_CLASSPATH={{{EXTRA_CLASSPATH}}}%CONF_FOLDER%;%PROG_HOME%\lib\*
 
-java %JAVA_OPTS% %PROG_OPTS%  -cp "%PROG_CLASSPATH%" -Dprog.home="%PROG_HOME%" {{{MAIN_CLASS}}}
+java %JAVA_OPTS% %PROG_OPTS% -cp "%PROG_CLASSPATH%" -Dprog.home="%PROG_HOME%" {{{MAIN_CLASS}}}
