@@ -1,3 +1,3 @@
 
-version in ThisBuild := "0.4.0-hddoc"
+version in ThisBuild := "0.4.0-extended"
 
