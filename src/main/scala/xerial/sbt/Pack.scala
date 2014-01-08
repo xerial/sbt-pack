@@ -73,6 +73,7 @@ object Pack extends sbt.Plugin {
     packUpdateReports <<= (thisProjectRef, buildStructure, packExclude) flatMap getFromSelectedProjects(update.task),
     packPreserveOriginalJarName := false,
     packGenerateWindowsBatFile := true,
+    mappings := Seq.empty,
     pack := {
       val dependentJars = collection.immutable.SortedMap.empty[ModuleEntry, File] ++ (
         for {
@@ -115,6 +116,14 @@ object Pack extends sbt.Plugin {
       for (m <- packAllUnmanagedJars.value; um <- m; f = um.data) {
         out.log.info(f.getPath)
         IO.copyFile(f, libDir / f.getName, true)
+      }
+
+      // Copy explicitly added dependencies
+      val mapped: Seq[(File, String)] = (mappings in(Compile, pack)).value
+      out.log.info("explicit dependencies:")
+      for ((file, path) <- mapped) {
+        out.log.info(file.getPath)
+        IO.copyFile(file, distDir / path, true)
       }
 
       // Create target/pack/bin folder
