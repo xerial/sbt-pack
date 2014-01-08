@@ -53,18 +53,20 @@ object Pack extends sbt.Plugin {
   val packGenerateWindowsBatFile = settingKey[Boolean]("Generate BAT file launch scripts for Windows")
 
   val packMacIconFile = SettingKey[String]("pack-mac-icon-file", "icon file name for Mac")
-  val packResourceDir = SettingKey[String]("pack-resource-dir", "pack resource directory. default = src/pack")
+  val packResourceDir = SettingKey[Seq[String]](s"pack-resource-dir", "pack resource directory. default = Seq($DEFAULT_RESOURCE_DIRECTORY)")
   val packAllUnmanagedJars = taskKey[Seq[Classpath]]("all unmanaged jar files")
   val packJvmOpts = SettingKey[Map[String, Seq[String]]]("pack-jvm-opts")
   val packExtraClasspath = SettingKey[Map[String, Seq[String]]]("pack-extra-classpath")
   val packPreserveOriginalJarName = SettingKey[Boolean]("pack-preserve-jarname", "preserve the original jar file names. default = false")
-
+  
+  val DEFAULT_RESOURCE_DIRECTORY = "src/pack"
+  
   lazy val packSettings = Seq[Def.Setting[_]](
     packDir := "pack",
     packMain := Map.empty,
     packExclude := Seq.empty,
     packMacIconFile := "icon-mac.png",
-    packResourceDir := "src/pack",
+    packResourceDir := Seq.empty,
     packJvmOpts := Map.empty,
     packExtraClasspath := Map.empty,
     packAllClasspaths <<= (thisProjectRef, buildStructure) flatMap getFromAllProjects(dependencyClasspath.task in Runtime),
@@ -165,16 +167,17 @@ object Pack extends sbt.Plugin {
       }
 
       // Copy resources in src/pack folder
-      val otherResourceDir = base / packResourceDir.value
-      val binScriptsDir = otherResourceDir / "bin"
+      val binScriptsDir = base / DEFAULT_RESOURCE_DIRECTORY / "bin"
+      val otherResourceDirs = Seq(binScriptsDir) ++ packResourceDir.value.map( dir => base / dir )
+      out.log.info(s"packed resource directories = ${otherResourceDirs.mkString(",")}")
 
       def linkToScript(name: String) =
         "\t" + """ln -sf "../$(PROG)/current/bin/%s" "$(PREFIX)/bin/%s"""".format(name, name)
 
       // Create Makefile
       val makefile = {
-        val additinalScripts = (Option(binScriptsDir.listFiles) getOrElse Array.empty).map(_.getName)
-        val symlink = (mainTable.keys ++ additinalScripts).map(linkToScript).mkString("\n")
+        val additionalScripts = (Option(binScriptsDir.listFiles) getOrElse Array.empty).map(_.getName)
+        val symlink = (mainTable.keys ++ additionalScripts).map(linkToScript).mkString("\n")
         val globalVar = Map("PROG_NAME" -> name.value, "PROG_SYMLINK" -> symlink)
         engine.layout("/xerial/sbt/template/Makefile.mustache", globalVar)
       }
@@ -184,7 +187,9 @@ object Pack extends sbt.Plugin {
       write("VERSION", "version:=" + progVersion + "\n")
 
       // Copy other scripts
-      IO.copyDirectory(otherResourceDir, distDir, overwrite=true, preserveLastModified=true)
+      otherResourceDirs.foreach { otherResourceDir =>
+        IO.copyDirectory(otherResourceDir, distDir, overwrite=true, preserveLastModified=true)
+      }
 
       // chmod +x the scripts in bin directory
       binDir.listFiles.foreach(_.setExecutable(true, false))
