@@ -86,7 +86,7 @@ object Pack extends sbt.Plugin {
           val mid = m.module
           val me = ModuleEntry(mid.organization, mid.name, mid.revision, artifact.classifier, file.getName)
           me -> file
-        })
+        }).filter(tuple => tuple._1.classifier == None)
 
       val out = streams.value
       val distDir: File = target.value / packDir.value
