@@ -1,128 +1,140 @@
-#! /bin/bash
+#!/bin/sh
+#/*--------------------------------------------------------------------------
+# *  Copyright 2012 Taro L. Saito
+# *
+# *  Licensed under the Apache License, Version 2.0 (the "License");
+# *  you may not use this file except in compliance with the License.
+# *  You may obtain a copy of the License at
+# *
+# *     http://www.apache.org/licenses/LICENSE-2.0
+# *
+# *  Unless required by applicable law or agreed to in writing, software
+# *  distributed under the License is distributed on an "AS IS" BASIS,
+# *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# *  See the License for the specific language governing permissions and
+# *  limitations under the License.
+# *--------------------------------------------------------------------------*/
 
-### set PROG_HOME variable
-# resolve links - $0 may be a link to PROG_HOME
-PRG="$0"
+if [ -z "$PROG_HOME" ] ; then
+  ## resolve links - $0 may be a link to PROG_HOME
+  PRG="$0"
 
-# need this for relative symlinks
-while [ -h "$PRG" ] ; do
-  ls=`ls -ld "$PRG"`
-  link=`expr "$ls" : '.*-> \(.*\)$'`
-  if expr "$link" : '/.*' > /dev/null; then
-    PRG="$link"
-  else
-    PRG="`dirname "$PRG"`/$link"
+  # need this for relative symlinks
+  while [ -h "$PRG" ] ; do
+    ls=`ls -ld "$PRG"`
+    link=`expr "$ls" : '.*-> \(.*\)$'`
+    if expr "$link" : '/.*' > /dev/null; then
+      PRG="$link"
+    else
+      PRG="`dirname "$PRG"`/$link"
+    fi
+  done
+
+  saveddir=`pwd`
+
+  PROG_HOME=`dirname "$PRG"`/..
+
+  # make it fully qualified
+  PROG_HOME=`cd "$PROG_HOME" && pwd`
+
+  cd "$saveddir"
+fi
+
+
+cygwin=false
+mingw=false
+darwin=false
+case "`uname`" in
+  CYGWIN*) cygwin=true
+          ;;
+  MINGW*) mingw=true
+          ;;
+  Darwin*) darwin=true
+           if [ -z "$JAVA_VERSION" ] ; then
+             JAVA_VERSION="CurrentJDK"
+           else
+            echo "Using Java version: $JAVA_VERSION" 1>&2
+           fi
+           if [ -z "$JAVA_HOME" ] ; then
+             JAVA_HOME=/System/Library/Frameworks/JavaVM.framework/Versions/${JAVA_VERSION}/Home
+           fi
+           JVM_OPT="$JVM_OPT -Xdock:name=${PROG_NAME} -Xdock:icon=$PROG_HOME/{{{MAC_ICON_FILE}}} -Dcom.apple.macos.useScreenMenuBar=true"
+           JAVACMD="`which java`"
+           ;;
+esac
+
+# Resolve JAVA_HOME from javac command path
+if [ -z "$JAVA_HOME" ]; then
+  javaExecutable="`which javac`"
+  if [ -n "$javaExecutable" -a ! "`expr \"$javaExecutable\" : '\([^ ]*\)'`" = "no" ]; then
+    # readlink(1) is not available as standard on Solaris 10.
+    readLink=`which readlink`
+    if [ ! `expr "$readLink" : '\([^ ]*\)'` = "no" ]; then
+      javaExecutable="`readlink -f \"$javaExecutable\"`"
+      javaHome="`dirname \"$javaExecutable\"`"
+      javaHome=`expr "$javaHome" : '\(.*\)/bin'`
+      JAVA_HOME="$javaHome"
+      export JAVA_HOME
+    fi
   fi
-done
-
-saveddir=`pwd`
-PROG_HOME=`dirname "$PRG"`/..
-
-# make it fully qualified
-PROG_HOME=`cd "$PROG_HOME" && pwd`
-cd "$saveddir"
+fi
 
 
+if [ -z "$JAVACMD" ] ; then
+  if [ -n "$JAVA_HOME"  ] ; then
+    if [ -x "$JAVA_HOME/jre/sh/java" ] ; then
+      # IBM's JDK on AIX uses strange locations for the executables
+      JAVACMD="$JAVA_HOME/jre/sh/java"
+    else
+      JAVACMD="$JAVA_HOME/bin/java"
+    fi
+  else
+    JAVACMD="`which java`"
+  fi
+fi
 
-### definitions
-USAGE="usage: $0 ( start | stop | status )"
+if [ ! -x "$JAVACMD" ] ; then
+  echo "Error: JAVA_HOME is not defined correctly."
+  echo "  We cannot execute $JAVACMD"
+  exit 1
+fi
+
+if [ -z "$JAVA_HOME" ] ; then
+  echo "Warning: JAVA_HOME environment variable is not set."
+fi
+
+CLASSPATH_SUFFIX=""
+# Path separator used in EXTRA_CLASSPATH
+PSEP=":"
+
+# For Cygwin, switch paths to Windows-mixed format before running java
+if $cygwin; then
+  [ -n "$PROG_HOME" ] &&
+    PROG_HOME=`cygpath -am "$PROG_HOME"`
+  [ -n "$JAVA_HOME" ] &&
+    JAVA_HOME=`cygpath -am "$JAVA_HOME"`
+  CLASSPATH_SUFFIX=";"
+  PSEP=";"
+fi
+
+# For Migwn, ensure paths are in UNIX format before anything is touched
+if $mingw ; then
+  [ -n "$PROG_HOME" ] &&
+    PROG_HOME="`(cd "$PROG_HOME"; pwd)`"
+  [ -n "$JAVA_HOME" ] &&
+    JAVA_HOME="`(cd "$JAVA_HOME"; pwd)`"
+  CLASSPATH_SUFFIX=";"
+  PSEP=";"
+fi
+
+
 PROG_NAME={{{PROG_NAME}}}
 PROG_VERSION={{{PROG_VERSION}}}
-PID_FILE="$PROG_HOME"/.pid
-OUT_FILE="$PROG_HOME"/.console
-CLASSPATH_SUFFIX=":"
-CONF_FOLDER=${PROG_HOME}/conf
 
-if [ "${EXECUTION_ENV}" = "" ]; then
-    LOG_CONFIG_FILE=${CONF_FOLDER}/logback.xml
-    JVM_OPTS_FILE=${CONF_FOLDER}/.jvm-opts
-else
-    LOG_CONFIG_FILE=${CONF_FOLDER}/logback.${EXECUTION_ENV}.xml
-    JVM_OPTS_FILE=${CONF_FOLDER}/.jvm-opts.${EXECUTION_ENV}
-fi
-
-JVM_OPTS="$(<$JVM_OPTS_FILE)"
-CLASSPATH="{{{EXTRA_CLASSPATH}}}${CONF_FOLDER}${CLASSPATH_SUFFIX}${PROG_HOME}/lib/*${CLASSPATH_SUFFIX}"
-APPLICATION_PROPS="-Dapplication.home=${PROG_HOME} -Dapplication.executionEnv=${EXECUTION_ENV} -Dprog.version=${PROG_VERSION} -Dprog.name=${PROG_NAME} -Dlogback.configurationFile=${LOG_CONFIG_FILE}"
-MAIN_CLASS={{{MAIN_CLASS}}}
-JAVA_DAEMON="$JVM_OPTS -cp $CLASSPATH $APPLICATION_PROPS $MAIN_CLASS"
-
-
-### functions
-do_start() {
-  getServicePid
-  if [ $? -eq 0 ]; then echo -n "$PROG_NAME is already running"; RETVAL=1; echo ""; return 1; fi
-  echo " ...Starting $PROG_NAME"
-
-  $SHELL -c "nohup java $JAVA_DAEMON >>$OUT_FILE 2>&1 & echo \$! >$PID_FILE"
-
-  pid="$(<$PID_FILE)"
-  checkProcessIsRunning $pid
-  RETVAL=$?
-}
-
-do_stop() {
-  echo " ...Stopping $PROG_NAME"
-  kill -15 $(cat $PID_FILE)
-  if [ $? -ne 0 ]; then
-    echo -n "$PROG_NAME could not be stopped";
-    RETVAL=1;
-  else
-    RETVAL=0;
-  fi
-  rm -f $PID_FILE
-  rm -f $OUT_FILE
-  echo ""
-}
-
-do_status() {
-  checkServiceStatus
-}
-
-# Returns 0 if the process with PID $1 is running.
-function checkProcessIsRunning {
-   local pid="$1"
-   if [ -z "$pid" -o "$pid" == " " ]; then return 1; fi
-   if [ ! -e /proc/$pid ]; then return 1; fi
-   return 0;
-}
-
-# Returns 0 when the service is running and sets the variable $pid to the PID.
-function getServicePid {
-  if [ ! -f $PID_FILE ]; then return 1; fi
-  pid="$(<$PID_FILE)"
-  checkProcessIsRunning $pid || return 1
-  # don't know if we have to check that:
-  # checkProcessIsOurService $pid || return 1
-  return 0;
-}
-
-function checkServiceStatus {
-  echo -n "Checking for $PROG_NAME: "
-  if getServicePid; then
-    echo "running PID=$pid"
-    RETVAL=0
-  else
-    echo "stopped"
-    RETVAL=3
-  fi
-  return 0;
-}
-
-
-RETVAL=0
-
-if [ $# -ne 0 ]; then
-  for i in $*
-  do
-    case $i in
-	    start) do_start; exit $RETVAL;;
-	    stop) do_stop; exit $RETVAL;;
-	    status) do_status; exit $RETVAL;;
-	    *) echo $USAGE; exit 1;;
-    esac
-    exit $RETVAL
-  done
-else
-  echo $USAGE; exit 1
-fi
+exec "$JAVACMD" \
+     ${JVM_OPT} \
+     {{{JVM_OPTS}}} \
+     -cp "{{{EXTRA_CLASSPATH}}}${PROG_HOME}/lib/*${CLASSPATH_SUFFIX}" \
+     -Dprog.home="${PROG_HOME}" \
+     -Dprog.version="${PROG_VERSION}" \
+     {{{MAIN_CLASS}}} "$@"

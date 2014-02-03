@@ -42,6 +42,11 @@ object Pack extends sbt.Plugin {
 
   val pack = taskKey[File]("create a distributable package of the project")
   val packDir = settingKey[String]("pack-dir")
+  
+  val packBashTemplate = settingKey[String]("template file for bash scripts - defaults to pack's out-of-the-box template for bash")
+  val packBatTemplate = settingKey[String]("template file for bash scripts - defaults to pack's out-of-the-box template for bat")
+  val packMakeTemplate = settingKey[String]("template file for bash scripts - defaults to pack's out-of-the-box template for make")
+
   val packUpdateReports = taskKey[Seq[sbt.UpdateReport]]("only for retrieving dependent module names")
   val packArchive = TaskKey[File]("pack-archive", "create a tar.gz archive of the distributable package")
   val packArchiveArtifact = SettingKey[Artifact]("tar.gz archive artifact")
@@ -63,6 +68,9 @@ object Pack extends sbt.Plugin {
   
   lazy val packSettings = Seq[Def.Setting[_]](
     packDir := "pack",
+    packBashTemplate := "/xerial/sbt/template/launch.mustache",
+    packBatTemplate := "/xerial/sbt/template/launch-bat.mustache",
+    packMakeTemplate := "/xerial/sbt/template/Makefile.mustache",
     packMain := Map.empty,
     packExclude := Seq.empty,
     packMacIconFile := "icon-mac.png",
@@ -153,7 +161,7 @@ object Pack extends sbt.Plugin {
           "MAC_ICON_FILE" -> packMacIconFile.value,
           "JVM_OPTS" -> packJvmOpts.value.getOrElse(name, Nil).map("\"%s\"".format(_)).mkString(" "),
           "EXTRA_CLASSPATH" -> extraClasspath(pathSeparator))
-        val launchScript = engine.layout("/xerial/sbt/template/launch.mustache", m)
+        val launchScript = engine.layout(packBashTemplate.value, m)
         val progName = m("PROG_NAME").replaceAll(" ", "") // remove white spaces
         write(s"bin/$progName", launchScript)
 
@@ -161,7 +169,7 @@ object Pack extends sbt.Plugin {
         if(packGenerateWindowsBatFile.value) {
           val extraPath = extraClasspath("%PSEP%").replaceAll("""\$\{PROG_HOME\}""", "%PROG_HOME%").replaceAll("/", """\\""")
           val propForWin : Map[String, Any] = m + ("EXTRA_CLASSPATH" -> extraPath)
-          val batScript = engine.layout("/xerial/sbt/template/launch-bat.mustache", propForWin)
+          val batScript = engine.layout(packBatTemplate.value, propForWin)
           write(s"bin/${progName}.bat", batScript)
         }
       }
@@ -179,7 +187,7 @@ object Pack extends sbt.Plugin {
         val additionalScripts = (Option(binScriptsDir.listFiles) getOrElse Array.empty).map(_.getName)
         val symlink = (mainTable.keys ++ additionalScripts).map(linkToScript).mkString("\n")
         val globalVar = Map("PROG_NAME" -> name.value, "PROG_SYMLINK" -> symlink)
-        engine.layout("/xerial/sbt/template/Makefile.mustache", globalVar)
+        engine.layout(packMakeTemplate.value, globalVar)
       }
       write("Makefile", makefile)
 
