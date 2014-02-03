@@ -1,4 +1,7 @@
 ### Release Notes
+- February 4th, 2014 - 0.4.1 release
+  - Fix unintentional source/javadoc-jar inclusion
+  - Allow to use custome launch script templates. You can set your template file paths in the following settings: packBashTemplate, packBatTemplate, packMakeTemplate
 - January 3rd, 2014 - 0.4.0 release
   - Add .bat file generation
 - November 12, 2013 - 0.3.6 release
