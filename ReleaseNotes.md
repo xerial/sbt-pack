@@ -1,4 +1,6 @@
 ### Release Notes
+- February 7th, 2014 - 0.4.2 release
+  - Fix test case (no change from 0.4.1)
 - February 4th, 2014 - 0.4.1 release
   - Fix unintentional source/javadoc-jar inclusion
   - Allow to use custome launch script templates. You can set your template file paths in the following settings: packBashTemplate, packBatTemplate, packMakeTemplate
