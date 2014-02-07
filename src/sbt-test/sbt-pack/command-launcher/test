@@ -1,5 +1,5 @@
 > pack
 $ exec sh ./target/pack/bin/launcher
 $ exists target/pack/lib/xerial-lens-3.2.1.jar
-$ exists target/pack/lib/xerial-lens-3.2.1-sources.jar
+
 
