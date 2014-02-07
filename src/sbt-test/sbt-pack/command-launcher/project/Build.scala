@@ -17,7 +17,7 @@ object Build extends sbt.Build {
         crossPaths := false,
         libraryDependencies ++= Seq(
           // include both jar and source.jar
-          "org.xerial" % "xerial-lens" % "3.2.1" jar() classifier("sources"),
+          "org.xerial" % "xerial-lens" % "3.2.1",
           "org.xerial" % "xerial-core" % "3.2.1"
         )
       )

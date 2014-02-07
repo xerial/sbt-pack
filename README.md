@@ -30,10 +30,12 @@ Add `sbt-pack` plugin to your sbt configuration:
 **project/plugins.sbt**
 
 ```scala
-addSbtPlugin("org.xerial.sbt" % "sbt-pack" % "0.4.0")  // for sbt-0.13.x or higher
+addSbtPlugin("org.xerial.sbt" % "sbt-pack" % "0.4.2")  // for sbt-0.13.x or higher
 
 addSbtPlugin("org.xerial.sbt" % "sbt-pack" % "0.2.5")  // for sbt-0.12.x (New features will not be supported in this version.)
 ```
+
+Repository URL: http://repo1.maven.org/maven2/org/xerial/sbt/
 
 #### Minimum configuration
 
@@ -73,8 +75,8 @@ object Build extends sbt.Build {
         packJvmOpts := Map("hello" -> Seq("-Xmx512m")),
         // [Optional] Extra class paths to look when launching a program
         packExtraClasspath := Map("hello" -> Seq("${PROG_HOME}/etc")), 
-        // [Optional] (if you do not need to genrate .bat file for Windows. The default value is true)
-        packGenerateWindowsBatFile := false
+        // [Optional] (Generate .bat files for Windows. The default value is true)
+        packGenerateWindowsBatFile := true
       ) 
     // To publish tar.gz archive to the repository, add the following line (since 0.3.6)
     // ++ publishPackArchive  
