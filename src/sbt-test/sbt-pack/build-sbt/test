@@ -1,4 +1,5 @@
 > pack
 $ exists target/pack/bin/hello
+$ exists target/pack/bin/myscript
 $ exec sh ./target/pack/bin/hello
 
