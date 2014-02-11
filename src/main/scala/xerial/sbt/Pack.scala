@@ -74,7 +74,7 @@ object Pack extends sbt.Plugin {
     packMain := Map.empty,
     packExclude := Seq.empty,
     packMacIconFile := "icon-mac.png",
-    packResourceDir := Seq.empty,
+    packResourceDir := Seq(DEFAULT_RESOURCE_DIRECTORY),
     packJvmOpts := Map.empty,
     packExtraClasspath := Map.empty,
     packAllClasspaths <<= (thisProjectRef, buildStructure) flatMap getFromAllProjects(dependencyClasspath.task in Runtime),
@@ -184,8 +184,8 @@ object Pack extends sbt.Plugin {
       }
 
       // Copy resources in src/pack folder
-      val binScriptsDir = base / DEFAULT_RESOURCE_DIRECTORY / "bin"
-      val otherResourceDirs = Seq(binScriptsDir) ++ packResourceDir.value.map( dir => base / dir )
+      val otherResourceDirs = packResourceDir.value.map( dir => base / dir )
+      val binScriptsDir = otherResourceDirs.map(_ / "bin").filter(_.exists)
       out.log.info(s"packed resource directories = ${otherResourceDirs.mkString(",")}")
 
       def linkToScript(name: String) =
@@ -193,7 +193,7 @@ object Pack extends sbt.Plugin {
 
       // Create Makefile
       val makefile = {
-        val additionalScripts = (Option(binScriptsDir.listFiles) getOrElse Array.empty).map(_.getName)
+        val additionalScripts = binScriptsDir.flatMap(_.listFiles).map(_.getName)
         val symlink = (mainTable.keys ++ additionalScripts).map(linkToScript).mkString("\n")
         val globalVar = Map("PROG_NAME" -> name.value, "PROG_SYMLINK" -> symlink)
         engine.layout(packMakeTemplate.value, globalVar)
