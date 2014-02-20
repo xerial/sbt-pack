@@ -1,0 +1,4 @@
+> pack
+$ exists target/pack/lib/org.xerial.xerial-core.jar
+
+
