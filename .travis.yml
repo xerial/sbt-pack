@@ -7,4 +7,5 @@ script: sbt ++$TRAVIS_SCALA_VERSION scripted
 branches:
   only:
     - develop
+    - /^release\/.*$/
     - feature/sbt-0.12.x

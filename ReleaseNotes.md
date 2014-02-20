@@ -1,4 +1,9 @@
 ### Release Notes
+- February 21st, 2014 - 0.5.0 release
+  - Deprecated packPreserveOriginalJarName setting
+  - Instead, introduced packJarNameConvention 
+- February 11th, 2014 - 0.4.3 release
+  - Fixes #23
 - February 7th, 2014 - 0.4.2 release
   - Fix test case (no change from 0.4.1)
 - February 4th, 2014 - 0.4.1 release
