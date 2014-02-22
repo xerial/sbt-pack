@@ -66,6 +66,7 @@ object Pack extends sbt.Plugin {
   val packAllUnmanagedJars = taskKey[Seq[Classpath]]("all unmanaged jar files")
   val packJvmOpts = SettingKey[Map[String, Seq[String]]]("pack-jvm-opts")
   val packExtraClasspath = SettingKey[Map[String, Seq[String]]]("pack-extra-classpath")
+  val packExpandedClasspath = settingKey[Boolean]("Expands the wildcard classpath in launch scripts to point at specific libraries")
   val packJarNameConvention = SettingKey[String]("pack-jarname-convention", "default: (artifact name)-(version).jar; original: original JAR name; full: (organization).(artifact name)-(version).jar; no-version: (organization).(artifact name).jar")
 
   val DEFAULT_RESOURCE_DIRECTORY = "src/pack"
@@ -81,6 +82,7 @@ object Pack extends sbt.Plugin {
     packResourceDir := Seq(DEFAULT_RESOURCE_DIRECTORY),
     packJvmOpts := Map.empty,
     packExtraClasspath := Map.empty,
+    packExpandedClasspath := false,
     packAllClasspaths <<= (thisProjectRef, buildStructure) flatMap getFromAllProjects(dependencyClasspath.task in Runtime),
     packAllUnmanagedJars <<= (thisProjectRef, buildStructure, packExclude) flatMap getFromSelectedProjects(unmanagedJars.task in Compile),
     packLibJars <<= (thisProjectRef, buildStructure, packExclude) flatMap getFromSelectedProjects(packageBin.task in Runtime),
@@ -119,14 +121,18 @@ object Pack extends sbt.Plugin {
       libs.foreach(l => IO.copyFile(l, libDir / l.getName))
 
       // Copy dependent jars
-      out.log.info("project dependencies:\n" + dependentJars.keys.mkString("\n"))
-      for ((m, f) <- dependentJars) {
-        val targetFileName = packJarNameConvention.value match {
+      def resolveJarName(m: ModuleEntry, convention: String) = {
+        convention match {
           case "original" => m.originalFileName
           case "full" => m.fullJarName
           case "no-version" => m.noVersionJarName
           case _ => m.jarName
         }
+      }
+
+      out.log.info("project dependencies:\n" + dependentJars.keys.mkString("\n"))
+      for ((m, f) <- dependentJars) {
+        val targetFileName = resolveJarName(m, packJarNameConvention.value)
         IO.copyFile(f, libDir / targetFileName, true)
       }
 
@@ -172,6 +178,8 @@ object Pack extends sbt.Plugin {
       for ((name, mainClass) <- mainTable) {
         out.log.info("main class for %s: %s".format(name, mainClass))
         def extraClasspath(sep:String) : String = packExtraClasspath.value.get(name).map(_.mkString("", sep, sep)).getOrElse("")
+        def expandedClasspath(sep: String): String = dependentJars.keys.map("${PROG_HOME}/lib/" + resolveJarName(_, packJarNameConvention.value)).mkString("", sep, sep)
+        val expandedClasspathM = if (packExpandedClasspath.value) Map("EXPANDED_CLASSPATH" -> expandedClasspath(pathSeparator)) else Map()
         val m = Map(
           "PROG_NAME" -> name,
           "PROG_VERSION" -> progVersion,
@@ -179,14 +187,15 @@ object Pack extends sbt.Plugin {
           "MAC_ICON_FILE" -> packMacIconFile.value,
           "JVM_OPTS" -> packJvmOpts.value.getOrElse(name, Nil).map("\"%s\"".format(_)).mkString(" "),
           "EXTRA_CLASSPATH" -> extraClasspath(pathSeparator))
-        val launchScript = engine.layout(packBashTemplate.value, m)
+        val launchScript = engine.layout(packBashTemplate.value, m ++ expandedClasspathM)
         val progName = m("PROG_NAME").replaceAll(" ", "") // remove white spaces
         write(s"bin/$progName", launchScript)
 
         // Create BAT file
         if(packGenerateWindowsBatFile.value) {
           val extraPath = extraClasspath("%PSEP%").replaceAll("""\$\{PROG_HOME\}""", "%PROG_HOME%").replaceAll("/", """\\""")
-          val propForWin : Map[String, Any] = m + ("EXTRA_CLASSPATH" -> extraPath)
+          val expandedClasspathM = if (packExpandedClasspath.value) Map("EXPANDED_CLASSPATH" -> expandedClasspath("%PSEP%").replaceAll("""\$\{PROG_HOME\}""", "%PROG_HOME%").replaceAll("/", """\\""")) else Map()
+          val propForWin : Map[String, Any] = m + ("EXTRA_CLASSPATH" -> extraPath) ++ expandedClasspathM
           val batScript = engine.layout(packBatTemplate.value, propForWin)
           write(s"bin/${progName}.bat", batScript)
         }
