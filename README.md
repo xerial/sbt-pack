@@ -82,7 +82,9 @@ object Build extends sbt.Build {
 	//   "full"      (organization name).(project name)-(version).jar
 	//   "no-version" (organization name).(project name).jar
 	//   "original"  (Preserve original jar file names)
-	packJarNameConvention := "default"
+	packJarNameConvention := "default",
+	// [Optional] List full class paths in the lanch scripts (default is false) (since 0.5.1)
+	packExpandedClasspath := false
       ) 
     // To publish tar.gz archive to the repository, add the following line (since 0.3.6)
     // ++ publishPackArchive  
