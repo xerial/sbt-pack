@@ -178,7 +178,12 @@ object Pack extends sbt.Plugin {
       for ((name, mainClass) <- mainTable) {
         out.log.info("main class for %s: %s".format(name, mainClass))
         def extraClasspath(sep:String) : String = packExtraClasspath.value.get(name).map(_.mkString("", sep, sep)).getOrElse("")
-        def expandedClasspath(sep: String): String = dependentJars.keys.map("${PROG_HOME}/lib/" + resolveJarName(_, packJarNameConvention.value)).mkString("", sep, sep)
+        def expandedClasspath(sep: String): String = {
+          val projJars = libs.map(l => "${PROG_HOME}/lib/" + l.getName)
+          val depJars = dependentJars.keys.map("${PROG_HOME}/lib/" + resolveJarName(_, packJarNameConvention.value))
+          val unmanagedJars = for (m <- packAllUnmanagedJars.value; um <- m; f = um.data) yield "${PROG_HOME}/lib/" + f.getName
+          (projJars ++ depJars ++ unmanagedJars).mkString("", sep, sep)
+        }
         val expandedClasspathM = if (packExpandedClasspath.value) Map("EXPANDED_CLASSPATH" -> expandedClasspath(pathSeparator)) else Map()
         val m = Map(
           "PROG_NAME" -> name,
