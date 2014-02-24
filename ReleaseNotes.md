@@ -1,4 +1,6 @@
 ### Release Notes
+- February 24th, 2014 - 0.5.1 release
+  - Added packExpandedClasspath option
 - February 21st, 2014 - 0.5.0 release
   - Deprecated packPreserveOriginalJarName setting
   - Instead, introduced packJarNameConvention 
