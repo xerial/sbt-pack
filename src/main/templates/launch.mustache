@@ -134,7 +134,12 @@ PROG_VERSION={{{PROG_VERSION}}}
 exec "$JAVACMD" \
      ${JVM_OPT} \
      {{{JVM_OPTS}}} \
+     {{^EXPANDED_CLASSPATH}}
      -cp "{{{EXTRA_CLASSPATH}}}${PROG_HOME}/lib/*${CLASSPATH_SUFFIX}" \
+     {{/EXPANDED_CLASSPATH}}
+     {{#EXPANDED_CLASSPATH}}
+     -cp "{{{EXTRA_CLASSPATH}}}{{{EXPANDED_CLASSPATH}}}${CLASSPATH_SUFFIX}" \
+     {{/EXPANDED_CLASSPATH}}
      -Dprog.home="${PROG_HOME}" \
      -Dprog.version="${PROG_VERSION}" \
      {{{MAIN_CLASS}}} "$@"
