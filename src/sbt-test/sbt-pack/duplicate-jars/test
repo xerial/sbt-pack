@@ -1,0 +1,5 @@
+> 'set version := "0.1"'
+> pack
+$ exists target/pack/lib/scala-library-2.10.3.jar
+$ absent target/pack/lib/slf4j-api-1.7.2.jar
+$ exists target/pack/lib/slf4j-api-1.7.6.jar

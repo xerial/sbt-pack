@@ -9,9 +9,7 @@ package xerial.sbt
 
 import sbt._
 import org.fusesource.scalate.TemplateEngine
-import classpath.ClasspathUtilities
 import Keys._
-import java.io.ByteArrayOutputStream
 import java.io.BufferedInputStream
 import java.io.BufferedOutputStream
 import java.io.FileInputStream
@@ -21,6 +19,7 @@ import java.util.zip.Deflater
 import java.util.zip.GZIPOutputStream
 import org.kamranzafar.jtar.TarOutputStream
 import org.kamranzafar.jtar.TarEntry
+import scala.collection.mutable
 
 /**
  * Plugin for packaging projects
@@ -28,7 +27,12 @@ import org.kamranzafar.jtar.TarEntry
  */
 object Pack extends sbt.Plugin {
 
-  private case class ModuleEntry(org: String, name: String, revision: String, classifier: Option[String], originalFileName: String) {
+  private case class ModuleEntry(org: String,
+                                 name: String,
+                                 revision: String,
+                                 classifier: Option[String],
+                                 originalFileName: String,
+                                 projectRef: ProjectRef) {
     private def classifierSuffix = classifier.map("-" + _).getOrElse("")
 
     override def toString = "%s:%s:%s%s".format(org, name, revision, classifierSuffix)
@@ -51,23 +55,24 @@ object Pack extends sbt.Plugin {
   val packBatTemplate = settingKey[String]("template file for bash scripts - defaults to pack's out-of-the-box template for bat")
   val packMakeTemplate = settingKey[String]("template file for bash scripts - defaults to pack's out-of-the-box template for make")
 
-  val packUpdateReports = taskKey[Seq[sbt.UpdateReport]]("only for retrieving dependent module names")
+  val packUpdateReports = taskKey[Seq[(sbt.UpdateReport, ProjectRef)]]("only for retrieving dependent module names")
   val packArchive = TaskKey[File]("pack-archive", "create a tar.gz archive of the distributable package")
   val packArchiveArtifact = SettingKey[Artifact]("tar.gz archive artifact")
   val packArchivePrefix = SettingKey[String]("prefix of (prefix)-(version).tar.gz archive file name")
   val packMain = settingKey[Map[String, String]]("prog_name -> main class table")
   val packExclude = SettingKey[Seq[String]]("pack-exclude", "specify projects to exclude when packaging")
-  val packAllClasspaths = TaskKey[Seq[Classpath]]("pack-all-classpaths")
-  val packLibJars = TaskKey[Seq[File]]("pack-lib-jars")
+  val packAllClasspaths = TaskKey[Seq[(Classpath, ProjectRef)]]("pack-all-classpaths")
+  val packLibJars = TaskKey[Seq[(File, ProjectRef)]]("pack-lib-jars")
   val packGenerateWindowsBatFile = settingKey[Boolean]("Generate BAT file launch scripts for Windows")
 
   val packMacIconFile = SettingKey[String]("pack-mac-icon-file", "icon file name for Mac")
   val packResourceDir = SettingKey[Seq[String]](s"pack-resource-dir", "pack resource directory. default = Seq($DEFAULT_RESOURCE_DIRECTORY)")
-  val packAllUnmanagedJars = taskKey[Seq[Classpath]]("all unmanaged jar files")
+  val packAllUnmanagedJars = taskKey[Seq[(Classpath, ProjectRef)]]("all unmanaged jar files")
   val packJvmOpts = SettingKey[Map[String, Seq[String]]]("pack-jvm-opts")
   val packExtraClasspath = SettingKey[Map[String, Seq[String]]]("pack-extra-classpath")
   val packExpandedClasspath = settingKey[Boolean]("Expands the wildcard classpath in launch scripts to point at specific libraries")
   val packJarNameConvention = SettingKey[String]("pack-jarname-convention", "default: (artifact name)-(version).jar; original: original JAR name; full: (organization).(artifact name)-(version).jar; no-version: (organization).(artifact name).jar")
+  val packDuplicateJarStrategy = SettingKey[String]("deal with duplicate jars. default to use latest version", "latest: use the jar with a higher version; exit: exit the task with error")
 
   val DEFAULT_RESOURCE_DIRECTORY = "src/pack"
 
@@ -83,23 +88,24 @@ object Pack extends sbt.Plugin {
     packJvmOpts := Map.empty,
     packExtraClasspath := Map.empty,
     packExpandedClasspath := false,
-    packAllClasspaths <<= (thisProjectRef, buildStructure) flatMap getFromAllProjects(dependencyClasspath.task in Runtime),
-    packAllUnmanagedJars <<= (thisProjectRef, buildStructure, packExclude) flatMap getFromSelectedProjects(unmanagedJars.task in Compile),
-    packLibJars <<= (thisProjectRef, buildStructure, packExclude) flatMap getFromSelectedProjects(packageBin.task in Runtime),
-    packUpdateReports <<= (thisProjectRef, buildStructure, packExclude) flatMap getFromSelectedProjects(update.task),
+    packAllClasspaths <<= (thisProjectRef, buildStructure) flatMap getFromAllProjects(dependencyClasspath in Runtime),
+    packAllUnmanagedJars <<= (thisProjectRef, buildStructure, packExclude) flatMap getFromSelectedProjects(unmanagedJars in Compile),
+    packLibJars <<= (thisProjectRef, buildStructure, packExclude) flatMap getFromSelectedProjects(packageBin in Runtime),
+    packUpdateReports <<= (thisProjectRef, buildStructure, packExclude) flatMap getFromSelectedProjects(update),
     packJarNameConvention := "default",
+    packDuplicateJarStrategy := "latest",
     packGenerateWindowsBatFile := true,
     (mappings in pack) := Seq.empty,
     pack := {
       val dependentJars = collection.immutable.SortedMap.empty[ModuleEntry, File] ++ (
         for {
-          r: sbt.UpdateReport <- packUpdateReports.value
+          (r: sbt.UpdateReport, projectRef) <- packUpdateReports.value
           c <- r.configurations if c.configuration == "runtime"
           m <- c.modules
           (artifact, file) <- m.artifacts if DependencyFilter.allPass(c.configuration, m.module, artifact)}
         yield {
           val mid = m.module
-          val me = ModuleEntry(mid.organization, mid.name, mid.revision, artifact.classifier, file.getName)
+          val me = ModuleEntry(mid.organization, mid.name, mid.revision, artifact.classifier, file.getName, projectRef)
           me -> file
         }).filter(tuple => tuple._1.classifier == None)
 
@@ -116,9 +122,31 @@ object Pack extends sbt.Plugin {
       // Copy project jars
       val base: File = baseDirectory.value
       out.log.info("Copying libraries to " + rpath(base, libDir))
-      val libs: Seq[File] = packLibJars.value
+      val libs: Seq[File] = packLibJars.value.map(_._1)
       out.log.info("project jars:\n" + libs.map(path => rpath(base, path)).mkString("\n"))
       libs.foreach(l => IO.copyFile(l, libDir / l.getName))
+
+      // check duplicate jars
+      val distinctDpJars = dependentJars.foldLeft(mutable.HashMap.empty[String, (ModuleEntry, File)])((result, jar) => {
+        val key = jar._1.noVersionJarName
+        if (result.contains(key)) {
+          val old = result(key)
+          val oldVersion = old._1.revision
+          val newVersion = jar._1.revision
+          if (oldVersion != newVersion) {
+            if (packDuplicateJarStrategy.value == "exit")
+              sys.error(s"Version conflict on ${key}: [${old._1.projectRef.project}] using $oldVersion V.S. [${jar._1.projectRef.project}] using $newVersion")
+
+            out.log.warn(s"Version conflict on ${key}: [${old._1.projectRef.project}] using $oldVersion V.S. [${jar._1.projectRef.project}] using $newVersion")
+            val latest = if (oldVersion > newVersion) old else jar
+            out.log.warn(s"\tUsing the latest version ${latest._1.fullJarName}")
+            result += (key -> latest)
+          }
+        }else {
+          result += (key -> jar)
+        }
+        result
+      }).map(_._2).toMap
 
       // Copy dependent jars
       def resolveJarName(m: ModuleEntry, convention: String) = {
@@ -130,15 +158,15 @@ object Pack extends sbt.Plugin {
         }
       }
 
-      out.log.info("project dependencies:\n" + dependentJars.keys.mkString("\n"))
-      for ((m, f) <- dependentJars) {
+      out.log.info("project dependencies:\n" + distinctDpJars.keys.mkString("\n"))
+      for ((m, f) <- distinctDpJars) {
         val targetFileName = resolveJarName(m, packJarNameConvention.value)
         IO.copyFile(f, libDir / targetFileName, true)
       }
 
       // Copy unmanaged jars in ${baseDir}/lib folder
       out.log.info("unmanaged dependencies:")
-      for (m <- packAllUnmanagedJars.value; um <- m; f = um.data) {
+      for ((m, projectRef) <- packAllUnmanagedJars.value; um <- m; f = um.data) {
         out.log.info(f.getPath)
         IO.copyFile(f, libDir / f.getName, true)
       }
@@ -180,8 +208,8 @@ object Pack extends sbt.Plugin {
         def extraClasspath(sep:String) : String = packExtraClasspath.value.get(name).map(_.mkString("", sep, sep)).getOrElse("")
         def expandedClasspath(sep: String): String = {
           val projJars = libs.map(l => "${PROG_HOME}/lib/" + l.getName)
-          val depJars = dependentJars.keys.map("${PROG_HOME}/lib/" + resolveJarName(_, packJarNameConvention.value))
-          val unmanagedJars = for (m <- packAllUnmanagedJars.value; um <- m; f = um.data) yield "${PROG_HOME}/lib/" + f.getName
+          val depJars = distinctDpJars.keys.map("${PROG_HOME}/lib/" + resolveJarName(_, packJarNameConvention.value))
+          val unmanagedJars = for ((m, projectRef) <- packAllUnmanagedJars.value; um <- m; f = um.data) yield "${PROG_HOME}/lib/" + f.getName
           (projJars ++ depJars ++ unmanagedJars).mkString("", sep, sep)
         }
         val expandedClasspathM = if (packExpandedClasspath.value) Map("EXPANDED_CLASSPATH" -> expandedClasspath(pathSeparator)) else Map()
@@ -292,11 +320,11 @@ object Pack extends sbt.Plugin {
   }
 
 
-  private def getFromAllProjects[T](targetTask: SettingKey[Task[T]])(currentProject: ProjectRef, structure: BuildStructure): Task[Seq[T]] =
+  private def getFromAllProjects[T](targetTask: TaskKey[T])(currentProject: ProjectRef, structure: BuildStructure): Task[Seq[(T, ProjectRef)]] =
     getFromSelectedProjects(targetTask)(currentProject, structure, Seq.empty)
 
 
-  private def getFromSelectedProjects[T](targetTask: SettingKey[Task[T]])(currentProject: ProjectRef, structure: BuildStructure, exclude: Seq[String]): Task[Seq[T]] = {
+  private def getFromSelectedProjects[T](targetTask: TaskKey[T])(currentProject: ProjectRef, structure: BuildStructure, exclude: Seq[String]): Task[Seq[(T, ProjectRef)]] = {
     def allProjectRefs(currentProject: ProjectRef): Seq[ProjectRef] = {
       def isExcluded(p: ProjectRef) = exclude.contains(p.project)
       val children = Project.getProject(currentProject, structure).toSeq.flatMap {
@@ -308,7 +336,7 @@ object Pack extends sbt.Plugin {
     }
 
     val projects: Seq[ProjectRef] = allProjectRefs(currentProject).distinct
-    projects.flatMap(p => targetTask in p get structure.data).join
+    projects.map(p => (Def.task {((targetTask in p).value, p)}) evaluate structure.data).join
   }
 
 
