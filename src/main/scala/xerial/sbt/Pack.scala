@@ -344,7 +344,7 @@ object Pack extends sbt.Plugin {
 
   private[this] def templateSourceFromCanonicalPath(path: String)(implicit engine: TemplateEngine) = {
     val file = new File(path).getCanonicalFile
-    require(file.exists(), "script template file (mustache) not found")
+    require(file.exists(), s"script template file (${file.getPath}}) not found")
     engine.load(file).source
   }
 
