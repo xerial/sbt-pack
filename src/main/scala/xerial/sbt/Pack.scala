@@ -220,7 +220,7 @@ object Pack extends sbt.Plugin {
           "MAC_ICON_FILE" -> packMacIconFile.value,
           "JVM_OPTS" -> packJvmOpts.value.getOrElse(name, Nil).map("\"%s\"".format(_)).mkString(" "),
           "EXTRA_CLASSPATH" -> extraClasspath(pathSeparator))
-        val launchScript = engine.layout(templateSourceFromCanonicalPath(packBashTemplate.value), m ++ expandedClasspathM)
+        val launchScript = engine.layout(templateSourceFromCanonicalPath(packBashTemplate.value, base), m ++ expandedClasspathM)
         val progName = m("PROG_NAME").replaceAll(" ", "") // remove white spaces
         write(s"bin/$progName", launchScript)
 
@@ -229,7 +229,7 @@ object Pack extends sbt.Plugin {
           val extraPath = extraClasspath("%PSEP%").replaceAll("""\$\{PROG_HOME\}""", "%PROG_HOME%").replaceAll("/", """\\""")
           val expandedClasspathM = if (packExpandedClasspath.value) Map("EXPANDED_CLASSPATH" -> expandedClasspath("%PSEP%").replaceAll("""\$\{PROG_HOME\}""", "%PROG_HOME%").replaceAll("/", """\\""")) else Map()
           val propForWin : Map[String, Any] = m + ("EXTRA_CLASSPATH" -> extraPath) ++ expandedClasspathM
-          val batScript = engine.layout(templateSourceFromCanonicalPath(packBatTemplate.value), propForWin)
+          val batScript = engine.layout(templateSourceFromCanonicalPath(packBatTemplate.value, base), propForWin)
           write(s"bin/${progName}.bat", batScript)
         }
       }
@@ -342,9 +342,9 @@ object Pack extends sbt.Plugin {
 
   private def rpath(base: File, f: RichFile) = f.relativeTo(base).getOrElse(f).toString
 
-  private[this] def templateSourceFromCanonicalPath(path: String)(implicit engine: TemplateEngine) = {
-    val file = new File(path).getCanonicalFile
-    require(file.exists(), s"script template file (${file.getPath}}) not found")
+  private[this] def templateSourceFromCanonicalPath(path: String, baseDir: File)(implicit engine: TemplateEngine) = {
+    val file = (baseDir / path).getCanonicalFile
+    require(file.exists(), s"script template file (${file.getPath}) not found")
     engine.load(file).source
   }
 
