@@ -1,4 +1,6 @@
 ### Release Notes
+- July 14th, 2014 - 0.5.2 release
+  - Pack only runtime-scope dependencies from unmanaged jars 
 - February 24th, 2014 - 0.5.1 release
   - Added packExpandedClasspath option
 - February 21st, 2014 - 0.5.0 release
