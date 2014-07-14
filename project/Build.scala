@@ -20,6 +20,7 @@ import java.io.File
 import sbt._
 import Keys._
 import sbt.ScriptedPlugin._
+import net.virtualvoid.sbt.graph.Plugin._
 
 import sbtrelease.ReleasePlugin._
 
@@ -46,7 +47,7 @@ object PackBuild extends Build {
     }
   }
 
-  lazy val buildSettings = Defaults.defaultSettings ++ releaseSettings ++ scriptedSettings ++ scalateSettings ++ Seq[Setting[_]](
+  lazy val buildSettings = Defaults.coreDefaultSettings ++ releaseSettings ++ scriptedSettings ++ graphSettings ++ scalateSettings ++ Seq[Setting[_]](
     organization := "org.xerial.sbt",
     organizationName := "Xerial project",
     organizationHomepage := Some(new URL("http://xerial.org/")),
