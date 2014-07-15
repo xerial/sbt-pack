@@ -84,7 +84,9 @@ object Build extends sbt.Build {
         //   "original"  (Preserve original jar file names)
         packJarNameConvention := "default",
         // [Optional] List full class paths in the launch scripts (default is false) (since 0.5.1)
-        packExpandedClasspath := false
+        packExpandedClasspath := false,
+        // [Optional] Resource directroies to be copied to target/pack. Default is Seq("src/pack") 
+        packResourceDir += Seq("src/pack-extra")
       ) 
     // To publish tar.gz archive to the repository, add the following line (since 0.3.6)
     // ++ publishPackArchive  
