@@ -66,15 +66,13 @@ object Pack extends sbt.Plugin {
   val packGenerateWindowsBatFile = settingKey[Boolean]("Generate BAT file launch scripts for Windows")
 
   val packMacIconFile = SettingKey[String]("pack-mac-icon-file", "icon file name for Mac")
-  val packResourceDir = SettingKey[Seq[String]](s"pack-resource-dir", "pack resource directory. default = Seq($DEFAULT_RESOURCE_DIRECTORY)")
+  val packResourceDir = SettingKey[Map[File, String]](s"pack-resource-dir", "pack resource directory. default = Map({projectRoot}/src/pack -> \"\")")
   val packAllUnmanagedJars = taskKey[Seq[(Classpath, ProjectRef)]]("all unmanaged jar files")
   val packJvmOpts = SettingKey[Map[String, Seq[String]]]("pack-jvm-opts")
   val packExtraClasspath = SettingKey[Map[String, Seq[String]]]("pack-extra-classpath")
   val packExpandedClasspath = settingKey[Boolean]("Expands the wildcard classpath in launch scripts to point at specific libraries")
   val packJarNameConvention = SettingKey[String]("pack-jarname-convention", "default: (artifact name)-(version).jar; original: original JAR name; full: (organization).(artifact name)-(version).jar; no-version: (organization).(artifact name).jar")
   val packDuplicateJarStrategy = SettingKey[String]("deal with duplicate jars. default to use latest version", "latest: use the jar with a higher version; exit: exit the task with error")
-
-  val DEFAULT_RESOURCE_DIRECTORY = "src/pack"
 
   lazy val packSettings = Seq[Def.Setting[_]](
     packDir := "pack",
@@ -84,7 +82,7 @@ object Pack extends sbt.Plugin {
     packMain := Map.empty,
     packExclude := Seq.empty,
     packMacIconFile := "icon-mac.png",
-    packResourceDir := Seq(DEFAULT_RESOURCE_DIRECTORY),
+    packResourceDir := Map(baseDirectory.value / "src/pack" -> ""),
     packJvmOpts := Map.empty,
     packExtraClasspath := Map.empty,
     packExpandedClasspath := false,
@@ -234,10 +232,10 @@ object Pack extends sbt.Plugin {
         }
       }
 
-      // Copy resources in src/pack folder
-      val otherResourceDirs = packResourceDir.value.map( dir => base / dir )
-      val binScriptsDir = otherResourceDirs.map(_ / "bin").filter(_.exists)
-      out.log.info(s"packed resource directories = ${otherResourceDirs.mkString(",")}")
+      // Copy resources
+      val otherResourceDirs = packResourceDir.value
+      val binScriptsDir = otherResourceDirs.map(_._1 / "bin").filter(_.exists)
+      out.log.info(s"packed resource directories = ${otherResourceDirs.map(_._1).mkString(",")}")
 
       def linkToScript(name: String) =
         "\t" + """ln -sf "../$(PROG)/current/bin/%s" "$(PREFIX)/bin/%s"""".format(name, name)
@@ -256,7 +254,12 @@ object Pack extends sbt.Plugin {
 
       // Copy other scripts
       otherResourceDirs.foreach { otherResourceDir =>
-        IO.copyDirectory(otherResourceDir, distDir, overwrite=true, preserveLastModified=true)
+        val from = otherResourceDir._1
+        val to = otherResourceDir._2 match {
+          case "" => distDir
+          case p => distDir / p
+        }
+        IO.copyDirectory(from, to, overwrite=true, preserveLastModified=true)
       }
 
       // chmod +x the scripts in bin directory
