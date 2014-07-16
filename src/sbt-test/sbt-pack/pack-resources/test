@@ -1,0 +1,3 @@
+> 'set version := "0.1"'
+> pack
+$ exists target/pack/application.conf
