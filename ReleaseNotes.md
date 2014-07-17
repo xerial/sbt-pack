@@ -1,4 +1,6 @@
 ### Release Notes
+-July 18th, 2014 - 0.6.0 release
+  - Added resource mapping setting: `packResourceDir` Map[File, String]
 - July 14th, 2014 - 0.5.2 release
   - Pack only runtime-scope dependencies from unmanaged jars 
 - February 24th, 2014 - 0.5.1 release
