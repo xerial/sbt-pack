@@ -10,23 +10,13 @@ package xerial.sbt
 import sbt._
 import org.fusesource.scalate.TemplateEngine
 import Keys._
-import java.io.BufferedInputStream
-import java.io.BufferedOutputStream
-import java.io.FileInputStream
-import java.io.FileOutputStream
-import java.io.InputStream
-import java.util.zip.Deflater
-import java.util.zip.GZIPOutputStream
-import org.kamranzafar.jtar.TarOutputStream
-import org.kamranzafar.jtar.TarEntry
 import scala.collection.mutable
 
 /**
  * Plugin for packaging projects
  * @author Taro L. Saito
  */
-object Pack extends sbt.Plugin {
-
+object Pack extends sbt.Plugin with PackArchive {
   private case class ModuleEntry(org: String,
                                  name: String,
                                  revision: String,
@@ -56,9 +46,6 @@ object Pack extends sbt.Plugin {
   val packMakeTemplate = settingKey[String]("template file for bash scripts - defaults to pack's out-of-the-box template for make")
 
   val packUpdateReports = taskKey[Seq[(sbt.UpdateReport, ProjectRef)]]("only for retrieving dependent module names")
-  val packArchive = TaskKey[File]("pack-archive", "create a tar.gz archive of the distributable package")
-  val packArchiveArtifact = SettingKey[Artifact]("tar.gz archive artifact")
-  val packArchivePrefix = SettingKey[String]("prefix of (prefix)-(version).tar.gz archive file name")
   val packMain = settingKey[Map[String, String]]("prog_name -> main class table")
   val packExclude = SettingKey[Seq[String]]("pack-exclude", "specify projects to exclude when packaging")
   val packAllClasspaths = TaskKey[Seq[(Classpath, ProjectRef)]]("pack-all-classpaths")
@@ -267,60 +254,8 @@ object Pack extends sbt.Plugin {
 
       out.log.info("done.")
       distDir
-    },
-    packArchiveArtifact := Artifact(packArchivePrefix.value, "arch", "tar.gz"),
-    packArchivePrefix := name.value,
-    packArchive := {
-      val out = streams.value
-      val targetDir: File = target.value
-      val distDir: File = pack.value
-      val binDir = distDir / "bin"
-      val archiveStem = s"${packArchivePrefix.value}-${version.value}"
-      val archiveName = s"${archiveStem}.tar.gz"
-      out.log.info("Generating " + rpath(baseDirectory.value, targetDir / archiveName))
-      val tarfile = new TarOutputStream(new BufferedOutputStream(new GZIPOutputStream(new FileOutputStream(targetDir / archiveName)) {
-        `def`.setLevel(Deflater.BEST_COMPRESSION)
-      }))
-      def tarEntry(src: File, dst: String) {
-        val tarEntry = new TarEntry(src, dst)
-        tarEntry.setIds(0, 0)
-        tarEntry.setUserName("")
-        tarEntry.setGroupName("")
-        if (src.getAbsolutePath startsWith binDir.getAbsolutePath)
-          tarEntry.getHeader.mode = Integer.parseInt("0755", 8)
-        tarfile.putNextEntry(tarEntry)
-      }
-      tarEntry(new File("."), archiveStem)
-      val excludeFiles = Set("Makefile", "VERSION")
-      val buffer = Array.fill(1024 * 1024)(0: Byte)
-      def addFilesToTar(dir: File): Unit = dir.listFiles.
-        filterNot(f => excludeFiles.contains(rpath(distDir, f))).foreach {
-        file =>
-          tarEntry(file, archiveStem ++ "/" ++ rpath(distDir, file))
-          if (file.isDirectory) addFilesToTar(file)
-          else {
-            def copy(input: InputStream): Unit = input.read(buffer) match {
-              case length if length < 0 => input.close()
-              case length =>
-                tarfile.write(buffer, 0, length)
-                copy(input)
-            }
-            copy(new BufferedInputStream(new FileInputStream(file)))
-          }
-      }
-      addFilesToTar(distDir)
-      tarfile.close()
-
-      val archiveFile: File = target.value / archiveName
-      archiveFile
     }
-  )
-
-
-  def publishPackArchive : SettingsDefinition = {
-    val pkgd = packagedArtifacts := packagedArtifacts.value updated (packArchiveArtifact.value, packArchive.value)
-    Seq( artifacts += packArchiveArtifact.value, pkgd )
-  }
+  ) ++ packArchiveSettings
 
 
   private def getFromAllProjects[T](targetTask: TaskKey[T])(currentProject: ProjectRef, structure: BuildStructure): Task[Seq[(T, ProjectRef)]] =
@@ -341,10 +276,4 @@ object Pack extends sbt.Plugin {
     val projects: Seq[ProjectRef] = allProjectRefs(currentProject).distinct
     projects.map(p => (Def.task {((targetTask in p).value, p)}) evaluate structure.data).join
   }
-
-
-  private def rpath(base: File, f: RichFile) = f.relativeTo(base).getOrElse(f).toString
-
-
 }
-
