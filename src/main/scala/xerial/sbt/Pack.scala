@@ -224,9 +224,11 @@ object Pack extends sbt.Plugin {
 
         // Create BAT file
         if(packGenerateWindowsBatFile.value) {
-          val extraPath = extraClasspath("%PSEP%").replaceAll("""\$\{PROG_HOME\}""", "%PROG_HOME%").replaceAll("/", """\\""")
-          val expandedClasspathM = if (packExpandedClasspath.value) Map("EXPANDED_CLASSPATH" -> expandedClasspath("%PSEP%").replaceAll("""\$\{PROG_HOME\}""", "%PROG_HOME%").replaceAll("/", """\\""")) else Map()
-          val propForWin : Map[String, Any] = m + ("EXTRA_CLASSPATH" -> extraPath) ++ expandedClasspathM
+          def replaceProgHome(s:String) = s.replaceAll("""\$\{PROG_HOME\}""", "%PROG_HOME%")
+
+          val extraPath = extraClasspath("%PSEP%").replaceAll("/", """\\""")
+          val expandedClasspathM = if (packExpandedClasspath.value) Map("EXPANDED_CLASSPATH" -> expandedClasspath("%PSEP%").replaceAll("/", """\\""")) else Map()
+          val propForWin : Map[String, Any] = (m + ("EXTRA_CLASSPATH" -> extraPath) ++ expandedClasspathM).map{case (k, v) => k ->replaceProgHome(v)}.toMap
           val batScript = engine.layout(packBatTemplate.value, propForWin)
           write(s"bin/${progName}.bat", batScript)
         }
