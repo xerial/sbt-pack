@@ -5,18 +5,21 @@ import xerial.sbt.Pack._
 
 object Build extends sbt.Build {
 
-  val commonSettings = Defaults.defaultSettings ++ Seq(
-    scalaVersion := "2.10.3",
-    version := "0.1",
-    crossPaths := false
+  val commonSettings = Defaults.defaultSettings ++
+    // Add pack settings to common, so that packMain is available in subprojects' scope
+    packAutoSettings ++
+    Seq(
+      scalaVersion := "2.10.3",
+      version := "0.1",
+      crossPaths := false
   )
 
   lazy val root = Project(
     id = "duplicate-jars",
     base = file("."),
-    settings = commonSettings ++ packSettings ++
+    settings = commonSettings ++
       Seq(
-        packMain := Map("m1" -> "sample.Module1", "m2" -> "sample.Module2")
+        packMain := (packMain in module1).value ++ (packMain in module2).value
         // custom settings here
       )
   ) dependsOn(module1, module2)

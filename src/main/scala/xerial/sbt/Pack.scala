@@ -60,6 +60,7 @@ object Pack extends sbt.Plugin {
   val packArchiveArtifact = SettingKey[Artifact]("tar.gz archive artifact")
   val packArchivePrefix = SettingKey[String]("prefix of (prefix)-(version).tar.gz archive file name")
   val packMain = TaskKey[Map[String, String]]("prog_name -> main class table")
+  val packMainDiscovered = TaskKey[Map[String, String]]("discovered prog_name -> main class table")
   val packExclude = SettingKey[Seq[String]]("pack-exclude", "specify projects to exclude when packaging")
   val packAllClasspaths = TaskKey[Seq[(Classpath, ProjectRef)]]("pack-all-classpaths")
   val packLibJars = TaskKey[Seq[(File, ProjectRef)]]("pack-lib-jars")
@@ -80,6 +81,26 @@ object Pack extends sbt.Plugin {
     packBatTemplate := "/xerial/sbt/template/launch-bat.mustache",
     packMakeTemplate := "/xerial/sbt/template/Makefile.mustache",
     packMain := Map.empty,
+    packMainDiscovered := {
+      def pascalCaseSplit(s: List[Char]): List[String] =
+        if (s.isEmpty)
+          Nil
+        else if (!s.head.isUpper) {
+          val (w, tail) = s.span(!_.isUpper)
+          w.mkString :: pascalCaseSplit(tail)
+        } else if (s.tail.headOption.forall(!_.isUpper)) {
+          val (w, tail) = s.tail.span(!_.isUpper)
+          (s.head :: w).mkString :: pascalCaseSplit(tail)
+        } else {
+          val (w, tail) = s.span(_.isUpper)
+          w.init.mkString :: pascalCaseSplit(w.last :: tail)
+        }
+
+      def hyphenize(s: String): String =
+        pascalCaseSplit(s.toList).map(_.toLowerCase).mkString("-")
+
+      (discoveredMainClasses in Compile).value.map(mainClass => hyphenize(mainClass.split('.').last) -> mainClass).toMap
+    },
     packExclude := Seq.empty,
     packMacIconFile := "icon-mac.png",
     packResourceDir := Map(baseDirectory.value / "src/pack" -> ""),
@@ -316,6 +337,10 @@ object Pack extends sbt.Plugin {
       val archiveFile: File = target.value / archiveName
       archiveFile
     }
+  )
+
+  lazy val packAutoSettings = packSettings :+ (
+    packMain := packMainDiscovered.value
   )
 
 
