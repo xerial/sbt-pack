@@ -59,7 +59,7 @@ object Pack extends sbt.Plugin {
   val packArchive = TaskKey[File]("pack-archive", "create a tar.gz archive of the distributable package")
   val packArchiveArtifact = SettingKey[Artifact]("tar.gz archive artifact")
   val packArchivePrefix = SettingKey[String]("prefix of (prefix)-(version).tar.gz archive file name")
-  val packMain = settingKey[Map[String, String]]("prog_name -> main class table")
+  val packMain = TaskKey[Map[String, String]]("prog_name -> main class table")
   val packExclude = SettingKey[Seq[String]]("pack-exclude", "specify projects to exclude when packaging")
   val packAllClasspaths = TaskKey[Seq[(Classpath, ProjectRef)]]("pack-all-classpaths")
   val packLibJars = TaskKey[Seq[(File, ProjectRef)]]("pack-lib-jars")
