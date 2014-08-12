@@ -19,10 +19,7 @@ object Build extends sbt.Build {
   lazy val root = Project(
     id = "archive-modules",
     base = file("."),
-    settings = commonSettings ++
-      Seq(
-        packMain := (packMain in module1).value ++ (packMain in module2).value
-      )
+    settings = commonSettings
   ) aggregate(module1, module2)
 
   lazy val module1 = Project(

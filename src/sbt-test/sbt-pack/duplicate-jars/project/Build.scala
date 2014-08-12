@@ -19,7 +19,6 @@ object Build extends sbt.Build {
     base = file("."),
     settings = commonSettings ++
       Seq(
-        packMain := (packMain in module1).value ++ (packMain in module2).value
         // custom settings here
       )
   ) dependsOn(module1, module2)
