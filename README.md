@@ -30,7 +30,7 @@ Add `sbt-pack` plugin to your sbt configuration:
 **project/plugins.sbt**
 
 ```scala
-addSbtPlugin("org.xerial.sbt" % "sbt-pack" % "0.6.1")  // for sbt-0.13.x or higher
+addSbtPlugin("org.xerial.sbt" % "sbt-pack" % "0.6.2")  // for sbt-0.13.x or higher
 
 addSbtPlugin("org.xerial.sbt" % "sbt-pack" % "0.2.5")  // for sbt-0.12.x (New features will not be supported in this version.)
 ```
@@ -48,7 +48,7 @@ Now you can use `sbt pack` command in your project.
 
 #### Full build configuration
 
-Import `xerial.sbt.Pack.packAutoSettings` into your project settings. sbt-pack finds main classes in your code and generates programs for them accordingly. The main classes must be Scala objects that define `def main(args:Array[])` method. The program names are the main classes names, hyphenized. (For example, main class `myprog.ExampleProg` gives program name `example-prog`.) 
+Import `xerial.sbt.Pack.packAutoSettings` into your project settings (Since version 0.6.2). sbt-pack finds main classes in your code and generates programs for them accordingly. The main classes must be Scala objects that define `def main(args:Array[])` method. The program names are the main classes names, hyphenized. (For example, main class `myprog.ExampleProg` gives program name `example-prog`.) 
 
 Alternatively, import `xerial.sbt.Pack.packSettings` instead of `xerial.sbt.Pack.packAutoSettings`. The main classes in your program will then not be guessed. Manually set the `packMain` variable, a mapping from your program names to their corresponding main classes (for example `packMain := Map("hello" -> "myprog.Hello")`).   
 
