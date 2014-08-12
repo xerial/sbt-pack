@@ -7,11 +7,9 @@ object Build extends sbt.Build {
   lazy val root = Project(
     id = "pack-resources",
     base = file("."),
-    settings = Defaults.defaultSettings ++ packSettings ++
+    settings = Defaults.defaultSettings ++ packAutoSettings ++
       Seq(
         scalaVersion := "2.10.3",
-        // Mapping from program name -> Main class
-        packMain := Map("hello" -> "minproject.Hello"),
         // Copy files from ${root}/web/... to ${root}/target/pack/web-content...
         packResourceDir += (baseDirectory.value / "web" -> "web-content"),
         // custom settings here
