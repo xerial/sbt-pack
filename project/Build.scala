@@ -104,7 +104,8 @@ object PackBuild extends Build {
         Seq(
           "org.fusesource.scalate" % "scalate-core_2.10" % "1.6.1",
           "org.kamranzafar" % "jtar" % "2.2",
-          "org.slf4j" % "slf4j-nop" % "1.7.5"
+          "org.slf4j" % "slf4j-nop" % "1.7.5",
+          "org.specs2" %% "specs2" % "2.4.1" % "test"
         )
       )
   )
