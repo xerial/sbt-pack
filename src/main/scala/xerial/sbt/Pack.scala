@@ -29,7 +29,7 @@ object Pack extends sbt.Plugin {
 
   private case class ModuleEntry(org: String,
                                  name: String,
-                                 revision: String,
+                                 revision: VersionString,
                                  classifier: Option[String],
                                  originalFileName: String,
                                  projectRef: ProjectRef) {
@@ -44,7 +44,8 @@ object Pack extends sbt.Plugin {
     def noVersionJarName = "%s.%s%s.jar".format(org, name, classifierSuffix)
   }
 
-  private implicit def moduleEntryOrdering = Ordering.by[ModuleEntry, (String, String, String, Option[String])](m => (m.org, m.name, m.revision, m.classifier))
+  private implicit def versionStringOrdering = DefaultVersionStringOrdering
+  private implicit def moduleEntryOrdering = Ordering.by[ModuleEntry, (String, String, VersionString, Option[String])](m => (m.org, m.name, m.revision, m.classifier))
 
   val runtimeFilter = ScopeFilter(inAnyProject, inConfigurations(Runtime))
 
@@ -126,7 +127,7 @@ object Pack extends sbt.Plugin {
           (artifact, file) <- m.artifacts if DependencyFilter.allPass(c.configuration, m.module, artifact)}
         yield {
           val mid = m.module
-          val me = ModuleEntry(mid.organization, mid.name, mid.revision, artifact.classifier, file.getName, projectRef)
+          val me = ModuleEntry(mid.organization, mid.name, VersionString(mid.revision), artifact.classifier, file.getName, projectRef)
           me -> file
         })
 
@@ -159,7 +160,7 @@ object Pack extends sbt.Plugin {
               sys.error(s"Version conflict on ${key}: [${old._1.projectRef.project}] using $oldVersion V.S. [${jar._1.projectRef.project}] using $newVersion")
 
             out.log.warn(s"Version conflict on ${key}: [${old._1.projectRef.project}] using $oldVersion V.S. [${jar._1.projectRef.project}] using $newVersion")
-            val latest = if (oldVersion > newVersion) old else jar
+            val latest = if (versionStringOrdering.compare(oldVersion, newVersion) > 0) old else jar
             out.log.warn(s"\tUsing the latest version ${latest._1.fullJarName}")
             result += (key -> latest)
           }
