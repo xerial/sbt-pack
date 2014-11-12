@@ -19,7 +19,6 @@ import java.util.zip.Deflater
 import java.util.zip.GZIPOutputStream
 import org.kamranzafar.jtar.TarOutputStream
 import org.kamranzafar.jtar.TarEntry
-import scala.collection.mutable
 
 /**
  * Plugin for packaging projects
@@ -45,7 +44,6 @@ object Pack extends sbt.Plugin {
   }
 
   private implicit def versionStringOrdering = DefaultVersionStringOrdering
-  private implicit def moduleEntryOrdering = Ordering.by[ModuleEntry, (String, String, VersionString, Option[String])](m => (m.org, m.name, m.revision, m.classifier))
 
   val runtimeFilter = ScopeFilter(inAnyProject, inConfigurations(Runtime))
 
@@ -119,7 +117,7 @@ object Pack extends sbt.Plugin {
     packGenerateWindowsBatFile := true,
     (mappings in pack) := Seq.empty,
     pack := {
-      val dependentJars = collection.immutable.SortedMap.empty[ModuleEntry, File] ++ (
+      val dependentJars =
         for {
           (r: sbt.UpdateReport, projectRef) <- packUpdateReports.value
           c <- r.configurations if c.configuration == "runtime"
@@ -129,7 +127,7 @@ object Pack extends sbt.Plugin {
           val mid = m.module
           val me = ModuleEntry(mid.organization, mid.name, VersionString(mid.revision), artifact.classifier, file.getName, projectRef)
           me -> file
-        })
+        }
 
       val out = streams.value
       val distDir: File = target.value / packDir.value
@@ -148,27 +146,24 @@ object Pack extends sbt.Plugin {
       out.log.info("project jars:\n" + libs.map(path => rpath(base, path)).mkString("\n"))
       libs.foreach(l => IO.copyFile(l, libDir / l.getName))
 
-      // check duplicate jars
-      val distinctDpJars = dependentJars.foldLeft(mutable.HashMap.empty[String, (ModuleEntry, File)])((result, jar) => {
-        val key = jar._1.noVersionJarName
-        if (result.contains(key)) {
-          val old = result(key)
-          val oldVersion = old._1.revision
-          val newVersion = jar._1.revision
-          if (oldVersion != newVersion) {
-            if (packDuplicateJarStrategy.value == "exit")
-              sys.error(s"Version conflict on ${key}: [${old._1.projectRef.project}] using $oldVersion V.S. [${jar._1.projectRef.project}] using $newVersion")
-
-            out.log.warn(s"Version conflict on ${key}: [${old._1.projectRef.project}] using $oldVersion V.S. [${jar._1.projectRef.project}] using $newVersion")
-            val latest = if (versionStringOrdering.compare(oldVersion, newVersion) > 0) old else jar
-            out.log.warn(s"\tUsing the latest version ${latest._1.fullJarName}")
-            result += (key -> latest)
-          }
-        }else {
-          result += (key -> jar)
+      val distinctDpJars = dependentJars
+        .groupBy(_._1.noVersionJarName)
+        .map {
+          case (key, entries) if entries.groupBy(_._1.revision).size == 1 => entries.head
+          case (key, entries) =>
+            val revisions = entries.groupBy(_._1.revision).map(_._1).toList.sorted
+            packDuplicateJarStrategy.value match {
+              case "latest" =>
+                val latest = entries.sortBy(_._1.revision).last
+                out.log.warn(s"Version conflict on $key. Using ${latest._1.revision} (found ${revisions.mkString(", ")})")
+                latest
+              case "exit" =>
+                sys.error(s"Version conflict on $key (found ${revisions.mkString(", ")})")
+              case x =>
+                sys.error("Unknown duplicate JAR strategy '%s'".format(x))
+            }
         }
-        result
-      }).map(_._2).toMap
+        .toMap
 
       // Copy dependent jars
       def resolveJarName(m: ModuleEntry, convention: String) = {
