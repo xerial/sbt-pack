@@ -1,4 +1,6 @@
 ### Release Notes
+- November 12th, 2014 - 0.6.3 release
+  - Enable packing resources having any classifiers
 - August 13th, 2014 - 0.6.2 release
   - Added `packAutoSettings` to find main classes automatically. 
 - July 28th, 2014 - 0.6.1 release
