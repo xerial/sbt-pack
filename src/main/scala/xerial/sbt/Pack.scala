@@ -159,10 +159,8 @@ object Pack extends sbt.Plugin {
                 latest
               case "exit" =>
                 sys.error(s"Version conflict on $key (found ${revisions.mkString(", ")})")
-                ???
               case x =>
                 sys.error("Unknown duplicate JAR strategy '%s'".format(x))
-                ???
             }
         }
         .toMap
