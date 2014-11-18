@@ -1,4 +1,6 @@
 ### Release Notes
+- November 18th, 2014 - 0.6.4 release
+  - Add packInstall command
 - November 12th, 2014 - 0.6.3 release
   - Enable packing resources having any classifiers
 - August 13th, 2014 - 0.6.2 release
