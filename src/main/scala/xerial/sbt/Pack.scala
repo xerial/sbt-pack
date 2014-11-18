@@ -50,6 +50,7 @@ object Pack extends sbt.Plugin {
   val runtimeFilter = ScopeFilter(inAnyProject, inConfigurations(Runtime))
 
   val pack = taskKey[File]("create a distributable package of the project")
+  val packInstall = inputKey[Int]("pack and install")
   val packDir = settingKey[String]("pack-dir")
 
   val packBashTemplate = settingKey[String]("template file for bash scripts - defaults to pack's out-of-the-box template for bash")
@@ -76,6 +77,10 @@ object Pack extends sbt.Plugin {
   val packExpandedClasspath = settingKey[Boolean]("Expands the wildcard classpath in launch scripts to point at specific libraries")
   val packJarNameConvention = SettingKey[String]("pack-jarname-convention", "default: (artifact name)-(version).jar; original: original JAR name; full: (organization).(artifact name)-(version).jar; no-version: (organization).(artifact name).jar")
   val packDuplicateJarStrategy = SettingKey[String]("deal with duplicate jars. default to use latest version", "latest: use the jar with a higher version; exit: exit the task with error")
+
+  import complete.DefaultParsers._
+  private val targetFolderParser: complete.Parser[Option[String]] =
+    (Space ~> token(StringBasic, "(target folder)")).?.!!!("invalid input. please input target folder name")
 
   lazy val packSettings = Seq[Def.Setting[_]](
     packDir := "pack",
@@ -118,6 +123,17 @@ object Pack extends sbt.Plugin {
     packDuplicateJarStrategy := "latest",
     packGenerateWindowsBatFile := true,
     (mappings in pack) := Seq.empty,
+    packInstall := {
+      val arg : Option[String] = targetFolderParser.parsed
+      val packDir = pack.value
+      val cmd = arg match {
+        case Some(target) =>
+          s"make install PREFIX=${target}"
+        case None =>
+          s"make install"
+      }
+      Process(cmd, packDir).!
+    },
     pack := {
       val dependentJars = collection.immutable.SortedMap.empty[ModuleEntry, File] ++ (
         for {

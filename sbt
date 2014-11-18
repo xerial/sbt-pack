@@ -26,7 +26,7 @@ get_mem_opts () {
   (( $perm < 1024 )) || perm=1024
   local codecache=$(( $perm / 2 ))
   
-  echo "-Xms512m -Xmx${mem}m -XX:MaxPermSize=${perm}m"
+  echo "-Xms512m -Xmx${mem}m "
 }
 
 die() {
