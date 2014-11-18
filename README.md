@@ -30,7 +30,7 @@ Add `sbt-pack` plugin to your sbt configuration:
 **project/plugins.sbt**
 
 ```scala
-addSbtPlugin("org.xerial.sbt" % "sbt-pack" % "0.6.3")  // for sbt-0.13.x or higher
+addSbtPlugin("org.xerial.sbt" % "sbt-pack" % "0.6.4")  // for sbt-0.13.x or higher
 
 addSbtPlugin("org.xerial.sbt" % "sbt-pack" % "0.2.5")  // for sbt-0.12.x (New features will not be supported in this version.)
 ```
@@ -41,14 +41,17 @@ Repository URL: http://repo1.maven.org/maven2/org/xerial/sbt/
 
 **build.sbt**
 ```
-# Automatically find def main(args:Array[String]) methods from classpath
+// Automatically find def main(args:Array[String]) methods from classpath
 packAutoSettings
+```
 
-# If you need to specify main classes manually, use packSettings and packMain
+or 
+```
+// If you need to specify main classes manually, use packSettings and packMain
 packSettings
 
-packMain := Map("hello" -> "(class name with full package path (e.g. org.mydomain.Hello)")
-
+// [Optional] Creating `hello` command that calls org.mydomain.Hello#main(Array[String]) 
+packMain := Map("hello" -> "org.mydomain.Hello")
 ```
 
 Now you can use `sbt pack` command in your project.
