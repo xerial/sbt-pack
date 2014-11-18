@@ -44,4 +44,5 @@ install:
 	cp -pr ./* "$(PROG_DIR)"
 	ln -sfn "$(PROG)-$(version)" "$(PROG_BASE_DIR)/current"
 	$(INSTALL) -d "$(PREFIX)/bin"
+	ls -l $(PREFIX)
 {{{PROG_SYMLINK}}}

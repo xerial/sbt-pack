@@ -41,7 +41,14 @@ Repository URL: http://repo1.maven.org/maven2/org/xerial/sbt/
 
 **build.sbt**
 ```scala
+# Automatically find def main(args:Array[String]) methods from classpath
 packAutoSettings
+
+# If you need to specify main classes manually, use packSettings and packMain
+packSettings
+
+packMain := Map("hello" -> "(class name with full package path (e.g. org.mydomain.Hello)")
+
 ```
 
 Now you can use `sbt pack` command in your project.
@@ -123,11 +130,30 @@ Your program package will be generated in `target/pack` folder.
 
 **Install the command**
 
-    $ cd target/pack; make install
+Install the command to `$(HOME)/local/bin`:
+```
+$ sbt packInstall
+```
+
+or
+
+```
+$ cd target/pack; make install
+```
+
+To launch the command:
+```    
     $ ~/local/bin/hello
     Hello World!
+```
+
+Add the following configuration to your .bash_profile, .zsh_profile, etc. for the usability:
+```
+export PATH=$(HOME)/local/bin:$PATH
+```
 
 **Install the command to the system**
+
    
     $ cd target/pack
     $ sudo make install PREFIX="/usr/local"
