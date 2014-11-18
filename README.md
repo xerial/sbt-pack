@@ -40,7 +40,7 @@ Repository URL: http://repo1.maven.org/maven2/org/xerial/sbt/
 #### Minimum configuration
 
 **build.sbt**
-```scala
+```
 # Automatically find def main(args:Array[String]) methods from classpath
 packAutoSettings
 
