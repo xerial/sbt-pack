@@ -1,5 +1,13 @@
 ### Release Notes
--July 18th, 2014 - 0.6.0 release
+- November 18th, 2014 - 0.6.5 release
+  - Add packInstall command
+- November 12th, 2014 - 0.6.3 release
+  - Enable packing resources having any classifiers
+- August 13th, 2014 - 0.6.2 release
+  - Added `packAutoSettings` to find main classes automatically. 
+- July 28th, 2014 - 0.6.1 release
+  - Fixes [#41](https://github.com/xerial/sbt-pack/issues/41)
+- July 18th, 2014 - 0.6.0 release
   - Added resource mapping setting: `packResourceDir` Map[File, String]
 - July 14th, 2014 - 0.5.2 release
   - Pack only runtime-scope dependencies from unmanaged jars 

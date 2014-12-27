@@ -10,7 +10,6 @@ package xerial.sbt
 import sbt._
 import org.fusesource.scalate.TemplateEngine
 import Keys._
-import scala.collection.mutable
 
 /**
  * Plugin for packaging projects
@@ -19,7 +18,7 @@ import scala.collection.mutable
 object Pack extends sbt.Plugin with PackArchive {
   private case class ModuleEntry(org: String,
                                  name: String,
-                                 revision: String,
+                                 revision: VersionString,
                                  classifier: Option[String],
                                  originalFileName: String,
                                  projectRef: ProjectRef) {
@@ -34,11 +33,12 @@ object Pack extends sbt.Plugin with PackArchive {
     def noVersionJarName = "%s.%s%s.jar".format(org, name, classifierSuffix)
   }
 
-  private implicit def moduleEntryOrdering = Ordering.by[ModuleEntry, (String, String, String, Option[String])](m => (m.org, m.name, m.revision, m.classifier))
+  private implicit def versionStringOrdering = DefaultVersionStringOrdering
 
   val runtimeFilter = ScopeFilter(inAnyProject, inConfigurations(Runtime))
 
   val pack = taskKey[File]("create a distributable package of the project")
+  val packInstall = inputKey[Int]("pack and install")
   val packDir = settingKey[String]("pack-dir")
 
   val packBashTemplate = settingKey[String]("template file for bash scripts - defaults to pack's out-of-the-box template for bash")
@@ -46,7 +46,9 @@ object Pack extends sbt.Plugin with PackArchive {
   val packMakeTemplate = settingKey[String]("template file for bash scripts - defaults to pack's out-of-the-box template for make")
 
   val packUpdateReports = taskKey[Seq[(sbt.UpdateReport, ProjectRef)]]("only for retrieving dependent module names")
-  val packMain = settingKey[Map[String, String]]("prog_name -> main class table")
+  val packMain = TaskKey[Map[String, String]]("prog_name -> main class table")
+  val packMainDiscovered = TaskKey[Map[String, String]]("discovered prog_name -> main class table")
+  val packAllMainDiscovered = TaskKey[Map[String, String]]("all discovered prog_name -> main class table")
   val packExclude = SettingKey[Seq[String]]("pack-exclude", "specify projects to exclude when packaging")
   val packAllClasspaths = TaskKey[Seq[(Classpath, ProjectRef)]]("pack-all-classpaths")
   val packLibJars = TaskKey[Seq[(File, ProjectRef)]]("pack-lib-jars")
@@ -61,12 +63,37 @@ object Pack extends sbt.Plugin with PackArchive {
   val packJarNameConvention = SettingKey[String]("pack-jarname-convention", "default: (artifact name)-(version).jar; original: original JAR name; full: (organization).(artifact name)-(version).jar; no-version: (organization).(artifact name).jar")
   val packDuplicateJarStrategy = SettingKey[String]("deal with duplicate jars. default to use latest version", "latest: use the jar with a higher version; exit: exit the task with error")
 
+  import complete.DefaultParsers._
+  private val targetFolderParser: complete.Parser[Option[String]] =
+    (Space ~> token(StringBasic, "(target folder)")).?.!!!("invalid input. please input target folder name")
+
   lazy val packSettings = Seq[Def.Setting[_]](
     packDir := "pack",
     packBashTemplate := "/xerial/sbt/template/launch.mustache",
     packBatTemplate := "/xerial/sbt/template/launch-bat.mustache",
     packMakeTemplate := "/xerial/sbt/template/Makefile.mustache",
     packMain := Map.empty,
+    packMainDiscovered := {
+      def pascalCaseSplit(s: List[Char]): List[String] =
+        if (s.isEmpty)
+          Nil
+        else if (!s.head.isUpper) {
+          val (w, tail) = s.span(!_.isUpper)
+          w.mkString :: pascalCaseSplit(tail)
+        } else if (s.tail.headOption.forall(!_.isUpper)) {
+          val (w, tail) = s.tail.span(!_.isUpper)
+          (s.head :: w).mkString :: pascalCaseSplit(tail)
+        } else {
+          val (w, tail) = s.span(_.isUpper)
+          w.init.mkString :: pascalCaseSplit(w.last :: tail)
+        }
+
+      def hyphenize(s: String): String =
+        pascalCaseSplit(s.toList).map(_.toLowerCase).mkString("-")
+
+      (discoveredMainClasses in Compile).value.map(mainClass => hyphenize(mainClass.split('.').last) -> mainClass).toMap
+    },
+    packAllMainDiscovered <<= (thisProjectRef, buildStructure, packExclude) flatMap getFromSelectedProjects(packMainDiscovered) map { _.flatMap(_._1).toMap },
     packExclude := Seq.empty,
     packMacIconFile := "icon-mac.png",
     packResourceDir := Map(baseDirectory.value / "src/pack" -> ""),
@@ -81,8 +108,19 @@ object Pack extends sbt.Plugin with PackArchive {
     packDuplicateJarStrategy := "latest",
     packGenerateWindowsBatFile := true,
     (mappings in pack) := Seq.empty,
+    packInstall := {
+      val arg : Option[String] = targetFolderParser.parsed
+      val packDir = pack.value
+      val cmd = arg match {
+        case Some(target) =>
+          s"make install PREFIX=${target}"
+        case None =>
+          s"make install"
+      }
+      Process(cmd, packDir).!
+    },
     pack := {
-      val dependentJars = collection.immutable.SortedMap.empty[ModuleEntry, File] ++ (
+      val dependentJars =
         for {
           (r: sbt.UpdateReport, projectRef) <- packUpdateReports.value
           c <- r.configurations if c.configuration == "runtime"
@@ -90,9 +128,9 @@ object Pack extends sbt.Plugin with PackArchive {
           (artifact, file) <- m.artifacts if DependencyFilter.allPass(c.configuration, m.module, artifact)}
         yield {
           val mid = m.module
-          val me = ModuleEntry(mid.organization, mid.name, mid.revision, artifact.classifier, file.getName, projectRef)
+          val me = ModuleEntry(mid.organization, mid.name, VersionString(mid.revision), artifact.classifier, file.getName, projectRef)
           me -> file
-        }).filter(tuple => tuple._1.classifier == None)
+        }
 
       val out = streams.value
       val distDir: File = target.value / packDir.value
@@ -111,27 +149,24 @@ object Pack extends sbt.Plugin with PackArchive {
       out.log.info("project jars:\n" + libs.map(path => rpath(base, path)).mkString("\n"))
       libs.foreach(l => IO.copyFile(l, libDir / l.getName))
 
-      // check duplicate jars
-      val distinctDpJars = dependentJars.foldLeft(mutable.HashMap.empty[String, (ModuleEntry, File)])((result, jar) => {
-        val key = jar._1.noVersionJarName
-        if (result.contains(key)) {
-          val old = result(key)
-          val oldVersion = old._1.revision
-          val newVersion = jar._1.revision
-          if (oldVersion != newVersion) {
-            if (packDuplicateJarStrategy.value == "exit")
-              sys.error(s"Version conflict on ${key}: [${old._1.projectRef.project}] using $oldVersion V.S. [${jar._1.projectRef.project}] using $newVersion")
-
-            out.log.warn(s"Version conflict on ${key}: [${old._1.projectRef.project}] using $oldVersion V.S. [${jar._1.projectRef.project}] using $newVersion")
-            val latest = if (oldVersion > newVersion) old else jar
-            out.log.warn(s"\tUsing the latest version ${latest._1.fullJarName}")
-            result += (key -> latest)
-          }
-        }else {
-          result += (key -> jar)
+      val distinctDpJars = dependentJars
+        .groupBy(_._1.noVersionJarName)
+        .map {
+          case (key, entries) if entries.groupBy(_._1.revision).size == 1 => entries.head
+          case (key, entries) =>
+            val revisions = entries.groupBy(_._1.revision).map(_._1).toList.sorted
+            packDuplicateJarStrategy.value match {
+              case "latest" =>
+                val latest = entries.sortBy(_._1.revision).last
+                out.log.warn(s"Version conflict on $key. Using ${latest._1.revision} (found ${revisions.mkString(", ")})")
+                latest
+              case "exit" =>
+                sys.error(s"Version conflict on $key (found ${revisions.mkString(", ")})")
+              case x =>
+                sys.error("Unknown duplicate JAR strategy '%s'".format(x))
+            }
         }
-        result
-      }).map(_._2).toMap
+        .toMap
 
       // Copy dependent jars
       def resolveJarName(m: ModuleEntry, convention: String) = {
@@ -211,9 +246,11 @@ object Pack extends sbt.Plugin with PackArchive {
 
         // Create BAT file
         if(packGenerateWindowsBatFile.value) {
-          val extraPath = extraClasspath("%PSEP%").replaceAll("""\$\{PROG_HOME\}""", "%PROG_HOME%").replaceAll("/", """\\""")
-          val expandedClasspathM = if (packExpandedClasspath.value) Map("EXPANDED_CLASSPATH" -> expandedClasspath("%PSEP%").replaceAll("""\$\{PROG_HOME\}""", "%PROG_HOME%").replaceAll("/", """\\""")) else Map()
-          val propForWin : Map[String, Any] = m + ("EXTRA_CLASSPATH" -> extraPath) ++ expandedClasspathM
+          def replaceProgHome(s:String) = s.replaceAll("""\$\{PROG_HOME\}""", "%PROG_HOME%")
+
+          val extraPath = extraClasspath("%PSEP%").replaceAll("/", """\\""")
+          val expandedClasspathM = if (packExpandedClasspath.value) Map("EXPANDED_CLASSPATH" -> expandedClasspath("%PSEP%").replaceAll("/", """\\""")) else Map()
+          val propForWin : Map[String, Any] = (m + ("EXTRA_CLASSPATH" -> extraPath) ++ expandedClasspathM).map{case (k, v) => k ->replaceProgHome(v)}.toMap
           val batScript = engine.layout(packBatTemplate.value, propForWin)
           write(s"bin/${progName}.bat", batScript)
         }
@@ -256,6 +293,10 @@ object Pack extends sbt.Plugin with PackArchive {
       distDir
     }
   ) ++ packArchiveSettings
+
+  lazy val packAutoSettings = packSettings :+ (
+    packMain := packAllMainDiscovered.value
+  )
 
 
   private def getFromAllProjects[T](targetTask: TaskKey[T])(currentProject: ProjectRef, structure: BuildStructure): Task[Seq[(T, ProjectRef)]] =

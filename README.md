@@ -30,7 +30,7 @@ Add `sbt-pack` plugin to your sbt configuration:
 **project/plugins.sbt**
 
 ```scala
-addSbtPlugin("org.xerial.sbt" % "sbt-pack" % "0.6.0")  // for sbt-0.13.x or higher
+addSbtPlugin("org.xerial.sbt" % "sbt-pack" % "0.6.5")  // for sbt-0.13.x or higher
 
 addSbtPlugin("org.xerial.sbt" % "sbt-pack" % "0.2.5")  // for sbt-0.12.x (New features will not be supported in this version.)
 ```
@@ -40,18 +40,27 @@ Repository URL: http://repo1.maven.org/maven2/org/xerial/sbt/
 #### Minimum configuration
 
 **build.sbt**
-```scala
+```
+// Automatically find def main(args:Array[String]) methods from classpath
+packAutoSettings
+```
+
+or 
+```
+// If you need to specify main classes manually, use packSettings and packMain
 packSettings
 
-// [Optional: Mappings from a program name to the corresponding Main class ]
-packMain := Map("hello" -> "myprog.Hello")
+// [Optional] Creating `hello` command that calls org.mydomain.Hello#main(Array[String]) 
+packMain := Map("hello" -> "org.mydomain.Hello")
 ```
 
 Now you can use `sbt pack` command in your project.
 
 #### Full build configuration
 
-Import `xerial.sbt.Pack.packSettings` into your project settings. Then set `packMain` variable, a mapping from the your program names to their corresponding main classes. The main classes must be Scala objects that define `def main(args:Array[])` method:
+Import `xerial.sbt.Pack.packAutoSettings` into your project settings (Since version 0.6.2). sbt-pack finds main classes in your code and generates programs for them accordingly. The main classes must be Scala objects that define `def main(args:Array[])` method. The program names are the main classes names, hyphenized. (For example, main class `myprog.ExampleProg` gives program name `example-prog`.) 
+
+Alternatively, import `xerial.sbt.Pack.packSettings` instead of `xerial.sbt.Pack.packAutoSettings`. The main classes in your program will then not be guessed. Manually set the `packMain` variable, a mapping from your program names to their corresponding main classes (for example `packMain := Map("hello" -> "myprog.Hello")`).   
 
 **project/Build.scala**
 
@@ -66,14 +75,15 @@ object Build extends sbt.Build {
     id = "myprog",
     base = file("."),
     settings = Defaults.defaultSettings 
-      ++ packSettings // This settings add pack and pack-archive commands to sbt
+      ++ packAutoSettings // This settings add pack and pack-archive commands to sbt
       ++ Seq(
-        // [Optional] Specify mappings from program name -> Main class (full package path)
-        packMain := Map("hello" -> "myprog.Hello"),
+        // [Optional] If you used packSettings instead of packAutoSettings, 
+        //  specify mappings from program name -> Main class (full package path)
+        // packMain := Map("hello" -> "myprog.Hello"),
         // Add custom settings here
         // [Optional] JVM options of scripts (program name -> Seq(JVM option, ...))
         packJvmOpts := Map("hello" -> Seq("-Xmx512m")),
-        // [Optional] Extra class paths to look when launching a program
+        // [Optional] Extra class paths to look when launching a program. You can use ${PROG_HOME} to specify the base directory
         packExtraClasspath := Map("hello" -> Seq("${PROG_HOME}/etc")), 
         // [Optional] (Generate .bat files for Windows. The default value is true)
         packGenerateWindowsBatFile := true
@@ -123,11 +133,30 @@ Your program package will be generated in `target/pack` folder.
 
 **Install the command**
 
-    $ cd target/pack; make install
+Install the command to `$(HOME)/local/bin`:
+```
+$ sbt packInstall
+```
+
+or
+
+```
+$ cd target/pack; make install
+```
+
+To launch the command:
+```    
     $ ~/local/bin/hello
     Hello World!
+```
+
+Add the following configuration to your .bash_profile, .zsh_profile, etc. for the usability:
+```
+export PATH=$(HOME)/local/bin:$PATH
+```
 
 **Install the command to the system**
+
    
     $ cd target/pack
     $ sudo make install PREFIX="/usr/local"
