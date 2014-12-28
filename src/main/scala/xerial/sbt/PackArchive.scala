@@ -87,11 +87,26 @@ trait PackArchive {
       packArchiveTgz.value,
       packArchiveZip.value))
 
-  def publishPackArchives: SettingsDefinition = Seq(
-    artifacts ++= Seq(
-      packArchiveTgzArtifact.value,
-      packArchiveZipArtifact.value),
-    packagedArtifacts ++= Map(
-      (packArchiveTgzArtifact.value -> packArchiveTgz.value),
-      (packArchiveZipArtifact.value -> packArchiveZip.value)))
+  def publishPackTgzArchive: SettingsDefinition = Seq(
+    artifacts += packArchiveTgzArtifact.value,
+    packagedArtifacts += packArchiveTgzArtifact.value -> packArchiveTgz.value
+  )
+
+  def publishPackTbzArchive: SettingsDefinition = Seq(
+    artifacts += packArchiveTbzArtifact.value,
+    packagedArtifacts += packArchiveTbzArtifact.value -> packArchiveTbz.value
+  )
+
+  def publishPackTxzArchive: SettingsDefinition = Seq(
+    artifacts += packArchiveTxzArtifact.value,
+    packagedArtifacts += packArchiveTxzArtifact.value -> packArchiveTxz.value
+  )
+
+  def publishPackZipArchive: SettingsDefinition = Seq(
+    artifacts += packArchiveZipArtifact.value,
+    packagedArtifacts += packArchiveZipArtifact.value -> packArchiveZip.value
+  )
+
+  def publishPackArchives: SettingsDefinition =
+    publishPackTgzArchive ++ publishPackZipArchive
 }
