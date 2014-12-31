@@ -181,10 +181,6 @@ in the source code. It contains several Scala project examples using sbt-pack.
 	
 ### For developers
 
-Creating IntelliJ project:
-
-    $ ./sbt "gen-idea sbt-classifiers"
-
 To test sbt-pack plugin, run
 
     $ ./sbt scripted
