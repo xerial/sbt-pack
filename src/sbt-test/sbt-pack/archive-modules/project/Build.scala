@@ -9,7 +9,7 @@ object Build extends sbt.Build {
     // Add pack, pack-archive commands
     packAutoSettings ++
     // publish tar.gz archive to the repository (since sbt-pack-0.3.6)
-    publishPackArchive ++
+    publishPackArchives ++
     Seq(
      scalaVersion := "2.10.3",
      version := "0.1",
