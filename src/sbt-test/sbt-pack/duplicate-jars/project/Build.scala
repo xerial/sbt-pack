@@ -5,19 +5,16 @@ import xerial.sbt.Pack._
 
 object Build extends sbt.Build {
 
-  val commonSettings = Defaults.defaultSettings ++
-    // Add pack settings to common, so that packMain is available in subprojects' scope
-    packAutoSettings ++
-    Seq(
-      scalaVersion := "2.10.3",
-      version := "0.1",
-      crossPaths := false
+  val commonSettings = Defaults.defaultSettings ++ Seq(
+    scalaVersion := "2.10.3",
+    version := "0.1",
+    crossPaths := false
   )
 
   lazy val root = Project(
     id = "duplicate-jars",
     base = file("."),
-    settings = commonSettings ++
+    settings = commonSettings ++ packAutoSettings ++
       Seq(
         // custom settings here
       )
