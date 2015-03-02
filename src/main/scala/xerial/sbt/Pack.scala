@@ -48,7 +48,6 @@ object Pack extends sbt.Plugin with PackArchive {
   val packUpdateReports = taskKey[Seq[(sbt.UpdateReport, ProjectRef)]]("only for retrieving dependent module names")
   val packMain = TaskKey[Map[String, String]]("prog_name -> main class table")
   val packMainDiscovered = TaskKey[Map[String, String]]("discovered prog_name -> main class table")
-  val packAllMainDiscovered = TaskKey[Map[String, String]]("all discovered prog_name -> main class table")
   val packExclude = SettingKey[Seq[String]]("pack-exclude", "specify projects to exclude when packaging")
   val packAllClasspaths = TaskKey[Seq[(Classpath, ProjectRef)]]("pack-all-classpaths")
   val packLibJars = TaskKey[Seq[(File, ProjectRef)]]("pack-lib-jars")
@@ -73,7 +72,7 @@ object Pack extends sbt.Plugin with PackArchive {
     packBatTemplate := "/xerial/sbt/template/launch-bat.mustache",
     packMakeTemplate := "/xerial/sbt/template/Makefile.mustache",
     packMain := Map.empty,
-    packMainDiscovered := {
+    packMainDiscovered <<= (thisProjectRef, buildStructure, packExclude) flatMap getFromSelectedProjects(discoveredMainClasses in Compile) map {
       def pascalCaseSplit(s: List[Char]): List[String] =
         if (s.isEmpty)
           Nil
@@ -91,9 +90,9 @@ object Pack extends sbt.Plugin with PackArchive {
       def hyphenize(s: String): String =
         pascalCaseSplit(s.toList).map(_.toLowerCase).mkString("-")
 
-      (discoveredMainClasses in Compile).value.map(mainClass => hyphenize(mainClass.split('.').last) -> mainClass).toMap
+      allDiscoveredMainClasses =>
+        allDiscoveredMainClasses.flatMap(_._1.map(mainClass => hyphenize(mainClass.split('.').last) -> mainClass).toMap).toMap
     },
-    packAllMainDiscovered <<= (thisProjectRef, buildStructure, packExclude) flatMap getFromSelectedProjects(packMainDiscovered) map { _.flatMap(_._1).toMap },
     packExclude := Seq.empty,
     packMacIconFile := "icon-mac.png",
     packResourceDir := Map(baseDirectory.value / "src/pack" -> ""),
@@ -295,7 +294,7 @@ object Pack extends sbt.Plugin with PackArchive {
   ) ++ packArchiveSettings
 
   lazy val packAutoSettings = packSettings :+ (
-    packMain := packAllMainDiscovered.value
+    packMain := packMainDiscovered.value
   )
 
 
