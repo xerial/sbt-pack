@@ -89,13 +89,7 @@ object PackBuild extends Build {
         }
       ),
       setReleaseVersion,
-      ReleaseStep(
-        action = { state =>
-          val extracted = Project extract state
-          Process("./bin/bump-version.sh").!
-          state
-        }
-      ),
+      bumpVersion,
       commitReleaseVersion,
       tagRelease,
       ReleaseStep(
@@ -105,6 +99,7 @@ object PackBuild extends Build {
         }
       ),
       setNextVersion,
+      bumpVersion,
       commitNextVersion,
       ReleaseStep{ state =>
         val extracted = Project extract state
@@ -135,6 +130,16 @@ object PackBuild extends Build {
     }
   )
 
+  val bumpVersion = ReleaseStep(
+    action = { state =>
+      val extracted = Project extract state
+      val ret = Process("./bin/bump-version.sh").!
+      ret match {
+        case 0 => state
+        case _ => state.fail
+      }
+    }
+  )
 
   // Project modules
   lazy val sbtPack = Project(
