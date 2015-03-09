@@ -1,4 +1,4 @@
 > pack
-$ exists target/pack/lib/org.xerial.xerial-core-3.2.3.jar
+$ exists target/pack/lib/org.xerial.xerial-core-3.3.6.jar
 
 
