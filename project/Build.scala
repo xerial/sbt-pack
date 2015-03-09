@@ -85,7 +85,7 @@ object PackBuild extends Build {
       ReleaseStep(
         action = { state =>
           val extracted = Project extract state
-          extracted.runAggregated(scriptedRun in Global in extracted.get(thisProjectRef), state)
+          extracted.runAggregated(scriptedTests in Global in extracted.get(thisProjectRef), state)
         }
       ),
       setReleaseVersion,
@@ -133,7 +133,8 @@ object PackBuild extends Build {
   val bumpVersion = ReleaseStep(
     action = { state =>
       val extracted = Project extract state
-      val ret = Process("./bin/bump-version.sh").!
+      state.log.info("Bump plugin version in scripted tests")
+      val ret = Process("./bin/bump-version.sh && git add src/sbt-test && git commit -m 'Bump plugin version in scripted tests").!
       ret match {
         case 0 => state
         case _ => state.fail
