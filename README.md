@@ -87,7 +87,7 @@ object Build extends sbt.Build {
         packExtraClasspath := Map("hello" -> Seq("${PROG_HOME}/etc")), 
         // [Optional] (Generate .bat files for Windows. The default value is true)
         packGenerateWindowsBatFile := true
-        // [Optional] jar file name format in pack/lib folder (Since 0.5.0)
+        // [Optional] jar file name format in pack/lib folder
         //   "default"   (project name)-(version).jar 
         //   "full"      (organization name).(project name)-(version).jar
         //   "no-version" (organization name).(project name).jar
@@ -98,10 +98,10 @@ object Build extends sbt.Build {
         // [Optional] Resource directory mapping to be copied within target/pack. Default is Map("{projectRoot}/src/pack" -> "") 
         packResourceDir += (baseDirectory.value / "web" -> "web-content"),
       ) 
-    // To publish tar.gz archive to the repository, add the following line (since 0.3.6)
-    // ++ publishPackArchive  
-    // Before 0.3.6, use below:
-    // ++ addArtifact(Artifact("myprog", "arch", "tar.gz"), packArchive).settings
+    // To publish tar.gz, zip archive etc. to the repository, add the following line
+    // ++ publishPackArchive
+    // If you need to publish tar.gz (publishTarGzArchive) only, use publishPack(xxx)Archive instead
+    // ++ publishPackTarGzArchive
   )
 }
 ```
