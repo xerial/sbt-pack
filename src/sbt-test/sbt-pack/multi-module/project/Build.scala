@@ -5,7 +5,7 @@ import xerial.sbt.Pack._
 
 object Build extends sbt.Build {
 
-  val commonSettings = Defaults.defaultSettings ++ Seq(
+  val commonSettings = Defaults.coreDefaultSettings ++ Seq(
      scalaVersion := "2.11.6",
      version := "0.1",
      crossPaths := false
