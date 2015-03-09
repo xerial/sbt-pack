@@ -1,4 +1,6 @@
 ### Release Notes
+- March 9th, 2015 - 0.6.6 release
+  - Improved packAutoSettings behaviour for multi-module projects
 - November 18th, 2014 - 0.6.5 release
   - Add packInstall command
 - November 12th, 2014 - 0.6.3 release
