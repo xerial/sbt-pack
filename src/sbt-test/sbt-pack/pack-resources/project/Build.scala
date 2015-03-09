@@ -9,7 +9,7 @@ object Build extends sbt.Build {
     base = file("."),
     settings = Defaults.defaultSettings ++ packAutoSettings ++
       Seq(
-        scalaVersion := "2.10.3",
+        scalaVersion := "2.11.6",
         // Copy files from ${root}/web/... to ${root}/target/pack/web-content...
         packResourceDir += (baseDirectory.value / "web" -> "web-content"),
         // custom settings here

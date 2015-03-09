@@ -6,7 +6,7 @@ import xerial.sbt.Pack._
 object Build extends sbt.Build {
 
   val commonSettings = Defaults.defaultSettings ++ Seq(
-     scalaVersion := "2.10.3",
+     scalaVersion := "2.11.6",
      version := "0.1",
      crossPaths := false
   )
@@ -24,7 +24,7 @@ object Build extends sbt.Build {
     id = "module1",
     base = file("module1"),
     settings = commonSettings ++ Seq(
-      libraryDependencies += "org.xerial" % "xerial-core" % "3.2.1"
+      libraryDependencies += "org.xerial" % "xerial-core" % "3.3.6"
     )
   )
 
@@ -32,7 +32,7 @@ object Build extends sbt.Build {
     id = "module2",
     base = file("module2"),
     settings = commonSettings ++ Seq(
-      libraryDependencies += "org.xerial.snappy" % "snappy-java" % "1.1.0"
+      libraryDependencies += "org.xerial.snappy" % "snappy-java" % "1.1.1.6"
     )
   )
 

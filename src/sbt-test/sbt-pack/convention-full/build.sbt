@@ -1,8 +1,8 @@
 packSettings
 
-scalaVersion := "2.10.3"
+scalaVersion := "2.11.6"
 
-libraryDependencies := Seq("org.xerial" % "xerial-core" % "3.2.3")
+libraryDependencies := Seq("org.xerial" % "xerial-core" % "3.3.6")
 
 packJarNameConvention := "full"
 

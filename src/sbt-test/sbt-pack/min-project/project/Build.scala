@@ -9,7 +9,7 @@ object Build extends sbt.Build {
     base = file("."),
     settings = Defaults.defaultSettings ++ packAutoSettings ++
       Seq(
-        scalaVersion := "2.10.3",
+        scalaVersion := "2.11.6",
         // custom settings here
         crossPaths := false
       )

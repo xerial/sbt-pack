@@ -22,14 +22,19 @@ import Keys._
 import sbt.ScriptedPlugin._
 import net.virtualvoid.sbt.graph.Plugin._
 
+import sbtrelease._
 import sbtrelease.ReleasePlugin._
+import sbtrelease.ReleaseStep
+import ReleaseStateTransformations._
+import Sonatype.SonatypeKeys._
+import com.typesafe.sbt.pgp.PgpKeys
 
 import com.mojolly.scalate.ScalatePlugin._
 import ScalateKeys._
 
 object PackBuild extends Build {
 
-  val SCALA_VERSION = "2.10.3"
+  val SCALA_VERSION = "2.10.5"
 
   def releaseResolver(v: String): Resolver = {
     val profile = System.getProperty("xerial.profile", "default")
@@ -71,6 +76,42 @@ object PackBuild extends Build {
     scalateTemplateConfig in Compile <<= (sourceDirectory in Compile) { base =>
       Seq(TemplateConfig(base / "templates", Nil, Nil, Some("xerial.sbt.template")))
     },
+    ReleaseKeys.tagName := { (version in ThisBuild).value },
+    ReleaseKeys.releaseProcess := Seq[ReleaseStep](
+      checkSnapshotDependencies,
+      inquireVersions,
+      runClean,
+      runTest,
+      ReleaseStep(
+        action = { state =>
+          val extracted = Project extract state
+          extracted.runAggregated(scriptedRun in Global in extracted.get(thisProjectRef), state)
+        }
+      ),
+      setReleaseVersion,
+      ReleaseStep(
+        action = { state =>
+          val extracted = Project extract state
+          Process("./bin/bump-version.sh").!
+          state
+        }
+      ),
+      commitReleaseVersion,
+      tagRelease,
+      ReleaseStep(
+        action = { state =>
+          val extracted = Project extract state
+          extracted.runAggregated(PgpKeys.publishSigned in Global in extracted.get(thisProjectRef), state)
+        }
+      ),
+      setNextVersion,
+      commitNextVersion,
+      ReleaseStep{ state =>
+        val extracted = Project extract state
+        extracted.runAggregated(sonatypeReleaseAll in Global in extracted.get(thisProjectRef), state)
+      },
+      pushChanges
+    ),
     pomExtra := {
       <url>http://xerial.org/</url>
       <licenses>

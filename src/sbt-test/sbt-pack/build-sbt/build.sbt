@@ -1,6 +1,6 @@
 packAutoSettings
 
-scalaVersion := "2.10.3"
+scalaVersion := "2.11.6"
 
 packExtraClasspath := Map("hello" -> Seq("${PROG_HOME}/extra"))
 
