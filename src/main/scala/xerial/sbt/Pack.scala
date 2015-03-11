@@ -19,18 +19,21 @@ object Pack extends sbt.Plugin with PackArchive {
   private case class ModuleEntry(org: String,
                                  name: String,
                                  revision: VersionString,
+                                 artifactName: String,
                                  classifier: Option[String],
                                  originalFileName: String,
                                  projectRef: ProjectRef) {
     private def classifierSuffix = classifier.map("-" + _).getOrElse("")
 
-    override def toString = "%s:%s:%s%s".format(org, name, revision, classifierSuffix)
+    override def toString = "%s:%s:%s%s".format(org, artifactName, revision, classifierSuffix)
 
-    def jarName = "%s-%s%s.jar".format(name, revision, classifierSuffix)
+    def jarName = "%s-%s%s.jar".format(artifactName, revision, classifierSuffix)
 
-    def fullJarName = "%s.%s-%s%s.jar".format(org, name, revision, classifierSuffix)
+    def fullJarName = "%s.%s-%s%s.jar".format(org, artifactName, revision, classifierSuffix)
 
-    def noVersionJarName = "%s.%s%s.jar".format(org, name, classifierSuffix)
+    def noVersionJarName = "%s.%s%s.jar".format(org, artifactName, classifierSuffix)
+
+    def noVersionModuleName = "%s.%s%s.jar".format(org, name, classifierSuffix)
   }
 
   private implicit def versionStringOrdering = DefaultVersionStringOrdering
@@ -127,7 +130,7 @@ object Pack extends sbt.Plugin with PackArchive {
           (artifact, file) <- m.artifacts if DependencyFilter.allPass(c.configuration, m.module, artifact)}
         yield {
           val mid = m.module
-          val me = ModuleEntry(mid.organization, mid.name, VersionString(mid.revision), artifact.classifier, file.getName, projectRef)
+          val me = ModuleEntry(mid.organization, mid.name, VersionString(mid.revision), artifact.name, artifact.classifier, file.getName, projectRef)
           me -> file
         }
 
@@ -149,16 +152,16 @@ object Pack extends sbt.Plugin with PackArchive {
       libs.foreach(l => IO.copyFile(l, libDir / l.getName))
 
       val distinctDpJars = dependentJars
-        .groupBy(_._1.noVersionJarName)
-        .map {
-          case (key, entries) if entries.groupBy(_._1.revision).size == 1 => entries.head
+        .groupBy(_._1.noVersionModuleName)
+        .flatMap {
+          case (key, entries) if entries.groupBy(_._1.revision).size == 1 => entries
           case (key, entries) =>
             val revisions = entries.groupBy(_._1.revision).map(_._1).toList.sorted
+            val latestRevision = revisions.last
             packDuplicateJarStrategy.value match {
               case "latest" =>
-                val latest = entries.sortBy(_._1.revision).last
-                out.log.warn(s"Version conflict on $key. Using ${latest._1.revision} (found ${revisions.mkString(", ")})")
-                latest
+                out.log.warn(s"Version conflict on $key. Using ${latestRevision} (found ${revisions.mkString(", ")})")
+                entries.filter(_._1.revision == latestRevision)
               case "exit" =>
                 sys.error(s"Version conflict on $key (found ${revisions.mkString(", ")})")
               case x =>
@@ -295,7 +298,7 @@ object Pack extends sbt.Plugin with PackArchive {
 
   lazy val packAutoSettings = packSettings :+ (
     packMain := packMainDiscovered.value
-  )
+    )
 
 
   private def getFromAllProjects[T](targetTask: TaskKey[T])(currentProject: ProjectRef, structure: BuildStructure): Task[Seq[(T, ProjectRef)]] =
