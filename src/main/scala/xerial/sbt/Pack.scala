@@ -298,7 +298,7 @@ object Pack extends sbt.Plugin with PackArchive {
 
   lazy val packAutoSettings = packSettings :+ (
     packMain := packMainDiscovered.value
-    )
+  )
 
 
   private def getFromAllProjects[T](targetTask: TaskKey[T])(currentProject: ProjectRef, structure: BuildStructure): Task[Seq[(T, ProjectRef)]] =
