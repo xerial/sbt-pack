@@ -127,8 +127,8 @@ object Pack extends sbt.Plugin with PackArchive {
           (r: sbt.UpdateReport, projectRef) <- packUpdateReports.value
           c <- r.configurations if c.configuration == "runtime"
           m <- c.modules
-          (artifact, file) <- m.artifacts if DependencyFilter.allPass(c.configuration, m.module, artifact)}
-        yield {
+          (artifact, file) <- m.artifacts if artifactFilter(`type` = "jar")(c.configuration, m.module, artifact)
+        } yield {
           val mid = m.module
           val me = ModuleEntry(mid.organization, mid.name, VersionString(mid.revision), artifact.name, artifact.classifier, file.getName, projectRef)
           me -> file
