@@ -1,4 +1,6 @@
 ### Release Notes
+- March 16th, 2015 - 0.6.7 release
+  - Fixed a problem when including multiple artifact versions
 - March 9th, 2015 - 0.6.6 release
   - Improved packAutoSettings behaviour for multi-module projects
   - Add packTgz, packTbz, packTxz, packZip tasks to create archives
