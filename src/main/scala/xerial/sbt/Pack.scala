@@ -70,6 +70,7 @@ object Pack extends sbt.Plugin with PackArchive {
   val packJarNameConvention = SettingKey[String]("pack-jarname-convention", "default: (artifact name)-(version).jar; original: original JAR name; full: (organization).(artifact name)-(version).jar; no-version: (organization).(artifact name).jar")
   val packDuplicateJarStrategy = SettingKey[String]("deal with duplicate jars. default to use latest version", "latest: use the jar with a higher version; exit: exit the task with error")
 
+  val checkDuplicatedExclude = settingKey[Seq[(String, String)]]("List of modules organization/artifactName that should not be checked for duplicated dependencies")
   val checkDuplicatedDependencies = taskKey[Unit]("Checks there are no duplicated dependencies, incompatible between them.")
 
   import complete.DefaultParsers._
@@ -303,6 +304,8 @@ object Pack extends sbt.Plugin with PackArchive {
       distDir
     },
 
+    checkDuplicatedExclude := Seq.empty,
+
     checkDuplicatedDependencies := {
       val log = streams.value.log
       val dependentJars =
@@ -311,6 +314,7 @@ object Pack extends sbt.Plugin with PackArchive {
           c <- r.configurations if c.configuration == "runtime"
           m <- c.modules
           (artifact, file) <- m.artifacts if !packExcludeArtifactTypes.value.contains(artifact.`type`)
+          if !checkDuplicatedExclude.value.contains((m.module.organization, m.module.name))
         } yield {
           val mid = m.module
           val me = ModuleEntry(mid.organization, mid.name, VersionString(mid.revision), artifact.name, artifact.classifier, file.getName, projectRef)

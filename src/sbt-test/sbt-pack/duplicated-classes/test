@@ -2,3 +2,5 @@
 > module2/checkDuplicatedDependencies
 -> module1/checkDuplicatedDependencies
 -> checkDuplicatedDependencies
+> 'set checkDuplicatedExclude := Seq(("jakarta-regexp", "jakarta-regexp"))'
+> checkDuplicatedDependencies
