@@ -7,6 +7,10 @@
 
 package xerial.sbt
 
+import java.io.InputStream
+import java.security.{DigestInputStream, MessageDigest}
+import java.util.zip.ZipFile
+
 import sbt._
 import org.fusesource.scalate.TemplateEngine
 import Keys._
@@ -65,6 +69,8 @@ object Pack extends sbt.Plugin with PackArchive {
   val packExpandedClasspath = settingKey[Boolean]("Expands the wildcard classpath in launch scripts to point at specific libraries")
   val packJarNameConvention = SettingKey[String]("pack-jarname-convention", "default: (artifact name)-(version).jar; original: original JAR name; full: (organization).(artifact name)-(version).jar; no-version: (organization).(artifact name).jar")
   val packDuplicateJarStrategy = SettingKey[String]("deal with duplicate jars. default to use latest version", "latest: use the jar with a higher version; exit: exit the task with error")
+
+  val checkDuplicatedDependencies = taskKey[Unit]("Checks there are no duplicated dependencies, incompatible between them.")
 
   import complete.DefaultParsers._
   private val targetFolderParser: complete.Parser[Option[String]] =
@@ -295,6 +301,95 @@ object Pack extends sbt.Plugin with PackArchive {
 
       out.log.info("done.")
       distDir
+    },
+
+    checkDuplicatedDependencies := {
+      val log = streams.value.log
+      val dependentJars =
+        for {
+          (r: sbt.UpdateReport, projectRef) <- packUpdateReports.value
+          c <- r.configurations if c.configuration == "runtime"
+          m <- c.modules
+          (artifact, file) <- m.artifacts if !packExcludeArtifactTypes.value.contains(artifact.`type`)
+        } yield {
+          val mid = m.module
+          val me = ModuleEntry(mid.organization, mid.name, VersionString(mid.revision), artifact.name, artifact.classifier, file.getName, projectRef)
+          me -> file
+        }
+
+      def hash(is: InputStream) = {
+        val md = MessageDigest.getInstance("MD5")
+        val dis = new DigestInputStream(is, md)
+        Iterator.continually(dis.read()).takeWhile(_ >= 0).foreach{_ ⇒ ()}
+        md.digest()
+      }
+
+      def strMod(m: ModuleEntry) = m.org + " % " + m.artifactName + " % " + m.revision
+
+      val distinctDpJars = dependentJars
+          .groupBy(_._1.noVersionModuleName)
+          .map {
+            case (key, entries) if entries.groupBy(_._1.revision).size == 1 ⇒
+              val e0 = entries(0)
+              (strMod(e0._1), e0._2)
+            case (key, entries) ⇒
+              val revisions = entries.groupBy(_._1.revision).map(_._1).toList.sorted
+              val latestRevision = revisions.last
+              packDuplicateJarStrategy.value match {
+                case "latest" =>
+                  log.warn(s"Version conflict on $key. Using ${latestRevision} (found ${revisions.mkString(", ")})")
+                  val entry = entries.filter(_._1.revision == latestRevision)(0)
+                  (strMod(entry._1), entry._2)
+                case "exit" =>
+                  sys.error(s"Version conflict on $key (found ${revisions.mkString(", ")})")
+                case x =>
+                  sys.error("Unknown duplicate JAR strategy '%s'".format(x))
+              }
+          }
+
+      val allClasses = distinctDpJars.map { case (mod, file) ⇒
+        import scala.collection.JavaConversions._
+        log debug s"Scanning $file"
+        val jar = new ZipFile(file)
+        val classes = try {
+          jar.entries
+              .withFilter { e ⇒ !e.isDirectory && e.getName.endsWith(".class") }
+              .toList
+              .map { e ⇒
+                val h = hash(jar.getInputStream(e))
+                //log debug s"${e.getName} ⇒ ${h.map(a ⇒ f"$a%02X").mkString}"
+                (e.getName, h)
+              }
+        } finally
+          jar.close()
+        (mod, classes)
+      }
+
+      val conflicts = for {
+        ((mod, hashes), index) ← allClasses.zipWithIndex
+        others = allClasses.view(index+1, allClasses.size)
+        (file1, hash1) ← hashes
+        (mod2, hashes2) ← others
+        (file2, hash2) ← hashes2
+        if file1 == file2 && !(hash1 sameElements hash2)
+      } yield {
+          //log debug mod+" "+mod2+" "+file1
+          (mod, mod2, file1)
+      }
+
+      if (conflicts.size > 0) {
+        def strMod(m: ModuleEntry) = m.org + " % " + m.artifactName + " % " + m.revision
+
+        val groupedConflicts = conflicts.groupBy { case (mod1, mod2, file) ⇒
+          (mod1, mod2)
+        }.mapValues { _.map{ case (mod1, mod2, file) ⇒ file } }
+        groupedConflicts.foreach { case ((m1, m2), files) ⇒
+          val f = files.map{ "\n  "+_.replaceFirst(".class$", "")}.mkString
+          println(s"Conflict between $m1 and $m2:"+f)
+        }
+        sys.error(s"Detected ${conflicts.size} conflict(s)")
+      } else
+        log info s"No conflicts detected, scanned ${dependentJars.size} jar files."
     }
   ) ++ packArchiveSettings
 

@@ -1,0 +1,4 @@
+> 'set version := "0.1"'
+> module2/checkDuplicatedDependencies
+-> module1/checkDuplicatedDependencies
+-> checkDuplicatedDependencies
