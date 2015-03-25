@@ -70,7 +70,7 @@ object Pack extends sbt.Plugin with PackArchive {
   val packJarNameConvention = SettingKey[String]("pack-jarname-convention", "default: (artifact name)-(version).jar; original: original JAR name; full: (organization).(artifact name)-(version).jar; no-version: (organization).(artifact name).jar")
   val packDuplicateJarStrategy = SettingKey[String]("deal with duplicate jars. default to use latest version", "latest: use the jar with a higher version; exit: exit the task with error")
 
-  val checkDuplicatedExclude = settingKey[Seq[(String, String)]]("List of modules organization/artifactName that should not be checked for duplicated dependencies")
+  val checkDuplicatedExclude = settingKey[Seq[(ModuleID, ModuleID)]]("List of pair of modules whose duplicated dependencies are ignored, because they are known to be harmless.")
   val checkDuplicatedDependencies = taskKey[Unit]("Checks there are no duplicated dependencies, incompatible between them.")
 
   import complete.DefaultParsers._
@@ -308,13 +308,13 @@ object Pack extends sbt.Plugin with PackArchive {
 
     checkDuplicatedDependencies := {
       val log = streams.value.log
+
       val dependentJars =
         for {
           (r: sbt.UpdateReport, projectRef) <- packUpdateReports.value
           c <- r.configurations if c.configuration == "runtime"
           m <- c.modules
           (artifact, file) <- m.artifacts if !packExcludeArtifactTypes.value.contains(artifact.`type`)
-          if !checkDuplicatedExclude.value.contains((m.module.organization, m.module.name))
         } yield {
           val mid = m.module
           val me = ModuleEntry(mid.organization, mid.name, VersionString(mid.revision), artifact.name, artifact.classifier, file.getName, projectRef)
@@ -328,14 +328,14 @@ object Pack extends sbt.Plugin with PackArchive {
         md.digest()
       }
 
-      def strMod(m: ModuleEntry) = m.org + " % " + m.artifactName + " % " + m.revision
+      def modID(m: ModuleEntry) = m.org % m.artifactName % m.revision.toString
 
       val distinctDpJars = dependentJars
           .groupBy(_._1.noVersionModuleName)
           .map {
             case (key, entries) if entries.groupBy(_._1.revision).size == 1 ⇒
               val e0 = entries(0)
-              (strMod(e0._1), e0._2)
+              (modID(e0._1), e0._2)
             case (key, entries) ⇒
               val revisions = entries.groupBy(_._1.revision).map(_._1).toList.sorted
               val latestRevision = revisions.last
@@ -343,7 +343,7 @@ object Pack extends sbt.Plugin with PackArchive {
                 case "latest" =>
                   log.warn(s"Version conflict on $key. Using ${latestRevision} (found ${revisions.mkString(", ")})")
                   val entry = entries.filter(_._1.revision == latestRevision)(0)
-                  (strMod(entry._1), entry._2)
+                  (modID(entry._1), entry._2)
                 case "exit" =>
                   sys.error(s"Version conflict on $key (found ${revisions.mkString(", ")})")
                 case x =>
@@ -370,20 +370,21 @@ object Pack extends sbt.Plugin with PackArchive {
       }
 
       val conflicts = for {
-        ((mod, hashes), index) ← allClasses.zipWithIndex
+        ((mod1, hashes1), index) ← allClasses.zipWithIndex
         others = allClasses.view(index+1, allClasses.size)
-        (file1, hash1) ← hashes
+        (file1, hash1) ← hashes1
         (mod2, hashes2) ← others
+        if !checkDuplicatedExclude.value.exists{ case (m1, m2) ⇒
+          m1 == mod1 && m2 == mod2 || m2 == mod1 && m1 == mod2
+        }
         (file2, hash2) ← hashes2
         if file1 == file2 && !(hash1 sameElements hash2)
       } yield {
           //log debug mod+" "+mod2+" "+file1
-          (mod, mod2, file1)
+          (mod1, mod2, file1)
       }
 
       if (conflicts.size > 0) {
-        def strMod(m: ModuleEntry) = m.org + " % " + m.artifactName + " % " + m.revision
-
         val groupedConflicts = conflicts.groupBy { case (mod1, mod2, file) ⇒
           (mod1, mod2)
         }.mapValues { _.map{ case (mod1, mod2, file) ⇒ file } }
@@ -391,6 +392,16 @@ object Pack extends sbt.Plugin with PackArchive {
           val f = files.map{ "\n  "+_.replaceFirst(".class$", "")}.mkString
           println(s"Conflict between $m1 and $m2:"+f)
         }
+
+        def toStr(m: ModuleID) = s""""${m.organization}" % "${m.name}" % "${m.revision}""""
+        val excludes = groupedConflicts.map{ case ((m1, m2), _) ⇒ s"  ${toStr(m1)} -> ${toStr(m2)}" }.mkString(",\n")
+
+        println(s"""
+			  |If you consider these conflicts are infofensive, in order to ignore them, use:
+			  |set checkDuplicatedExclude := Seq(
+			  |$excludes
+			  |)
+			""".stripMargin)
         sys.error(s"Detected ${conflicts.size} conflict(s)")
       } else
         log info s"No conflicts detected, scanned ${dependentJars.size} jar files."
