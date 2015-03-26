@@ -4,7 +4,6 @@ import xerial.sbt.Pack._
 
 
 object Build extends sbt.Build {
-
   val commonSettings = packSettings ++ Seq(
     scalaVersion := "2.11.6",
     version := "0.1",
@@ -38,4 +37,22 @@ object Build extends sbt.Build {
     ): _*
   )
 
+  lazy val module3 = project.settings(
+    commonSettings ++ Seq(
+      libraryDependencies ++= Seq(
+        "commons-digester" % "commons-digester" % "2.1",
+        "commons-collections" % "commons-collections" % "3.2.1"
+      )
+    ): _*
+  )
+
+  lazy val module4 = project.settings(
+    commonSettings ++ Seq(
+      libraryDependencies ++= Seq(
+        "commons-digester" % "commons-digester" % "2.1"
+          exclude("commons-beanutils", "commons-beanutils"),
+        "commons-collections" % "commons-collections" % "3.2.1"
+      )
+    ): _*
+  )
 }
