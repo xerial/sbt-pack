@@ -1,0 +1,8 @@
+> 'set version := "0.1"'
+> module2/checkDuplicatedDependencies
+-> module1/checkDuplicatedDependencies
+-> checkDuplicatedDependencies
+> 'set checkDuplicatedExclude := Seq("jakarta-regexp" % "jakarta-regexp" % "1.4" -> "xalan" % "xalan" % "2.7.1")'
+> checkDuplicatedDependencies
+-> module3/checkDuplicatedDependencies
+> module4/checkDuplicatedDependencies

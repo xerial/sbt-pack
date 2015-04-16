@@ -20,6 +20,7 @@ A sbt plugin for creating distributable Scala packages that include dependent ja
   - The latest version is linked from `~/local/{project name}/current`
 - You can add other resources in `src/pack` folder. 
   - All resources in this folder will be copied to `target/pack`.
+- Check duplicated classes in dependencies.  
 
 * [Release Notes](ReleaseNotes.md)
 
@@ -167,6 +168,10 @@ export PATH=$(HOME)/local/bin:$PATH
 **Create a tar.gz archive of your Scala program package**
 
     $ sbt pack-archive
+
+### Find duplicated classes in dependencies
+
+This feature is documented in a [separate page](USAGE.md)
 
 ### Example projects
 
