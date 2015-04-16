@@ -349,7 +349,7 @@ object Pack extends sbt.Plugin with PackArchive {
                 case x =>
                   sys.error("Unknown duplicate JAR strategy '%s'".format(x))
               }
-          }
+          }.par
 
       val allClasses = distinctDpJars.map { case (mod, file) ⇒
         import scala.collection.JavaConversions._
@@ -357,7 +357,7 @@ object Pack extends sbt.Plugin with PackArchive {
         val jar = new ZipFile(file)
         val classes = try {
           jar.entries
-              .withFilter { e ⇒ !e.isDirectory && e.getName.endsWith(".class") }
+              .filter { e ⇒ !e.isDirectory && e.getName.endsWith(".class") }
               .toList
               .map { e ⇒
                 val h = hash(jar.getInputStream(e))
@@ -371,7 +371,7 @@ object Pack extends sbt.Plugin with PackArchive {
 
       val conflicts = for {
         ((mod1, hashes1), index) ← allClasses.zipWithIndex
-        others = allClasses.view(index+1, allClasses.size)
+        others = allClasses.seq.view(index+1, allClasses.size).par
         (file1, hash1) ← hashes1
         (mod2, hashes2) ← others
         if !checkDuplicatedExclude.value.exists{ case (m1, m2) ⇒
@@ -397,7 +397,7 @@ object Pack extends sbt.Plugin with PackArchive {
         val excludes = groupedConflicts.map{ case ((m1, m2), _) ⇒ s"  ${toStr(m1)} -> ${toStr(m2)}" }.mkString(",\n")
 
         println(s"""
-			  |If you consider these conflicts are infofensive, in order to ignore them, use:
+			  |If you consider these conflicts are inoffensive, in order to ignore them, use:
 			  |set checkDuplicatedExclude := Seq(
 			  |$excludes
 			  |)
