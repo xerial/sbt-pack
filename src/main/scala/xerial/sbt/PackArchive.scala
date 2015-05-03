@@ -38,7 +38,7 @@ trait PackArchive {
     val excludeFiles = Set("Makefile", "VERSION")
     def addFilesToArchive(dir: File): Unit = dir.listFiles.
       filterNot(f => excludeFiles.contains(rpath(distDir, f))).foreach { file =>
-        aos.putArchiveEntry(createEntry(file, archiveStem ++ "/" ++ rpath(distDir, file), binDir))
+        aos.putArchiveEntry(createEntry(file, archiveStem ++ "/" ++ rpath(distDir, file, "/"), binDir))
         if (file.isDirectory) {
           aos.closeArchiveEntry()
           addFilesToArchive(file)
@@ -89,23 +89,19 @@ trait PackArchive {
 
   def publishPackTgzArchive: SettingsDefinition = Seq(
     artifacts += packArchiveTgzArtifact.value,
-    packagedArtifacts += packArchiveTgzArtifact.value -> packArchiveTgz.value
-  )
+    packagedArtifacts += packArchiveTgzArtifact.value -> packArchiveTgz.value)
 
   def publishPackTbzArchive: SettingsDefinition = Seq(
     artifacts += packArchiveTbzArtifact.value,
-    packagedArtifacts += packArchiveTbzArtifact.value -> packArchiveTbz.value
-  )
+    packagedArtifacts += packArchiveTbzArtifact.value -> packArchiveTbz.value)
 
   def publishPackTxzArchive: SettingsDefinition = Seq(
     artifacts += packArchiveTxzArtifact.value,
-    packagedArtifacts += packArchiveTxzArtifact.value -> packArchiveTxz.value
-  )
+    packagedArtifacts += packArchiveTxzArtifact.value -> packArchiveTxz.value)
 
   def publishPackZipArchive: SettingsDefinition = Seq(
     artifacts += packArchiveZipArtifact.value,
-    packagedArtifacts += packArchiveZipArtifact.value -> packArchiveZip.value
-  )
+    packagedArtifacts += packArchiveZipArtifact.value -> packArchiveZip.value)
 
   def publishPackArchives: SettingsDefinition =
     publishPackTgzArchive ++ publishPackZipArchive
