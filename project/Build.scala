@@ -36,22 +36,6 @@ object PackBuild extends Build {
 
   val SCALA_VERSION = "2.10.5"
 
-  def releaseResolver(v: String): Resolver = {
-    val profile = System.getProperty("xerial.profile", "default")
-    profile match {
-      case "default" => {
-        val nexus = "https://oss.sonatype.org/"
-        if (v.trim.endsWith("SNAPSHOT"))
-          "snapshots" at nexus + "content/repositories/snapshots"
-        else
-          "releases" at nexus + "service/local/staging/deploy/maven2"
-      }
-      case p => {
-        sys.error("unknown xerial.profile:%s".format(p))
-      }
-    }
-  }
-
   lazy val buildSettings = Defaults.coreDefaultSettings ++ releaseSettings ++ scriptedSettings ++ graphSettings ++ scalateSettings ++ Seq[Setting[_]](
     organization := "org.xerial.sbt",
     organizationName := "Xerial project",
@@ -60,7 +44,6 @@ object PackBuild extends Build {
     scalaVersion := SCALA_VERSION,
     publishMavenStyle := true,
     publishArtifact in Test := false,
-    publishTo <<= version { (v) => Some(releaseResolver(v)) },
     pomIncludeRepository := {
       _ => false
     },
