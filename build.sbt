@@ -1,5 +1,3 @@
 import SonatypeKeys._
 
-sonatypeSettings
-
-profileName := "org.xerial"
+sonatypeProfileName := "org.xerial"
