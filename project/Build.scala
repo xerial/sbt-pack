@@ -87,8 +87,7 @@ object PackBuild extends Build {
       state.log.info("Bump plugin version in scripted tests")
       val command =
         Process("./bin/bump-version.sh") #&&
-        Process("git add src/sbt-test") #&&
-        Process(Seq("git", "commit", "-m", "Bump plugin version in scripted tests"))
+        Process("git add src/sbt-test")
       val ret = command.!
       ret match {
         case 0 => state
