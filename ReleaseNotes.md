@@ -1,5 +1,5 @@
 ### Release Notes
-- May 5th, 2015 - 0.6.10 release
+- May 5th, 2015 - 0.6.12 release
   - Add packExcludeJars setting
 - May 3rd, 2015 - 0.6.9 release
   - Fixes #68
