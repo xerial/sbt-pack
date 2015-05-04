@@ -85,11 +85,10 @@ object PackBuild extends Build {
     action = { state =>
       val extracted = Project extract state
       state.log.info("Bump plugin version in scripted tests")
-      val bd = state.configuration.baseDirectory()
       val command =
-        Process("./bin/bump-version.sh", cwd = bd) #&&
-        Process("git add src/sbt-test", cwd = bd) #&&
-        Process("git commit -m 'Bump plugin version in scripted tests'", cwd = bd)
+        Process("./bin/bump-version.sh") #&&
+        Process("git add src/sbt-test") #&&
+        Process("git commit -m \"Bump plugin version in scripted tests\"")
       val ret = command.!
       ret match {
         case 0 => state
