@@ -1,6 +1,6 @@
 ### Release Notes
 - May 3rd, 2015 - 0.6.9 release
-  - Fixes [#68]
+  - Fixes #68
 - March 19th, 2015 - 0.6.8 release
   - Fix a bug when collecting artifacts
 - March 16th, 2015 - 0.6.7 release
