@@ -85,7 +85,11 @@ object PackBuild extends Build {
     action = { state =>
       val extracted = Project extract state
       state.log.info("Bump plugin version in scripted tests")
-      val ret = Process("./bin/bump-version.sh && git add src/sbt-test && git commit -m 'Bump plugin version in scripted tests'").!
+      val command =
+        Process("./bin/bump-version.sh") #&&
+        Process("git add src/sbt-test") #&&
+        Process("git commit -m 'Bump plugin version in scripted tests'")
+      val ret = command.!
       ret match {
         case 0 => state
         case _ => state.fail
