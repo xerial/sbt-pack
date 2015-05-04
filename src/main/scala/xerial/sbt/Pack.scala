@@ -52,6 +52,7 @@ object Pack extends sbt.Plugin with PackArchive {
   val packMain = TaskKey[Map[String, String]]("prog_name -> main class table")
   val packMainDiscovered = TaskKey[Map[String, String]]("discovered prog_name -> main class table")
   val packExclude = SettingKey[Seq[String]]("pack-exclude", "specify projects to exclude when packaging")
+  val packExcludeJars = SettingKey[Seq[String]]("pack-exclude-jars", "specify jar file name patterns to exclude when packaging")
   val packExcludeArtifactTypes = settingKey[Seq[String]]("specify artifact types (e.g. javadoc) to exclude when packaging")
   val packAllClasspaths = TaskKey[Seq[(Classpath, ProjectRef)]]("pack-all-classpaths")
   val packLibJars = TaskKey[Seq[(File, ProjectRef)]]("pack-lib-jars")
@@ -98,6 +99,7 @@ object Pack extends sbt.Plugin with PackArchive {
         allDiscoveredMainClasses.flatMap(_._1.map(mainClass => hyphenize(mainClass.split('.').last) -> mainClass).toMap).toMap
     },
     packExclude := Seq.empty,
+    packExcludeJars := Seq.empty,
     packExcludeArtifactTypes := Seq("source", "javadoc", "test"),
     packMacIconFile := "icon-mac.png",
     packResourceDir := Map(baseDirectory.value / "src/pack" -> ""),
@@ -129,7 +131,7 @@ object Pack extends sbt.Plugin with PackArchive {
           (r: sbt.UpdateReport, projectRef) <- packUpdateReports.value
           c <- r.configurations if c.configuration == "runtime"
           m <- c.modules
-          (artifact, file) <- m.artifacts if !packExcludeArtifactTypes.value.contains(artifact.`type`)
+          (artifact, file) <- m.artifacts if !packExcludeArtifactTypes.value.contains(artifact.`type`) && !packExcludeJars.value.exists(file.name.matches)
         } yield {
           val mid = m.module
           val me = ModuleEntry(mid.organization, mid.name, VersionString(mid.revision), artifact.name, artifact.classifier, file.getName, projectRef)
