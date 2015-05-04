@@ -93,6 +93,8 @@ object Build extends sbt.Build {
         //   "no-version" (organization name).(project name).jar
         //   "original"  (Preserve original jar file names)
         packJarNameConvention := "default",
+        // [Optional] Patterns of jar file names to exclude in pack
+        packExcludeJars := Seq("scala-.*\\.jar"),
         // [Optional] List full class paths in the launch scripts (default is false) (since 0.5.1)
         packExpandedClasspath := false,
         // [Optional] Resource directory mapping to be copied within target/pack. Default is Map("{projectRoot}/src/pack" -> "") 
