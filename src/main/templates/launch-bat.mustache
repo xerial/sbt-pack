@@ -35,7 +35,7 @@ if "%OS%"=="Windows_NT" @setlocal
 if not "%JAVA_HOME%" == "" goto OkJHome
 
 for /f %%j in ("java.exe") do (
-  set JAVA_EXE=%%~$PATH:j
+  set JAVA_EXE="%%~$PATH:j"
   goto init
 )
 
