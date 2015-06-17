@@ -42,7 +42,8 @@ object Pack extends sbt.Plugin with PackArchive {
 
   val pack = taskKey[File]("create a distributable package of the project")
   val packInstall = inputKey[Int]("pack and install")
-  val packDir = settingKey[String]("target directory to pack. Default is target/pack")
+  val packTargetDir = settingKey[File]("target directory to pack default is target")
+  val packDir = settingKey[String]("pack directory name")
 
   val packBashTemplate = settingKey[String]("template file for bash scripts - defaults to pack's out-of-the-box template for bash")
   val packBatTemplate = settingKey[String]("template file for bash scripts - defaults to pack's out-of-the-box template for bat")
@@ -72,7 +73,8 @@ object Pack extends sbt.Plugin with PackArchive {
     (Space ~> token(StringBasic, "(target folder)")).?.!!!("invalid input. please input target folder name")
 
   lazy val packSettings = Seq[Def.Setting[_]](
-    packDir := target.value + "/pack",
+    packTargetDir := target.value,
+    packDir := "pack",
     packBashTemplate := "/xerial/sbt/template/launch.mustache",
     packBatTemplate := "/xerial/sbt/template/launch-bat.mustache",
     packMakeTemplate := "/xerial/sbt/template/Makefile.mustache",
@@ -139,7 +141,7 @@ object Pack extends sbt.Plugin with PackArchive {
         }
 
       val out = streams.value
-      val distDir: File = new File(packDir.value)
+      val distDir: File = packTargetDir.value / packDir.value
       out.log.info("Creating a distributable package in " + rpath(baseDirectory.value, distDir))
       IO.delete(distDir)
       distDir.mkdirs()

@@ -30,28 +30,30 @@ trait PackArchive {
     createOutputStream: (OutputStream) => ArchiveOutputStream,
     createEntry: (File, String, File) => ArchiveEntry) = Def.task {
     val out = streams.value
-    val targetDir: File = target.value
-    val distDir: File = Pack.pack.value
+    val targetDir: File = Pack.packTargetDir.value
+    val distDir: File = Pack.pack.value // run pack command here
     val binDir = distDir / "bin"
-    val archiveStem = s"${packArchivePrefix.value}-${version.value}"
+    val archiveStem = s"${packArchiveName.value}"
     val archiveName = s"${archiveStem}.${archiveSuffix}"
     out.log.info("Generating " + rpath(baseDirectory.value, targetDir / archiveName))
     val aos = createOutputStream(new BufferedOutputStream(new FileOutputStream(targetDir / archiveName)))
     val excludeFiles = packArchiveExcludes.value.toSet
-    def addFilesToArchive(dir: File): Unit = dir.listFiles.
-      filterNot(f => excludeFiles.contains(rpath(distDir, f))).foreach { file =>
-        aos.putArchiveEntry(createEntry(file, archiveStem ++ "/" ++ rpath(distDir, file, "/"), binDir))
-        if (file.isDirectory) {
-          aos.closeArchiveEntry()
-          addFilesToArchive(file)
-        } else {
-          IOUtils.copy(new BufferedInputStream(new FileInputStream(file)), aos)
-          aos.closeArchiveEntry()
-        }
+    def addFilesToArchive(dir: File): Unit = Option(dir.listFiles)
+            .getOrElse(Array.empty)
+            .filterNot(f => excludeFiles.contains(rpath(distDir, f)))
+            .foreach { file =>
+      aos.putArchiveEntry(createEntry(file, archiveStem ++ "/" ++ rpath(distDir, file, "/"), binDir))
+      if (file.isDirectory) {
+        aos.closeArchiveEntry()
+        addFilesToArchive(file)
+      } else {
+        IOUtils.copy(new BufferedInputStream(new FileInputStream(file)), aos)
+        aos.closeArchiveEntry()
       }
+    }
     addFilesToArchive(distDir)
     aos.close()
-    target.value / archiveName
+    targetDir / archiveName
   }
 
   private def createTarEntry(file: File, fileName: String, binDir: File) = {
@@ -70,6 +72,7 @@ trait PackArchive {
 
   lazy val packArchiveSettings = Seq[Def.Setting[_]](
     packArchivePrefix := name.value,
+    packArchiveName := s"${packArchivePrefix.value}-${version.value}",
     packArchiveExcludes := Seq.empty,
     packArchiveTgzArtifact := Artifact(packArchivePrefix.value, "arch", "tar.gz"),
     packArchiveTbzArtifact := Artifact(packArchivePrefix.value, "arch", "tar.bz2"),
