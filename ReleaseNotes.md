@@ -1,7 +1,8 @@
 ### Release Notes
-- June 17, 2015 - 0.7.0 release
-  - Allow specifying output directory via packDir
+- June 17, 2015 - 0.7.1 release
+  - Allow specifying output directory via packTargetDir ("target" in default) and packDir ("pack" in default)
   - Include Makefile and VERSION files in packArchive 
+  - Various bug fixes
 - May 5th, 2015 - 0.6.12 release
   - Add packExcludeJars setting
 - May 3rd, 2015 - 0.6.9 release
