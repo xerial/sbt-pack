@@ -13,6 +13,7 @@ import org.apache.commons.compress.utils.IOUtils
 
 trait PackArchive {
   val packArchivePrefix = SettingKey[String]("prefix of (prefix)-(version).(format) archive file name")
+  val packArchiveExcludes = SettingKey[Seq[String]]("List of excluding files from the archive")
   val packArchiveTgzArtifact = SettingKey[Artifact]("tar.gz archive artifact")
   val packArchiveTbzArtifact = SettingKey[Artifact]("tar.bz2 archive artifact")
   val packArchiveTxzArtifact = SettingKey[Artifact]("tar.xz archive artifact")
@@ -35,7 +36,7 @@ trait PackArchive {
     val archiveName = s"${archiveStem}.${archiveSuffix}"
     out.log.info("Generating " + rpath(baseDirectory.value, targetDir / archiveName))
     val aos = createOutputStream(new BufferedOutputStream(new FileOutputStream(targetDir / archiveName)))
-    val excludeFiles = Set("Makefile", "VERSION")
+    val excludeFiles = packArchiveExcludes.value.toSet
     def addFilesToArchive(dir: File): Unit = dir.listFiles.
       filterNot(f => excludeFiles.contains(rpath(distDir, f))).foreach { file =>
         aos.putArchiveEntry(createEntry(file, archiveStem ++ "/" ++ rpath(distDir, file, "/"), binDir))
@@ -68,6 +69,7 @@ trait PackArchive {
 
   lazy val packArchiveSettings = Seq[Def.Setting[_]](
     packArchivePrefix := name.value,
+    packArchiveExcludes := Seq.empty,
     packArchiveTgzArtifact := Artifact(packArchivePrefix.value, "arch", "tar.gz"),
     packArchiveTbzArtifact := Artifact(packArchivePrefix.value, "arch", "tar.bz2"),
     packArchiveTxzArtifact := Artifact(packArchivePrefix.value, "arch", "tar.xz"),
