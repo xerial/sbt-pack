@@ -30,7 +30,7 @@ Add `sbt-pack` plugin to your sbt configuration:
 **project/plugins.sbt**
 
 ```scala
-addSbtPlugin("org.xerial.sbt" % "sbt-pack" % "0.7.1")  // for sbt-0.13.x or higher
+addSbtPlugin("org.xerial.sbt" % "sbt-pack" % "0.7.2")  // for sbt-0.13.x or higher
 
 addSbtPlugin("org.xerial.sbt" % "sbt-pack" % "0.2.5")  // for sbt-0.12.x (New features will not be supported in this version.)
 ```
@@ -100,10 +100,10 @@ object Build extends sbt.Build {
         // [Optional] Resource directory mapping to be copied within target/pack. Default is Map("{projectRoot}/src/pack" -> "") 
         packResourceDir += (baseDirectory.value / "web" -> "web-content"),
       ) 
-    // To publish tar.gz, zip archive etc. to the repository, add the following line
+    // To publish tar.gz, zip archives to the repository, add the following line
     // ++ publishPackArchive
-    // If you need to publish tar.gz (publishTarGzArchive) only, use publishPack(xxx)Archive instead
-    // ++ publishPackTarGzArchive
+    // If you need to publish tar.gz (publishArchiveTgz) only, use publishPackArchive(xxx) instead
+    // ++ publishPackArchiveTgz
   )
 }
 ```
@@ -168,7 +168,7 @@ export PATH=$(HOME)/local/bin:$PATH
 
 **Create a tar.gz archive of your Scala program package**
 
-    $ sbt pack-archive
+    $ sbt packArchive
 
 ### Example projects
 

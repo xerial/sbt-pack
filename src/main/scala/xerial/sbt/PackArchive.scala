@@ -18,12 +18,12 @@ trait PackArchive {
   val packArchiveTgzArtifact = SettingKey[Artifact]("tar.gz archive artifact")
   val packArchiveTbzArtifact = SettingKey[Artifact]("tar.bz2 archive artifact")
   val packArchiveTxzArtifact = SettingKey[Artifact]("tar.xz archive artifact")
-  val packArchiveZipArtifact = SettingKey[Artifact](" zip archive artifact")
+  val packArchiveZipArtifact = SettingKey[Artifact]("zip archive artifact")
   val packArchiveTgz = TaskKey[File]("pack-archive-tgz", "create a tar.gz archive of the distributable package")
   val packArchiveTbz = TaskKey[File]("pack-archive-tbz", "create a tar.bz2 archive of the distributable package")
   val packArchiveTxz = TaskKey[File]("pack-archive-txz", "create a tar.xz archive of the distributable package")
   val packArchiveZip = TaskKey[File]("pack-archive-zip", "create a zip archive of the distributable package")
-  val packArchive = TaskKey[Seq[File]]("pack-archive", "create a tar.gz, tar.bz2, tar.xz and a zip archive of the distributable package")
+  val packArchive = TaskKey[Seq[File]]("pack-archive", "create a tar.gz and a zip archive of the distributable package")
 
   private def createArchive(
     archiveSuffix: String,
@@ -93,22 +93,22 @@ trait PackArchive {
       packArchiveTgz.value,
       packArchiveZip.value))
 
-  def publishPackTgzArchive: SettingsDefinition = Seq(
+  def publishPackArchiveTgz: SettingsDefinition = Seq(
     artifacts += packArchiveTgzArtifact.value,
     packagedArtifacts += packArchiveTgzArtifact.value -> packArchiveTgz.value)
 
-  def publishPackTbzArchive: SettingsDefinition = Seq(
+  def publishPackArchiveTbz: SettingsDefinition = Seq(
     artifacts += packArchiveTbzArtifact.value,
     packagedArtifacts += packArchiveTbzArtifact.value -> packArchiveTbz.value)
 
-  def publishPackTxzArchive: SettingsDefinition = Seq(
+  def publishPackArchiveTxz: SettingsDefinition = Seq(
     artifacts += packArchiveTxzArtifact.value,
     packagedArtifacts += packArchiveTxzArtifact.value -> packArchiveTxz.value)
 
-  def publishPackZipArchive: SettingsDefinition = Seq(
+  def publishPackArchiveZip: SettingsDefinition = Seq(
     artifacts += packArchiveZipArtifact.value,
     packagedArtifacts += packArchiveZipArtifact.value -> packArchiveZip.value)
 
   def publishPackArchives: SettingsDefinition =
-    publishPackTgzArchive ++ publishPackZipArchive
+    publishPackArchiveTgz ++ publishPackArchiveZip
 }
