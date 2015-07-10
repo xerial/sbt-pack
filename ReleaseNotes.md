@@ -1,4 +1,6 @@
 ### Release Notes
+- 0.7.4 release
+  - Allow regexp in packExcludeJars option
 - June 17, 2015 - 0.7.2 release
   - Allow specifying output directory via packTargetDir ("target" in default) and packDir ("pack" in default)
   - Include Makefile and VERSION files in packArchive 
