@@ -1,7 +1,9 @@
 > 'set version := "0.1"'
 > pack
 $ exists target/pack/Makefile
-$ absent target/pack/lib/scala-library-2.11.6.jar
+$ absent target/pack/lib/scala-library-2.10.5.jar
+$ absent target/pack/lib/scala-reflect-2.10.5.jar
 > packInstall ../../local
 $ exists local/exclude-jars/exclude-jars-0.1/lib/exclude-jars-0.1.jar
-$ absent local/exclude-jars/exclude-jars-0.1/lib/scala-library-2.11.6.jar
+$ absent local/exclude-jars/exclude-jars-0.1/lib/scala-library-2.10.5.jar
+$ absent local/exclude-jars/exclude-jars-0.1/lib/scala-reflect-2.10.5.jar
