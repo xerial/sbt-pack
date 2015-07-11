@@ -7,4 +7,4 @@ libraryDependencies ++= Seq(
   "com.typesafe.play" %% "play-json" % "2.3.9"
 )
 
-packExcludeJars := Seq("scala-library-.*\\.jar", "scala-reflect-.*\\.jar")
+packExcludeJars := Seq("scala-library.*\\.jar", "scala-reflect.*\\.jar")

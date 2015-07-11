@@ -140,10 +140,15 @@ object Pack
       Process(cmd, packDir).!
     },
     pack := {
+      val out = streams.value
 
       val jarExcludeFilter : Seq[Regex] = packExcludeJars.value.map(_.r)
       def isExcludeJar(name:String): Boolean = {
-        jarExcludeFilter.exists(pattern => pattern.findFirstIn(name).isDefined)
+        val toExclude = jarExcludeFilter.exists(pattern => pattern.findFirstIn(name).isDefined)
+        if(toExclude) {
+          out.log.info(s"Exclude $name from the package")
+        }
+        toExclude
       }
 
       val dependentJars =
@@ -159,7 +164,6 @@ object Pack
           me -> file
         }
 
-      val out = streams.value
       val distDir: File = packTargetDir.value / packDir.value
       out.log.info("Creating a distributable package in " + rpath(baseDirectory.value, distDir))
       IO.delete(distDir)
