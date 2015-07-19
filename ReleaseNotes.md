@@ -1,4 +1,36 @@
 ### Release Notes
+- 0.7.5 release
+  - Fix for spaces contained in project paths
+- 0.7.4 release
+  - Allow regexp in packExcludeJars option
+- June 17, 2015 - 0.7.2 release
+  - Allow specifying output directory via packTargetDir ("target" in default) and packDir ("pack" in default)
+  - Include Makefile and VERSION files in packArchive 
+  - Rename to packArchiveXXX (Tgz, Zip, etc.) commands
+  - Various bug fixes
+- May 5th, 2015 - 0.6.12 release
+  - Add packExcludeJars setting
+- May 3rd, 2015 - 0.6.9 release
+  - Fixes #68
+- March 19th, 2015 - 0.6.8 release
+  - Fix a bug when collecting artifacts
+- March 16th, 2015 - 0.6.7 release
+  - Fixed a problem when including multiple artifact versions
+- March 9th, 2015 - 0.6.6 release
+  - Improved packAutoSettings behaviour for multi-module projects
+  - Add packTgz, packTbz, packTxz, packZip tasks to create archives
+- November 18th, 2014 - 0.6.5 release
+  - Add packInstall command
+- November 12th, 2014 - 0.6.3 release
+  - Enable packing resources having any classifiers
+- August 13th, 2014 - 0.6.2 release
+  - Added `packAutoSettings` to find main classes automatically. 
+- July 28th, 2014 - 0.6.1 release
+  - Fixes [#41](https://github.com/xerial/sbt-pack/issues/41)
+- July 18th, 2014 - 0.6.0 release
+  - Added resource mapping setting: `packResourceDir` Map[File, String]
+- July 14th, 2014 - 0.5.2 release
+  - Pack only runtime-scope dependencies from unmanaged jars 
 - February 24th, 2014 - 0.5.1 release
   - Added packExpandedClasspath option
 - February 21st, 2014 - 0.5.0 release

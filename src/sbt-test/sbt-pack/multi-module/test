@@ -1,10 +1,10 @@
 > 'set version := "0.1"'
 > pack
-$ exists target/pack/lib/xerial-core-3.2.1.jar
-$ exists target/pack/lib/snappy-java-1.1.0.jar
+$ exists target/pack/lib/xerial-core-3.3.6.jar
+$ exists target/pack/lib/snappy-java-1.1.1.6.jar
 $ exists target/pack/lib/module1-0.1.jar
 $ exists target/pack/lib/module2-0.1.jar
-$ exists target/pack/bin/m1
-$ exec sh ./target/pack/bin/m1
-$ exists target/pack/bin/m2
-$ exec sh ./target/pack/bin/m2
+$ exists target/pack/bin/module1
+$ exec sh ./target/pack/bin/module1
+$ exists target/pack/bin/module2
+$ exec sh ./target/pack/bin/module2

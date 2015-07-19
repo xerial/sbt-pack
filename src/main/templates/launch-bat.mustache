@@ -35,7 +35,7 @@ if "%OS%"=="Windows_NT" @setlocal
 if not "%JAVA_HOME%" == "" goto OkJHome
 
 for /f %%j in ("java.exe") do (
-  set JAVA_EXE=%%~$PATH:j
+  set JAVA_EXE="%%~$PATH:j"
   goto init
 )
 
@@ -89,7 +89,7 @@ SET PSEP=;
 
 @REM Start Java program
 :runm2
-SET CMDLINE=%JAVA_EXE% %JVM_OPT% {{{JVM_OPTS}}} -cp {{^EXPANDED_CLASSPATH}}"{{{EXTRA_CLASSPATH}}}%PROG_HOME%\lib\*;" {{/EXPANDED_CLASSPATH}}{{#EXPANDED_CLASSPATH}}"{{{EXTRA_CLASSPATH}}}{{{EXPANDED_CLASSPATH}}};" {{/EXPANDED_CLASSPATH}} -Dprog.home="%PROG_HOME%" -Dprog.version="{{{PROG_VERSION}}}" {{{MAIN_CLASS}}} %CMD_LINE_ARGS%
+SET CMDLINE=%JAVA_EXE% {{{JVM_OPTS}}} %JAVA_OPTS% -cp {{^EXPANDED_CLASSPATH}}"{{{EXTRA_CLASSPATH}}}%PROG_HOME%\lib\*;" {{/EXPANDED_CLASSPATH}}{{#EXPANDED_CLASSPATH}}"{{{EXTRA_CLASSPATH}}}{{{EXPANDED_CLASSPATH}}};" {{/EXPANDED_CLASSPATH}} -Dprog.home="%PROG_HOME%" -Dprog.version="{{{PROG_VERSION}}}" {{{MAIN_CLASS}}} %CMD_LINE_ARGS%
 %CMDLINE%
 if ERRORLEVEL 1 goto error
 goto end

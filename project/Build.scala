@@ -16,37 +16,24 @@
 
 package xerial.sbt
 
-import java.io.File
 import sbt._
 import Keys._
 import sbt.ScriptedPlugin._
+import net.virtualvoid.sbt.graph.Plugin._
 
+import sbtrelease._
 import sbtrelease.ReleasePlugin._
+import sbtrelease.ReleaseStep
+import ReleaseStateTransformations._
 
 import com.mojolly.scalate.ScalatePlugin._
 import ScalateKeys._
 
 object PackBuild extends Build {
 
-  val SCALA_VERSION = "2.10.3"
+  val SCALA_VERSION = "2.10.5"
 
-  def releaseResolver(v: String): Resolver = {
-    val profile = System.getProperty("xerial.profile", "default")
-    profile match {
-      case "default" => {
-        val nexus = "https://oss.sonatype.org/"
-        if (v.trim.endsWith("SNAPSHOT"))
-          "snapshots" at nexus + "content/repositories/snapshots"
-        else
-          "releases" at nexus + "service/local/staging/deploy/maven2"
-      }
-      case p => {
-        sys.error("unknown xerial.profile:%s".format(p))
-      }
-    }
-  }
-
-  lazy val buildSettings = Defaults.defaultSettings ++ releaseSettings ++ scriptedSettings ++ scalateSettings ++ Seq[Setting[_]](
+  lazy val buildSettings = Defaults.coreDefaultSettings ++ releaseSettings ++ scriptedSettings ++ graphSettings ++ scalateSettings ++ Seq[Setting[_]](
     organization := "org.xerial.sbt",
     organizationName := "Xerial project",
     organizationHomepage := Some(new URL("http://xerial.org/")),
@@ -54,7 +41,6 @@ object PackBuild extends Build {
     scalaVersion := SCALA_VERSION,
     publishMavenStyle := true,
     publishArtifact in Test := false,
-    publishTo <<= version { (v) => Some(releaseResolver(v)) },
     pomIncludeRepository := {
       _ => false
     },
@@ -70,29 +56,45 @@ object PackBuild extends Build {
     scalateTemplateConfig in Compile <<= (sourceDirectory in Compile) { base =>
       Seq(TemplateConfig(base / "templates", Nil, Nil, Some("xerial.sbt.template")))
     },
-    pomExtra := {
-      <url>http://xerial.org/</url>
-      <licenses>
-        <license>
-          <name>Apache 2</name>
-          <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-        </license>
-      </licenses>
-        <scm>
-          <connection>scm:git:github.com/xerial/sbt-pack.git</connection>
-          <developerConnection>scm:git:git@github.com:xerial/sbt-pack.git</developerConnection>
-          <url>github.com/xerial/sbt-pack.git</url>
-        </scm>
-        <developers>
-          <developer>
-            <id>leo</id>
-            <name>Taro L. Saito</name>
-            <url>http://xerial.org/leo</url>
-          </developer>
-        </developers>
-    }
+    ReleaseKeys.tagName := { (version in ThisBuild).value },
+    ReleaseKeys.releaseProcess := Seq[ReleaseStep](
+      checkSnapshotDependencies,
+      inquireVersions,
+      runClean,
+      runTest,
+      ReleaseStep(
+        action = { state =>
+          val extracted = Project extract state
+          extracted.runAggregated(scriptedTests in Global in extracted.get(thisProjectRef), state)
+        }
+      ),
+      setReleaseVersion,
+      bumpVersion,
+      commitReleaseVersion,
+      tagRelease,
+      ReleaseStep(action = Command.process("publishSigned", _)),
+      setNextVersion,
+      bumpVersion,
+      commitNextVersion,
+      ReleaseStep(action = Command.process("sonatypeReleaseAll", _)),
+      pushChanges
+    )
   )
 
+  val bumpVersion = ReleaseStep(
+    action = { state =>
+      val extracted = Project extract state
+      state.log.info("Bump plugin version in scripted tests")
+      val command =
+        Process("./bin/bump-version.sh") #&&
+        Process("git add src/sbt-test")
+      val ret = command.!
+      ret match {
+        case 0 => state
+        case _ => state.fail
+      }
+    }
+  )
 
   // Project modules
   lazy val sbtPack = Project(
@@ -102,8 +104,10 @@ object PackBuild extends Build {
       Seq(libraryDependencies ++=
         Seq(
           "org.fusesource.scalate" % "scalate-core_2.10" % "1.6.1",
-          "org.kamranzafar" % "jtar" % "2.2",
-          "org.slf4j" % "slf4j-nop" % "1.7.5"
+          "org.apache.commons" % "commons-compress" % "1.9",
+          "org.tukaani" % "xz" % "1.5",
+          "org.slf4j" % "slf4j-nop" % "1.7.5",
+          "org.specs2" %% "specs2" % "2.4.1" % "test"
         )
       )
   )
