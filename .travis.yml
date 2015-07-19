@@ -11,6 +11,7 @@ script: sbt scripted
 
 branches:
   only:
+    - master
     - develop
     - /^release\/.*$/
     - feature/sbt-0.12.x
