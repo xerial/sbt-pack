@@ -1,4 +1,6 @@
 ### Release Notes
+- 0.7.5 release
+  - Fix for spaces contained in project paths
 - 0.7.4 release
   - Allow regexp in packExcludeJars option
 - June 17, 2015 - 0.7.2 release
