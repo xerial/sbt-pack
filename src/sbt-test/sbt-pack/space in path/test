@@ -1,0 +1,4 @@
+> pack
+$ exists target/pack/bin/hello
+$ exec sh ./target/pack/bin/hello
+
