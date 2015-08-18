@@ -7,6 +7,11 @@
 
 package xerial.sbt
 
+import java.io.InputStream
+import java.nio.file.Files
+import java.security.{DigestInputStream, MessageDigest}
+import java.util.zip.ZipFile
+
 import org.fusesource.scalate.TemplateEngine
 import sbt.Keys._
 import sbt._
@@ -58,7 +63,8 @@ object Pack
   val packUpdateReports = taskKey[Seq[(sbt.UpdateReport, ProjectRef)]]("only for retrieving dependent module names")
   val packMain = TaskKey[Map[String, String]]("prog_name -> main class table")
   val packMainDiscovered = TaskKey[Map[String, String]]("discovered prog_name -> main class table")
-  val packExclude = SettingKey[Seq[String]]("pack-exclude", "specify projects to exclude when packaging")
+  val packExclude = SettingKey[Seq[String]]("pack-exclude", "specify projects whose dependencies will be excluded when packaging")
+  val packExcludeLibJars = SettingKey[Seq[String]]("pack-exclude", "specify projects to exclude when packaging.  Its dependencies will be processed")
   val packExcludeJars = SettingKey[Seq[String]]("pack-exclude-jars", "specify jar file name patterns to exclude when packaging")
   val packExcludeArtifactTypes = settingKey[Seq[String]]("specify artifact types (e.g. javadoc) to exclude when packaging")
   val packAllClasspaths = TaskKey[Seq[(Classpath, ProjectRef)]]("pack-all-classpaths")
@@ -77,6 +83,9 @@ object Pack
     "latest: use the jar with a higher version; exit: exit the task with error")
   val checkDuplicatedExclude = settingKey[Seq[(ModuleID, ModuleID)]]("List of pair of modules whose duplicated dependencies are ignored, because they are known to be harmless.")
   val checkDuplicatedDependencies = taskKey[Unit]("Checks there are no duplicated dependencies, incompatible between them.")
+  val packCopyDependenciesTarget = settingKey[File]("Target folder for packCopyDependencies.")
+  val packCopyDependencies = taskKey[Unit]("Copies the dependencies to the packCopyDependencies folder.")
+  val packUseSymbolicLinks = taskKey[Boolean]("Use symbolic links instead of copying for packCopyDependencies.")
 
   import complete.DefaultParsers._
 
@@ -115,6 +124,7 @@ object Pack
         allDiscoveredMainClasses.flatMap(_._1.map(mainClass => hyphenize(mainClass.split('.').last) -> mainClass).toMap).toMap
     },
     packExclude := Seq.empty,
+    packExcludeLibJars := Seq.empty,
     packExcludeJars := Seq.empty,
     packExcludeArtifactTypes := Seq("source", "javadoc", "test"),
     packMacIconFile := "icon-mac.png",
@@ -124,7 +134,7 @@ object Pack
     packExpandedClasspath := false,
     packAllClasspaths <<= (thisProjectRef, buildStructure) flatMap getFromAllProjects(dependencyClasspath in Runtime),
     packAllUnmanagedJars <<= (thisProjectRef, buildStructure, packExclude) flatMap getFromSelectedProjects(unmanagedJars in Runtime),
-    packLibJars <<= (thisProjectRef, buildStructure, packExclude) flatMap getFromSelectedProjects(packageBin in Runtime),
+    packLibJars <<= (thisProjectRef, buildStructure, packExcludeLibJars) flatMap getFromSelectedProjects(packageBin in Runtime),
     packUpdateReports <<= (thisProjectRef, buildStructure, packExclude) flatMap getFromSelectedProjects(update),
     packJarNameConvention := "default",
     packDuplicateJarStrategy := "latest",
@@ -191,7 +201,7 @@ object Pack
           val latestRevision = revisions.last
           packDuplicateJarStrategy.value match {
             case "latest" =>
-              out.log.warn(s"Version conflict on $key. Using ${latestRevision} (found ${revisions.mkString(", ")})")
+              out.log.debug(s"Version conflict on $key. Using ${latestRevision} (found ${revisions.mkString(", ")})")
               entries.filter(_._1.revision == latestRevision)
             case "exit" =>
               sys.error(s"Version conflict on $key (found ${revisions.mkString(", ")})")
@@ -379,7 +389,7 @@ object Pack
               val latestRevision = revisions.last
               packDuplicateJarStrategy.value match {
                 case "latest" =>
-                  log.warn(s"Version conflict on $key. Using ${latestRevision} (found ${revisions.mkString(", ")})")
+                  log.debug(s"Version conflict on $key. Using ${latestRevision} (found ${revisions.mkString(", ")})")
                   val entry = entries.filter(_._1.revision == latestRevision)(0)
                   (modID(entry._1), entry._2)
                 case "exit" =>
@@ -443,6 +453,61 @@ object Pack
         sys.error(s"Detected ${conflicts.size} conflict(s)")
       } else
         log info s"No conflicts detected, scanned ${dependentJars.size} jar files."
+    },
+
+    packUseSymbolicLinks := true,
+    packCopyDependenciesTarget := target.value / "lib",
+
+    packCopyDependencies := {
+      val log = streams.value.log
+
+      val dependentJars =
+        for {
+          (r: sbt.UpdateReport, projectRef) <- packUpdateReports.value
+          c <- r.configurations if c.configuration == "runtime"
+          m <- c.modules
+          (artifact, file) <- m.artifacts if !packExcludeArtifactTypes.value.contains(artifact.`type`)
+        } yield {
+          val mid = m.module
+          val me = ModuleEntry(mid.organization, mid.name, VersionString(mid.revision), artifact.name, artifact.classifier, file.getName, projectRef)
+          me -> file
+        }
+
+      val distinctDpJars = dependentJars
+          .groupBy(_._1.noVersionModuleName)
+          .map {
+            case (key, entries) if entries.groupBy(_._1.revision).size == 1 ⇒
+              val e0 = entries(0)
+              e0._2
+            case (key, entries) ⇒
+              val revisions = entries.groupBy(_._1.revision).map(_._1).toList.sorted
+              val latestRevision = revisions.last
+              packDuplicateJarStrategy.value match {
+                case "latest" =>
+                  log.debug(s"Version conflict on $key. Using ${latestRevision} (found ${revisions.mkString(", ")})")
+                  val entry = entries.filter(_._1.revision == latestRevision)(0)
+                  entry._2
+                case "exit" =>
+                  sys.error(s"Version conflict on $key (found ${revisions.mkString(", ")})")
+                case x =>
+                  sys.error("Unknown duplicate JAR strategy '%s'".format(x))
+              }
+          }
+
+      packCopyDependenciesTarget.value.mkdirs()
+      IO.delete((packCopyDependenciesTarget.value * "*.jar").get)
+      distinctDpJars foreach { d ⇒
+        log debug s"Copying ${d.getName}"
+        val dest = packCopyDependenciesTarget.value / d.getName
+        if (packUseSymbolicLinks.value)
+          Files.createSymbolicLink(dest.toPath, d.toPath)
+        else
+          IO.copyFile(d, dest)
+      }
+      val libs = packLibJars.value.map(_._1)
+      libs.foreach(l ⇒ IO.copyFile(l, packCopyDependenciesTarget.value / l.getName))
+
+      log info s"Copied ${distinctDpJars.size+libs.size} jars to ${packCopyDependenciesTarget.value}"
     }
   ) ++ packArchiveSettings
 

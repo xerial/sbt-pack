@@ -1,4 +1,4 @@
-sonatypeProfileName := "org.xerial"
+sonatypeProfileName := "com.github.dapeca"
 
 pomExtra := {
   <url>http://xerial.org/</url>
