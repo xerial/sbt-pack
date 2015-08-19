@@ -397,7 +397,7 @@ object Pack
                 case x =>
                   sys.error("Unknown duplicate JAR strategy '%s'".format(x))
               }
-          }.par
+          }
 
       val allClasses = distinctDpJars.map { case (mod, file) ⇒
         import scala.collection.JavaConversions._
