@@ -34,7 +34,7 @@ object PackBuild extends Build {
   val SCALA_VERSION = "2.10.5"
 
   lazy val buildSettings = Defaults.coreDefaultSettings ++ releaseSettings ++ scriptedSettings ++ graphSettings ++ scalateSettings ++ Seq[Setting[_]](
-    organization := "com.github.dapeca",
+    organization := "org.xerial.sbt",
     organizationName := "Xerial project",
     organizationHomepage := Some(new URL("http://xerial.org/")),
     description := "A sbt plugin for packaging distributable Scala code",
