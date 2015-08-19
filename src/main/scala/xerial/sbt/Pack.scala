@@ -81,11 +81,17 @@ object Pack
     "default: (artifact name)-(version).jar; original: original JAR name; full: (organization).(artifact name)-(version).jar; no-version: (organization).(artifact name).jar")
   val packDuplicateJarStrategy = SettingKey[String]("deal with duplicate jars. default to use latest version",
     "latest: use the jar with a higher version; exit: exit the task with error")
-  val checkDuplicatedExclude = settingKey[Seq[(ModuleID, ModuleID)]]("List of pair of modules whose duplicated dependencies are ignored, because they are known to be harmless.")
-  val checkDuplicatedDependencies = taskKey[Unit]("Checks there are no duplicated dependencies, incompatible between them.")
-  val packCopyDependenciesTarget = settingKey[File]("Target folder for packCopyDependencies.")
-  val packCopyDependencies = taskKey[Unit]("Copies the dependencies to the packCopyDependencies folder.")
-  val packUseSymbolicLinks = taskKey[Boolean]("Use symbolic links instead of copying for packCopyDependencies.")
+  val checkDuplicatedExclude = settingKey[Seq[(ModuleID, ModuleID)]]("list of pair of modules whose duplicated dependencies are ignored, because they are known to be harmless.")
+  val checkDuplicatedDependencies = taskKey[Unit]("checks there are no duplicated dependencies, incompatible between them.")
+  val packCopyDependenciesTarget = settingKey[File]("target folder used by the <packCopyDependencies> task.")
+  val packCopyDependencies = taskKey[Unit](
+	  """just copies the dependencies to the <packCopyDependencies> folder.
+		|Compared to the <pack> task, it doesn't try to create scripts.
+	  """.stripMargin)
+  val packUseSymbolicLinks = taskKey[Boolean](
+	  """use symbolic links instead of copying for <packCopyDependencies>.
+		|The use of symbolic links allows faster processing and save disk space.
+	  """.stripMargin)
 
   import complete.DefaultParsers._
 
@@ -461,12 +467,21 @@ object Pack
     packCopyDependencies := {
       val log = streams.value.log
 
+      val jarExcludeFilter : Seq[Regex] = packExcludeJars.value.map(_.r)
+      def isExcludeJar(name:String): Boolean = {
+        val toExclude = jarExcludeFilter.exists(pattern => pattern.findFirstIn(name).isDefined)
+        if(toExclude) {
+          log.info(s"Exclude $name from the package")
+        }
+        toExclude
+      }
+
       val dependentJars =
         for {
           (r: sbt.UpdateReport, projectRef) <- packUpdateReports.value
           c <- r.configurations if c.configuration == "runtime"
           m <- c.modules
-          (artifact, file) <- m.artifacts if !packExcludeArtifactTypes.value.contains(artifact.`type`)
+          (artifact, file) <- m.artifacts if !packExcludeArtifactTypes.value.contains(artifact.`type`) && !isExcludeJar(file.name)
         } yield {
           val mid = m.module
           val me = ModuleEntry(mid.organization, mid.name, VersionString(mid.revision), artifact.name, artifact.classifier, file.getName, projectRef)
