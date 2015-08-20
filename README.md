@@ -171,6 +171,18 @@ export PATH=$(HOME)/local/bin:$PATH
 
     $ sbt packArchive
 
+### Copy dependencies
+
+The `packCopyDependencies` task copies all the dependencies to the folder specified through 
+the `packCopyDependenciesTarget` setting.
+
+By default, a symbolic link will be created.  By setting `packCopyDependenciesUseSymbolicLinks` to `false`, 
+the files will be copied instead of symlinking.   A symbolic link is faster and uses less disk space.
+
+It can be used e.g. for copying dependencies of a webapp to `WEB-INF/lib`
+
+See an [example](src/sbt-test/sbt-pack/copy-dependencies) project.
+
 ### Find duplicated classes in dependencies
 
 This feature is documented in a [separate page](USAGE.md)
