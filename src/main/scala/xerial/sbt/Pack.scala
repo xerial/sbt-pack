@@ -88,7 +88,7 @@ object Pack
 	  """just copies the dependencies to the <packCopyDependencies> folder.
 		|Compared to the <pack> task, it doesn't try to create scripts.
 	  """.stripMargin)
-  val packUseSymbolicLinks = taskKey[Boolean](
+  val packCopyDependenciesUseSymbolicLinks = taskKey[Boolean](
 	  """use symbolic links instead of copying for <packCopyDependencies>.
 		|The use of symbolic links allows faster processing and save disk space.
 	  """.stripMargin)
@@ -461,7 +461,7 @@ object Pack
         log info s"No conflicts detected, scanned ${dependentJars.size} jar files."
     },
 
-    packUseSymbolicLinks := true,
+    packCopyDependenciesUseSymbolicLinks := true,
     packCopyDependenciesTarget := target.value / "lib",
 
     packCopyDependencies := {
@@ -514,7 +514,7 @@ object Pack
       distinctDpJars foreach { d ⇒
         log debug s"Copying ${d.getName}"
         val dest = packCopyDependenciesTarget.value / d.getName
-        if (packUseSymbolicLinks.value)
+        if (packCopyDependenciesUseSymbolicLinks.value)
           Files.createSymbolicLink(dest.toPath, d.toPath)
         else
           IO.copyFile(d, dest)

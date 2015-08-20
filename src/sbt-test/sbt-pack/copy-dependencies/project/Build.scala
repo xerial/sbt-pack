@@ -26,7 +26,7 @@ object Build extends sbt.Build {
         "jakarta-regexp" % "jakarta-regexp" % "1.4",
         "xalan" % "xalan" % "2.7.1"
       ),
-      packUseSymbolicLinks := false
+      packCopyDependenciesUseSymbolicLinks := false
     ): _*
   )
 
