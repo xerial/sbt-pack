@@ -20,6 +20,7 @@ A sbt plugin for creating distributable Scala packages that include dependent ja
   - The latest version is linked from `~/local/{project name}/current`
 - You can add other resources in `src/pack` folder. 
   - All resources in this folder will be copied to `target/pack`.
+- Check duplicated classes in dependencies.  
 
 * [Release Notes](ReleaseNotes.md)
 
@@ -169,6 +170,22 @@ export PATH=$(HOME)/local/bin:$PATH
 **Create a tar.gz archive of your Scala program package**
 
     $ sbt packArchive
+
+### Copy dependencies
+
+The `packCopyDependencies` task copies all the dependencies to the folder specified through 
+the `packCopyDependenciesTarget` setting.
+
+By default, a symbolic link will be created.  By setting `packCopyDependenciesUseSymbolicLinks` to `false`, 
+the files will be copied instead of symlinking.   A symbolic link is faster and uses less disk space.
+
+It can be used e.g. for copying dependencies of a webapp to `WEB-INF/lib`
+
+See an [example](src/sbt-test/sbt-pack/copy-dependencies) project.
+
+### Find duplicated classes in dependencies
+
+This feature is documented in a [separate page](USAGE.md)
 
 ### Example projects
 
