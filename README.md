@@ -103,7 +103,7 @@ object Build extends sbt.Build {
       ) 
     // To publish tar.gz, zip archives to the repository, add the following line
     // ++ publishPackArchive
-    // If you need to publish tar.gz (publishArchiveTgz) only, use publishPackArchive(xxx) instead
+    // Publish tar.gz archive. To publish another type of archive, use publishPackArchive(xxx) instead
     // ++ publishPackArchiveTgz
   )
 }
