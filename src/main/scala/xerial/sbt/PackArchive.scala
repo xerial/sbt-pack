@@ -10,11 +10,14 @@ import org.apache.commons.compress.compressors.bzip2.BZip2CompressorOutputStream
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream
 import org.apache.commons.compress.compressors.xz.XZCompressorOutputStream
 import org.apache.commons.compress.utils.IOUtils
+import java.nio.file.Files
+import scala.collection.JavaConversions._
 
 trait PackArchive {
   val packArchivePrefix = SettingKey[String]("prefix of (prefix)-(version).(format) archive file name")
   val packArchiveName = SettingKey[String]("archive file name. Default is (project-name)-(version)")
   val packArchiveExcludes = SettingKey[Seq[String]]("List of excluding files from the archive")
+  val packArchivePosixMask = SettingKey[File => Option[Int]]("Function that associates an archive mask with a given path")
   val packArchiveTgzArtifact = SettingKey[Artifact]("tar.gz archive artifact")
   val packArchiveTbzArtifact = SettingKey[Artifact]("tar.bz2 archive artifact")
   val packArchiveTxzArtifact = SettingKey[Artifact]("tar.xz archive artifact")
@@ -28,11 +31,11 @@ trait PackArchive {
   private def createArchive(
     archiveSuffix: String,
     createOutputStream: (OutputStream) => ArchiveOutputStream,
-    createEntry: (File, String, File) => ArchiveEntry) = Def.task {
+    createEntry: (File, String, File => Option[Int]) => ArchiveEntry) = Def.task {
+    val posixMaskFunction = packArchivePosixMask.value
     val out = streams.value
     val targetDir: File = Pack.packTargetDir.value
     val distDir: File = Pack.pack.value // run pack command here
-    val binDir = distDir / "bin"
     val archiveStem = s"${packArchiveName.value}"
     val archiveName = s"${archiveStem}.${archiveSuffix}"
     out.log.info("Generating " + rpath(baseDirectory.value, targetDir / archiveName))
@@ -42,7 +45,7 @@ trait PackArchive {
             .getOrElse(Array.empty)
             .filterNot(f => excludeFiles.contains(rpath(distDir, f)))
             .foreach { file =>
-      aos.putArchiveEntry(createEntry(file, archiveStem ++ "/" ++ rpath(distDir, file, "/"), binDir))
+      aos.putArchiveEntry(createEntry(file, archiveStem ++ "/" ++ rpath(distDir, file, "/"), posixMaskFunction))
       if (file.isDirectory) {
         aos.closeArchiveEntry()
         addFilesToArchive(file)
@@ -56,10 +59,34 @@ trait PackArchive {
     targetDir / archiveName
   }
 
-  private def createTarEntry(file: File, fileName: String, binDir: File) = {
-    val archiveEntry = new TarArchiveEntry(file, fileName)
+  def posixMaskFromFilesystem(file: File): Option[Int] = {
+    val perms = Files.getPosixFilePermissions(file.toPath)
+    val mask = perms.foldLeft(0) { (a, b) => a | (0x100 >> b.ordinal) }
+    //println(s"Octal mask for ${file} is 0${mask.toOctalString}")
+    Some(mask)
+  }
+
+  def posixMaskNone(_unused: File): Option[Int] =
+    None
+
+  def posixMaskFromPath(binDir: File)(file: File): Option[Int] =
     if (file.getAbsolutePath startsWith binDir.getAbsolutePath)
-      archiveEntry.setMode(Integer.parseInt("0755", 8))
+      Some(Integer.parseInt("0755", 8))
+    else
+      None
+
+  val posixMaskFromBinPath: File => Option[Int] = {
+    val distDir: File = Pack.pack.value
+    val binDir = distDir / "bin"
+    posixMaskFromPath(binDir) _
+  }
+
+  private def createTarEntry(
+    file: File,
+    fileName: String,
+    posixMask: File => Option[Int]) = {
+    val archiveEntry = new TarArchiveEntry(file, fileName)
+    posixMask(file) foreach { archiveEntry.setMode(_) }
     archiveEntry
   }
 
@@ -78,6 +105,7 @@ trait PackArchive {
     packArchiveTbzArtifact := Artifact(packArchivePrefix.value, "arch", "tar.bz2"),
     packArchiveTxzArtifact := Artifact(packArchivePrefix.value, "arch", "tar.xz"),
     packArchiveZipArtifact := Artifact(packArchivePrefix.value, "arch", "zip"),
+    packArchivePosixMask := posixMaskFromBinPath,
     packArchiveTgz := createArchive("tar.gz",
       (fos) => createTarArchiveOutputStream(new GzipCompressorOutputStream(fos)),
       createTarEntry).value,
