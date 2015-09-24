@@ -75,8 +75,7 @@ trait PackArchive {
     else
       None
 
-  val posixMaskFromBinPath: File => Option[Int] = {
-    val distDir: File = Pack.pack.value
+  def posixMaskFromBinPath(distDir: File): File => Option[Int] = {
     val binDir = distDir / "bin"
     posixMaskFromPath(binDir) _
   }
@@ -105,7 +104,8 @@ trait PackArchive {
     packArchiveTbzArtifact := Artifact(packArchivePrefix.value, "arch", "tar.bz2"),
     packArchiveTxzArtifact := Artifact(packArchivePrefix.value, "arch", "tar.xz"),
     packArchiveZipArtifact := Artifact(packArchivePrefix.value, "arch", "zip"),
-    packArchivePosixMask := posixMaskFromBinPath,
+    packArchivePosixMask := posixMaskFromBinPath(Pack.packTargetDir.value / Pack.packDir.value),
+
     packArchiveTgz := createArchive("tar.gz",
       (fos) => createTarArchiveOutputStream(new GzipCompressorOutputStream(fos)),
       createTarEntry).value,
