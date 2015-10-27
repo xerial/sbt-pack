@@ -142,4 +142,4 @@ eval exec "$JAVACMD" \
      {{/EXPANDED_CLASSPATH}}
      -Dprog.home="'${PROG_HOME}'" \
      -Dprog.version="${PROG_VERSION}" \
-     {{{MAIN_CLASS}}} "$@"
+     {{{MAIN_CLASS}}} \"\$@\"

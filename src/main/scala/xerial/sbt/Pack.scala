@@ -509,9 +509,10 @@ object Pack
               }
           }
 
+      val unmanaged = packAllUnmanagedJars.value.flatMap{_._1}.map{_.data}
       packCopyDependenciesTarget.value.mkdirs()
       IO.delete((packCopyDependenciesTarget.value * "*.jar").get)
-      distinctDpJars foreach { d ⇒
+      (distinctDpJars ++ unmanaged) foreach { d ⇒
         log debug s"Copying ${d.getName}"
         val dest = packCopyDependenciesTarget.value / d.getName
         if (packCopyDependenciesUseSymbolicLinks.value)
