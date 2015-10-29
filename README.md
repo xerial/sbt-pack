@@ -87,7 +87,7 @@ object Build extends sbt.Build {
         // [Optional] Extra class paths to look when launching a program. You can use ${PROG_HOME} to specify the base directory
         packExtraClasspath := Map("hello" -> Seq("${PROG_HOME}/etc")), 
         // [Optional] (Generate .bat files for Windows. The default value is true)
-        packGenerateWindowsBatFile := true
+        packGenerateWindowsBatFile := true,
         // [Optional] jar file name format in pack/lib folder
         //   "default"   (project name)-(version).jar 
         //   "full"      (organization name).(project name)-(version).jar
