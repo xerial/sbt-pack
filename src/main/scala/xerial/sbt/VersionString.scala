@@ -7,11 +7,13 @@
 
 package xerial.sbt
 
+import scala.util.{Success, Try}
+
 /**
  * Class to represent version strings
  * @author Christian Hoffmeister
  */
-case class VersionString(numbers: List[Int], suffix: Option[String]) {
+case class VersionString(numbers: List[String], suffix: Option[String]) {
   def major = numbers.head
   def minor = numbers.drop(1).headOption
   def patch = numbers.drop(2).headOption
@@ -25,27 +27,36 @@ case class VersionString(numbers: List[Int], suffix: Option[String]) {
 }
 
 object VersionString {
+
+  def fromNumbers(num:Seq[Int], suffix:Option[String]) : VersionString = {
+    VersionString(num.map(_.toString).toList, suffix)
+  }
+
   def apply(version: String): VersionString = {
-    try {
-      val numbers = version.split("\\-", 2).head.split("\\.", -1).map(_.toInt).toList
-      val suffix = version.split("\\-", 2).tail.headOption
+    val numbers : List[String] = version.split("\\-", 2).head.split("\\.", -1).toList
+    val suffix = version.split("\\-", 2).tail.headOption
+    val containNonNumber = numbers.map(x => Try(x.toInt)).exists(_.isFailure)
+    if(containNonNumber)
+      VersionString(List.empty[String], Some(version))
+    else
       VersionString(numbers, suffix)
-    } catch {
-      case _: Exception => VersionString(Nil, Some(version))
-    }
   }
 }
 
 object DefaultVersionStringOrdering extends Ordering[VersionString] {
   override def compare(a: VersionString, b: VersionString): Int = {
-    def compareNumberSequence(ns1: Seq[Int], ns2: Seq[Int]): Int = (ns1, ns2) match {
+    def compareNumberSequence(ns1: Seq[String], ns2: Seq[String]): Int = (ns1, ns2) match {
       case (Nil, Nil) => 0
       case (n1 :: tail1, Nil) => +1
       case (Nil, n2 :: tail2) => -1
       case (n1 :: tail1, n2 :: tail2) =>
-        if (n1 < n2) -1
-        else if (n1 > n2) +1
-        else compareNumberSequence(tail1, tail2)
+        (Try(n1.toInt), Try(n2.toInt)) match {
+          case (Success(i1), Success(i2)) =>
+            if (i1 < i2) -1
+            else if (i1 > i2) +1
+            else compareNumberSequence(tail1, tail2)
+          case _ => n1.compareTo(n2)
+        }
     }
 
     compareNumberSequence(a.numbers, b.numbers) match {

@@ -18,15 +18,15 @@ class VersionStringSpec extends Specification {
     }
 
     "properly deconstruct arbitrary string" in {
-      VersionString("1") === VersionString(1 :: Nil, None)
-      VersionString("1.2") === VersionString(1 :: 2 :: Nil, None)
-      VersionString("1.2.3") === VersionString(1 :: 2 :: 3 :: Nil, None)
-      VersionString("1.2.3.4") === VersionString(1 :: 2 :: 3 :: 4 :: Nil, None)
-      VersionString("1.2.3.4-alpha") === VersionString(1 :: 2 :: 3 :: 4 :: Nil, Some("alpha"))
-      VersionString("1.2.3.4-alpha-beta") === VersionString(1 :: 2 :: 3 :: 4 :: Nil, Some("alpha-beta"))
-      VersionString("foo") === VersionString(Nil, Some("foo"))
-      VersionString("foo.bar") === VersionString(Nil, Some("foo.bar"))
-      VersionString("foo.bar-alpha") === VersionString(Nil, Some("foo.bar-alpha"))
+      VersionString("1") === VersionString.fromNumbers(1 :: Nil, None)
+      VersionString("1.2") === VersionString.fromNumbers(1 :: 2 :: Nil, None)
+      VersionString("1.2.3") === VersionString.fromNumbers(1 :: 2 :: 3 :: Nil, None)
+      VersionString("1.2.3.4") === VersionString.fromNumbers(1 :: 2 :: 3 :: 4 :: Nil, None)
+      VersionString("1.2.3.4-alpha") === VersionString.fromNumbers(1 :: 2 :: 3 :: 4 :: Nil, Some("alpha"))
+      VersionString("1.2.3.4-alpha-beta") === VersionString.fromNumbers(1 :: 2 :: 3 :: 4 :: Nil, Some("alpha-beta"))
+      VersionString("foo") === VersionString(List.empty[String], Some("foo"))
+      VersionString("foo.bar") === VersionString(List.empty[String], Some("foo.bar"))
+      VersionString("foo.bar-alpha") === VersionString(List.empty[String], Some("foo.bar-alpha"))
     }
 
     "properly sort" in {
@@ -42,6 +42,12 @@ class VersionStringSpec extends Specification {
       VersionString("1.2-beta") must be_>(VersionString("1.2-alpha"))
 
       VersionString("apple") must be_<(VersionString("pie"))
+    }
+
+    "preserve 0-padding in version strings" in {
+      val v = VersionString("1.09")
+      v.major mustEqual "1"
+      v.minor mustEqual Some("09")
     }
   }
 }
