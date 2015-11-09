@@ -47,8 +47,15 @@ trait PackArchive {
         aos.closeArchiveEntry()
         addFilesToArchive(file)
       } else {
-        IOUtils.copy(new BufferedInputStream(new FileInputStream(file)), aos)
-        aos.closeArchiveEntry()
+        val in = new BufferedInputStream(new FileInputStream(file))
+        try {
+          IOUtils.copy(in, aos)
+          aos.closeArchiveEntry()
+        }
+        finally {
+          if(in != null)
+            in.close()
+        }
       }
     }
     addFilesToArchive(distDir)
