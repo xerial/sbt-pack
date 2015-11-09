@@ -1,4 +1,9 @@
 ### Release Notes
+- 0.7.7
+  - Fixes a problem when handling version string padded with 0s (e.g., 1.09)
+  - Fixes a bug that 'packArchive' opens too many files
+- 0.7.6
+  - Proper escape handling in launcher script
 - 0.7.5 release
   - Fix for spaces contained in project paths
 - 0.7.4 release
