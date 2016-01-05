@@ -1,4 +1,6 @@
 ### Release Notes
+- 0.7.8 
+  - Add packArchiveStem parameter for using a specified directory name inside the archive 
 - 0.7.7
   - Fixes a problem when handling version string padded with 0s (e.g., 1.09)
   - Fixes a bug that 'packArchive' opens too many files
