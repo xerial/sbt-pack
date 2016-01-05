@@ -14,6 +14,7 @@ import org.apache.commons.compress.utils.IOUtils
 trait PackArchive {
   val packArchivePrefix = SettingKey[String]("prefix of (prefix)-(version).(format) archive file name")
   val packArchiveName = SettingKey[String]("archive file name. Default is (project-name)-(version)")
+  val packArchiveStem = SettingKey[String]("directory name within the archive. Default is (archive-name)")
   val packArchiveExcludes = SettingKey[Seq[String]]("List of excluding files from the archive")
   val packArchiveTgzArtifact = SettingKey[Artifact]("tar.gz archive artifact")
   val packArchiveTbzArtifact = SettingKey[Artifact]("tar.bz2 archive artifact")
@@ -33,8 +34,8 @@ trait PackArchive {
     val targetDir: File = Pack.packTargetDir.value
     val distDir: File = Pack.pack.value // run pack command here
     val binDir = distDir / "bin"
-    val archiveStem = s"${packArchiveName.value}"
-    val archiveName = s"${archiveStem}.${archiveSuffix}"
+    val archiveStem = s"${packArchiveStem.value}"
+    val archiveName = s"${packArchiveName.value}.${archiveSuffix}"
     out.log.info("Generating " + rpath(baseDirectory.value, targetDir / archiveName))
     val aos = createOutputStream(new BufferedOutputStream(new FileOutputStream(targetDir / archiveName)))
     val excludeFiles = packArchiveExcludes.value.toSet
@@ -80,6 +81,7 @@ trait PackArchive {
   lazy val packArchiveSettings = Seq[Def.Setting[_]](
     packArchivePrefix := name.value,
     packArchiveName := s"${packArchivePrefix.value}-${version.value}",
+    packArchiveStem := s"${packArchiveName.value}",
     packArchiveExcludes := Seq.empty,
     packArchiveTgzArtifact := Artifact(packArchivePrefix.value, "arch", "tar.gz"),
     packArchiveTbzArtifact := Artifact(packArchivePrefix.value, "arch", "tar.bz2"),
