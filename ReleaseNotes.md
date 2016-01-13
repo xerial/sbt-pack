@@ -1,4 +1,6 @@
 ### Release Notes
+- 0.7.9
+  - Report exit status appropriately in the generated script
 - 0.7.8 
   - Add packArchiveStem parameter for using a specified directory name inside the archive 
 - 0.7.7
