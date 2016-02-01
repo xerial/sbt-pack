@@ -99,7 +99,7 @@ object Build extends sbt.Build {
         // [Optional] List full class paths in the launch scripts (default is false) (since 0.5.1)
         packExpandedClasspath := false,
         // [Optional] Resource directory mapping to be copied within target/pack. Default is Map("{projectRoot}/src/pack" -> "") 
-        packResourceDir += (baseDirectory.value / "web" -> "web-content"),
+        packResourceDir += (baseDirectory.value / "web" -> "web-content")
       ) 
     // To publish tar.gz, zip archives to the repository, add the following line
     // ++ publishPackArchive
