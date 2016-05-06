@@ -1,4 +1,10 @@
 ### Release Notes
+
+- 0.8.0
+  - [Major] Uses non-aggregated updateReports to resolve dependencies
+    - For collecting jars of multi-module projects, you need to specify `dependsOn(sub-project, ...)`
+    - This resolves the problem of unintended dependency inclusion
+
 - 0.7.9
   - Report exit status appropriately in the generated script
 - 0.7.8 
