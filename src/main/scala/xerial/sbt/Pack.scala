@@ -84,8 +84,6 @@ object Pack
     "default: (artifact name)-(version).jar; original: original JAR name; full: (organization).(artifact name)-(version).jar; no-version: (organization).(artifact name).jar")
   val packDuplicateJarStrategy = SettingKey[String]("deal with duplicate jars. default to use latest version",
     "latest: use the jar with a higher version; exit: exit the task with error")
-  val checkDuplicatedExclude = settingKey[Seq[(ModuleID, ModuleID)]]("list of pair of modules whose duplicated dependencies are ignored, because they are known to be harmless.")
-  val checkDuplicatedDependencies = taskKey[Unit]("checks there are no duplicated dependencies, incompatible between them.")
   val packCopyDependenciesTarget = settingKey[File]("target folder used by the <packCopyDependencies> task.")
   val packCopyDependencies = taskKey[Unit](
 	  """just copies the dependencies to the <packCopyDependencies> folder.
@@ -360,77 +358,6 @@ object Pack
 
       out.log.info("done.")
       distDir
-    },
-
-    checkDuplicatedExclude := Seq.empty,
-
-    checkDuplicatedDependencies := {
-      val log = streams.value.log
-
-      val distinctDpJars = packModuleEntries.value
-
-      def hash(is: InputStream) = {
-        val md = MessageDigest.getInstance("MD5")
-        val dis = new DigestInputStream(is, md)
-        Iterator.continually(dis.read()).takeWhile(_ >= 0).foreach{_ ⇒ ()}
-        md.digest()
-      }
-
-      def modID(m: ModuleEntry) = m.org % m.artifactName % m.revision.toString
-
-      val allClasses = distinctDpJars.map { mod =>
-        import scala.collection.JavaConversions._
-        log debug s"Scanning ${mod.file}"
-        val jar = new ZipFile(mod.file)
-        val classes = try {
-          jar.entries
-              .filter { e ⇒ !e.isDirectory && e.getName.endsWith(".class") }
-              .toList
-              .map { e ⇒
-                val h = hash(jar.getInputStream(e))
-                //log debug s"${e.getName} ⇒ ${h.map(a ⇒ f"$a%02X").mkString}"
-                (e.getName, h)
-              }
-        } finally
-          jar.close()
-        (mod, classes)
-      }
-
-      val conflicts = for {
-        ((mod1, hashes1), index) ← allClasses.zipWithIndex
-        others = allClasses.seq.view(index+1, allClasses.size).par
-        (file1, hash1) ← hashes1
-        (mod2, hashes2) ← others
-        if !checkDuplicatedExclude.value.exists{ case (m1, m2) ⇒
-          m1 == mod1 && m2 == mod2 || m2 == mod1 && m1 == mod2
-        }
-        (file2, hash2) ← hashes2
-        if file1 == file2 && !(hash1 sameElements hash2)
-      } yield {
-          //log debug mod+" "+mod2+" "+file1
-          (mod1, mod2, file1)
-      }
-
-      if (conflicts.size > 0) {
-        val groupedConflicts = conflicts.groupBy { case (mod1, mod2, file) ⇒
-          (mod1, mod2)
-        }.mapValues { _.map{ case (mod1, mod2, file) ⇒ file } }
-        groupedConflicts.foreach { case ((m1, m2), files) ⇒
-          val f = files.map{ "\n  "+_.replaceFirst(".class$", "")}.mkString
-          println(s"Conflict between $m1 and $m2:"+f)
-        }
-
-        val excludes = groupedConflicts.map{ case ((m1, m2), _) ⇒ s"  ${m1.toDependencyStr} -> ${m2.toDependencyStr}" }.mkString(",\n")
-
-        println(s"""
-			  |If you consider these conflicts are inoffensive, in order to ignore them, use:
-			  |set checkDuplicatedExclude := Seq(
-			  |$excludes
-			  |)
-			""".stripMargin)
-        sys.error(s"Detected ${conflicts.size} conflict(s)")
-      } else
-        log info s"No conflicts detected, scanned ${distinctDpJars.size} jar files."
     },
 
     packCopyDependenciesUseSymbolicLinks := true,
