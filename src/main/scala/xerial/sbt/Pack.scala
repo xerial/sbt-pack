@@ -8,6 +8,7 @@
 package xerial.sbt
 
 import java.io.InputStream
+import java.net.URL
 import java.nio.file.Files
 import java.security.{DigestInputStream, MessageDigest}
 import java.util.zip.ZipFile
@@ -26,17 +27,18 @@ object Pack
         extends sbt.Plugin with PackArchive
 {
 
-  private case class ModuleEntry(org: String,
-          name: String,
-          revision: VersionString,
-          artifactName: String,
-          classifier: Option[String],
-          originalFileName: String,
-          projectRef: ProjectRef)
+  case class ModuleEntry(org: String,
+                         name: String,
+                         revision: VersionString,
+                         artifactName: String,
+                         classifier: Option[String],
+                         file:File)
   {
     private def classifierSuffix = classifier.map("-" + _).getOrElse("")
 
     override def toString = "%s:%s:%s%s".format(org, artifactName, revision, classifierSuffix)
+
+    def originalFileName = file.getName
 
     def jarName = "%s-%s%s.jar".format(artifactName, revision, classifierSuffix)
 
@@ -45,6 +47,8 @@ object Pack
     def noVersionJarName = "%s.%s%s.jar".format(org, artifactName, classifierSuffix)
 
     def noVersionModuleName = "%s.%s%s.jar".format(org, name, classifierSuffix)
+
+    def toDependencyStr =  s""""${org}" % "${name}" % "${revision}""""
   }
 
   private implicit def versionStringOrdering = DefaultVersionStringOrdering
@@ -60,20 +64,19 @@ object Pack
   val packBatTemplate = settingKey[String]("template file for bash scripts - defaults to pack's out-of-the-box template for bat")
   val packMakeTemplate = settingKey[String]("template file for bash scripts - defaults to pack's out-of-the-box template for make")
 
-  val packUpdateReports = taskKey[Seq[(sbt.UpdateReport, ProjectRef)]]("only for retrieving dependent module names")
   val packMain = TaskKey[Map[String, String]]("prog_name -> main class table")
   val packMainDiscovered = TaskKey[Map[String, String]]("discovered prog_name -> main class table")
   val packExclude = SettingKey[Seq[String]]("pack-exclude", "specify projects whose dependencies will be excluded when packaging")
   val packExcludeLibJars = SettingKey[Seq[String]]("pack-exclude", "specify projects to exclude when packaging.  Its dependencies will be processed")
   val packExcludeJars = SettingKey[Seq[String]]("pack-exclude-jars", "specify jar file name patterns to exclude when packaging")
   val packExcludeArtifactTypes = settingKey[Seq[String]]("specify artifact types (e.g. javadoc) to exclude when packaging")
-  val packAllClasspaths = TaskKey[Seq[(Classpath, ProjectRef)]]("pack-all-classpaths")
   val packLibJars = TaskKey[Seq[(File, ProjectRef)]]("pack-lib-jars")
   val packGenerateWindowsBatFile = settingKey[Boolean]("Generate BAT file launch scripts for Windows")
 
   val packMacIconFile = SettingKey[String]("pack-mac-icon-file", "icon file name for Mac")
   val packResourceDir = SettingKey[Map[File, String]](s"pack-resource-dir", "pack resource directory. default = Map({projectRoot}/src/pack -> \"\")")
   val packAllUnmanagedJars = taskKey[Seq[(Classpath, ProjectRef)]]("all unmanaged jar files")
+  val packModuleEntries = taskKey[Seq[ModuleEntry]]("modules that will be packed")
   val packJvmOpts = SettingKey[Map[String, Seq[String]]]("pack-jvm-opts")
   val packExtraClasspath = SettingKey[Map[String, Seq[String]]]("pack-extra-classpath")
   val packExpandedClasspath = settingKey[Boolean]("Expands the wildcard classpath in launch scripts to point at specific libraries")
@@ -138,10 +141,8 @@ object Pack
     packJvmOpts := Map.empty,
     packExtraClasspath := Map.empty,
     packExpandedClasspath := false,
-    packAllClasspaths <<= (thisProjectRef, buildStructure) flatMap getFromAllProjects(dependencyClasspath in Runtime),
     packAllUnmanagedJars <<= (thisProjectRef, buildStructure, packExclude) flatMap getFromSelectedProjects(unmanagedJars in Runtime),
     packLibJars <<= (thisProjectRef, buildStructure, packExcludeLibJars) flatMap getFromSelectedProjects(packageBin in Runtime),
-    packUpdateReports <<= (thisProjectRef, buildStructure, packExclude) flatMap getFromSelectedProjects(update),
     packJarNameConvention := "default",
     packDuplicateJarStrategy := "latest",
     packGenerateWindowsBatFile := true,
@@ -157,9 +158,8 @@ object Pack
       }
       Process(cmd, packDir).!
     },
-    pack := {
+    packModuleEntries := {
       val out = streams.value
-
       val jarExcludeFilter : Seq[Regex] = packExcludeJars.value.map(_.r)
       def isExcludeJar(name:String): Boolean = {
         val toExclude = jarExcludeFilter.exists(pattern => pattern.findFirstIn(name).isDefined)
@@ -169,18 +169,40 @@ object Pack
         toExclude
       }
 
+      val df: DependencyFilter = configurationFilter(name = "runtime") //&&
+
       val dependentJars =
         for {
-          (r: sbt.UpdateReport, projectRef) <- packUpdateReports.value
-          c <- r.configurations if c.configuration == "runtime"
-          m <- c.modules
+          c <- update.value.filter(df).configurations
+          m <- c.modules if !m.evicted
           (artifact, file) <- m.artifacts
           if !packExcludeArtifactTypes.value.contains(artifact.`type`) && !isExcludeJar(file.name)
         } yield {
           val mid = m.module
-          val me = ModuleEntry(mid.organization, mid.name, VersionString(mid.revision), artifact.name, artifact.classifier, file.getName, projectRef)
-          me -> file
+          ModuleEntry(mid.organization, mid.name, VersionString(mid.revision), artifact.name, artifact.classifier, file)
         }
+
+      val distinctDpJars = dependentJars
+                           .groupBy(_.noVersionModuleName)
+                           .flatMap {
+                             case (key, entries) if entries.groupBy(_.revision).size == 1 => entries
+                             case (key, entries) =>
+                               val revisions = entries.groupBy(_.revision).map(_._1).toList.sorted
+                               val latestRevision = revisions.last
+                               packDuplicateJarStrategy.value match {
+                                 case "latest" =>
+                                   out.log.debug(s"Version conflict on $key. Using ${latestRevision} (found ${revisions.mkString(", ")})")
+                                   entries.filter(_.revision == latestRevision)
+                                 case "exit" =>
+                                   sys.error(s"Version conflict on $key (found ${revisions.mkString(", ")})")
+                                 case x =>
+                                   sys.error("Unknown duplicate JAR strategy '%s'".format(x))
+                               }
+                           }
+      distinctDpJars.toSeq
+    },
+    pack := {
+      val out = streams.value
 
       val distDir: File = packTargetDir.value / packDir.value
       out.log.info("Creating a distributable package in " + rpath(baseDirectory.value, distDir))
@@ -198,25 +220,6 @@ object Pack
       out.log.info("project jars:\n" + libs.map(path => rpath(base, path)).mkString("\n"))
       libs.foreach(l => IO.copyFile(l, libDir / l.getName))
 
-      val distinctDpJars = dependentJars
-              .groupBy(_._1.noVersionModuleName)
-              .flatMap {
-        case (key, entries) if entries.groupBy(_._1.revision).size == 1 => entries
-        case (key, entries) =>
-          val revisions = entries.groupBy(_._1.revision).map(_._1).toList.sorted
-          val latestRevision = revisions.last
-          packDuplicateJarStrategy.value match {
-            case "latest" =>
-              out.log.debug(s"Version conflict on $key. Using ${latestRevision} (found ${revisions.mkString(", ")})")
-              entries.filter(_._1.revision == latestRevision)
-            case "exit" =>
-              sys.error(s"Version conflict on $key (found ${revisions.mkString(", ")})")
-            case x =>
-              sys.error("Unknown duplicate JAR strategy '%s'".format(x))
-          }
-      }
-              .toMap
-
       // Copy dependent jars
       def resolveJarName(m: ModuleEntry, convention: String) =
       {
@@ -228,10 +231,11 @@ object Pack
         }
       }
 
-      out.log.info("project dependencies:\n" + distinctDpJars.keys.mkString("\n"))
-      for ((m, f) <- distinctDpJars) {
+      val distinctDpJars = packModuleEntries.value
+      out.log.info("project dependencies:\n" + distinctDpJars.mkString("\n"))
+      for (m <- distinctDpJars) {
         val targetFileName = resolveJarName(m, packJarNameConvention.value)
-        IO.copyFile(f, libDir / targetFileName, true)
+        IO.copyFile(m.file, libDir / targetFileName, true)
       }
 
       // Copy unmanaged jars in ${baseDir}/lib folder
@@ -281,7 +285,7 @@ object Pack
         def expandedClasspath(sep: String): String =
         {
           val projJars = libs.map(l => "${PROG_HOME}/lib/" + l.getName)
-          val depJars = distinctDpJars.keys.map("${PROG_HOME}/lib/" + resolveJarName(_, packJarNameConvention.value))
+          val depJars = distinctDpJars.map(m => "${PROG_HOME}/lib/" + resolveJarName(m, packJarNameConvention.value))
           val unmanagedJars = for ((m, projectRef) <- packAllUnmanagedJars.value; um <- m; f = um.data) yield {
             "${PROG_HOME}/lib/" + f.getName
           }
@@ -363,17 +367,7 @@ object Pack
     checkDuplicatedDependencies := {
       val log = streams.value.log
 
-      val dependentJars =
-        for {
-          (r: sbt.UpdateReport, projectRef) <- packUpdateReports.value
-          c <- r.configurations if c.configuration == "runtime"
-          m <- c.modules
-          (artifact, file) <- m.artifacts if !packExcludeArtifactTypes.value.contains(artifact.`type`)
-        } yield {
-          val mid = m.module
-          val me = ModuleEntry(mid.organization, mid.name, VersionString(mid.revision), artifact.name, artifact.classifier, file.getName, projectRef)
-          me -> file
-        }
+      val distinctDpJars = packModuleEntries.value
 
       def hash(is: InputStream) = {
         val md = MessageDigest.getInstance("MD5")
@@ -384,31 +378,10 @@ object Pack
 
       def modID(m: ModuleEntry) = m.org % m.artifactName % m.revision.toString
 
-      val distinctDpJars = dependentJars
-          .groupBy(_._1.noVersionModuleName)
-          .map {
-            case (key, entries) if entries.groupBy(_._1.revision).size == 1 ⇒
-              val e0 = entries(0)
-              (modID(e0._1), e0._2)
-            case (key, entries) ⇒
-              val revisions = entries.groupBy(_._1.revision).map(_._1).toList.sorted
-              val latestRevision = revisions.last
-              packDuplicateJarStrategy.value match {
-                case "latest" =>
-                  log.debug(s"Version conflict on $key. Using ${latestRevision} (found ${revisions.mkString(", ")})")
-                  val entry = entries.filter(_._1.revision == latestRevision)(0)
-                  (modID(entry._1), entry._2)
-                case "exit" =>
-                  sys.error(s"Version conflict on $key (found ${revisions.mkString(", ")})")
-                case x =>
-                  sys.error("Unknown duplicate JAR strategy '%s'".format(x))
-              }
-          }
-
-      val allClasses = distinctDpJars.map { case (mod, file) ⇒
+      val allClasses = distinctDpJars.map { mod =>
         import scala.collection.JavaConversions._
-        log debug s"Scanning $file"
-        val jar = new ZipFile(file)
+        log debug s"Scanning ${mod.file}"
+        val jar = new ZipFile(mod.file)
         val classes = try {
           jar.entries
               .filter { e ⇒ !e.isDirectory && e.getName.endsWith(".class") }
@@ -447,8 +420,7 @@ object Pack
           println(s"Conflict between $m1 and $m2:"+f)
         }
 
-        def toStr(m: ModuleID) = s""""${m.organization}" % "${m.name}" % "${m.revision}""""
-        val excludes = groupedConflicts.map{ case ((m1, m2), _) ⇒ s"  ${toStr(m1)} -> ${toStr(m2)}" }.mkString(",\n")
+        val excludes = groupedConflicts.map{ case ((m1, m2), _) ⇒ s"  ${m1.toDependencyStr} -> ${m2.toDependencyStr}" }.mkString(",\n")
 
         println(s"""
 			  |If you consider these conflicts are inoffensive, in order to ignore them, use:
@@ -458,7 +430,7 @@ object Pack
 			""".stripMargin)
         sys.error(s"Detected ${conflicts.size} conflict(s)")
       } else
-        log info s"No conflicts detected, scanned ${dependentJars.size} jar files."
+        log info s"No conflicts detected, scanned ${distinctDpJars.size} jar files."
     },
 
     packCopyDependenciesUseSymbolicLinks := true,
@@ -467,48 +439,7 @@ object Pack
     packCopyDependencies := {
       val log = streams.value.log
 
-      val jarExcludeFilter : Seq[Regex] = packExcludeJars.value.map(_.r)
-      def isExcludeJar(name:String): Boolean = {
-        val toExclude = jarExcludeFilter.exists(pattern => pattern.findFirstIn(name).isDefined)
-        if(toExclude) {
-          log.info(s"Exclude $name from the package")
-        }
-        toExclude
-      }
-
-      val dependentJars =
-        for {
-          (r: sbt.UpdateReport, projectRef) <- packUpdateReports.value
-          c <- r.configurations if c.configuration == "runtime"
-          m <- c.modules
-          (artifact, file) <- m.artifacts if !packExcludeArtifactTypes.value.contains(artifact.`type`) && !isExcludeJar(file.name)
-        } yield {
-          val mid = m.module
-          val me = ModuleEntry(mid.organization, mid.name, VersionString(mid.revision), artifact.name, artifact.classifier, file.getName, projectRef)
-          me -> file
-        }
-
-      val distinctDpJars = dependentJars
-          .groupBy(_._1.noVersionModuleName)
-          .map {
-            case (key, entries) if entries.groupBy(_._1.revision).size == 1 ⇒
-              val e0 = entries(0)
-              e0._2
-            case (key, entries) ⇒
-              val revisions = entries.groupBy(_._1.revision).map(_._1).toList.sorted
-              val latestRevision = revisions.last
-              packDuplicateJarStrategy.value match {
-                case "latest" =>
-                  log.debug(s"Version conflict on $key. Using ${latestRevision} (found ${revisions.mkString(", ")})")
-                  val entry = entries.filter(_._1.revision == latestRevision)(0)
-                  entry._2
-                case "exit" =>
-                  sys.error(s"Version conflict on $key (found ${revisions.mkString(", ")})")
-                case x =>
-                  sys.error("Unknown duplicate JAR strategy '%s'".format(x))
-              }
-          }
-
+      val distinctDpJars = packModuleEntries.value.map(_.file)
       val unmanaged = packAllUnmanagedJars.value.flatMap{_._1}.map{_.data}
       packCopyDependenciesTarget.value.mkdirs()
       IO.delete((packCopyDependenciesTarget.value * "*.jar").get)
