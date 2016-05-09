@@ -183,10 +183,6 @@ It can be used e.g. for copying dependencies of a webapp to `WEB-INF/lib`
 
 See an [example](src/sbt-test/sbt-pack/copy-dependencies) project.
 
-### Find duplicated classes in dependencies
-
-This feature is documented in a [separate page](USAGE.md)
-
 ### Example projects
 
 See also [examples](src/sbt-test/sbt-pack) folder
