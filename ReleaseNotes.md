@@ -1,8 +1,8 @@
 ### Release Notes
 
 - 0.8.0
-  - [Major] Uses non-aggregated updateReports to resolve dependencies
-    - For collecting jars of multi-module projects, you need to specify `dependsOn(sub-project, ...)`
+  - Fixed module dependency resolusion.
+    - sbt-pack now uses the results of `update` command (updateReports) of a project in which `packSetting` is defined to resolve dependencies.
     - This resolves the problem of unintended dependency inclusion
     - Removed checkDuplicatedDependencies command that are no longer necessary
 
