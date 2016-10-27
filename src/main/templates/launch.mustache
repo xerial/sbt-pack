@@ -120,9 +120,9 @@ fi
 # For Migwn, ensure paths are in UNIX format before anything is touched
 if $mingw ; then
   [ -n "$PROG_HOME" ] &&
-    PROG_HOME="`(cd "$PROG_HOME"; pwd)`"
+    PROG_HOME="`(cd "$PROG_HOME"; pwd -W | sed 's|/|\\\\|g')`"
   [ -n "$JAVA_HOME" ] &&
-    JAVA_HOME="`(cd "$JAVA_HOME"; pwd)`"
+    JAVA_HOME="`(cd "$JAVA_HOME"; pwd -W | sed 's|/|\\\\|g')`"
   CLASSPATH_SUFFIX=";"
   PSEP=";"
 fi
@@ -131,7 +131,7 @@ fi
 PROG_NAME={{{PROG_NAME}}}
 PROG_VERSION={{{PROG_VERSION}}}
 
-eval exec "$JAVACMD" \
+eval exec "\"$JAVACMD\"" \
      {{{JVM_OPTS}}} \
      ${JAVA_OPTS} \
      {{^EXPANDED_CLASSPATH}}
