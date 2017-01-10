@@ -1,4 +1,4 @@
-sbt-pack plugin
+sbt-pack plugin [![Build Status](https://travis-ci.org/xerial/sbt-pack.svg?branch=master)](https://travis-ci.org/xerial/sbt-pack) [![Maven Central](https://img.shields.io/maven-central/v/org.xerial.sbt/sbt-pack.svg)](https://maven-badges.herokuapp.com/maven-central/org.xerial.sbt/sbt-pack)
 ========
 
 A sbt plugin for creating distributable Scala packages that include dependent jars and launch scripts.
@@ -31,7 +31,7 @@ Add `sbt-pack` plugin to your sbt configuration:
 **project/plugins.sbt**
 
 ```scala
-addSbtPlugin("org.xerial.sbt" % "sbt-pack" % "0.8.0")  // for sbt-0.13.x or higher
+addSbtPlugin("org.xerial.sbt" % "sbt-pack" % "0.8.1")  // for sbt-0.13.x or higher
 
 addSbtPlugin("org.xerial.sbt" % "sbt-pack" % "0.2.5")  // for sbt-0.12.x (New features will not be supported in this version.)
 ```

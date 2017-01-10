@@ -7,92 +7,86 @@
 
 package xerial.sbt
 
-import java.io.InputStream
-import java.net.URL
 import java.nio.file.Files
-import java.security.{DigestInputStream, MessageDigest}
-import java.util.zip.ZipFile
+import java.time.format.{DateTimeFormatterBuilder, SignStyle}
+import java.time.temporal.ChronoField._
+import java.time.{Instant, ZoneId, ZonedDateTime}
+import java.util.{Date, Locale}
 
 import org.fusesource.scalate.TemplateEngine
 import sbt.Keys._
 import sbt._
 
+import scala.util.Try
 import scala.util.matching.Regex
 
 /**
- * Plugin for packaging projects
- * @author Taro L. Saito
- */
+  * Plugin for packaging projects
+  *
+  * @author Taro L. Saito
+  */
 object Pack
-        extends sbt.Plugin with PackArchive
-{
+  extends sbt.Plugin with PackArchive {
 
   case class ModuleEntry(org: String,
                          name: String,
                          revision: VersionString,
                          artifactName: String,
                          classifier: Option[String],
-                         file:File)
-  {
+                         file: File) {
     private def classifierSuffix = classifier.map("-" + _).getOrElse("")
 
     override def toString = "%s:%s:%s%s".format(org, artifactName, revision, classifierSuffix)
-
     def originalFileName = file.getName
-
     def jarName = "%s-%s%s.jar".format(artifactName, revision, classifierSuffix)
-
     def fullJarName = "%s.%s-%s%s.jar".format(org, artifactName, revision, classifierSuffix)
-
     def noVersionJarName = "%s.%s%s.jar".format(org, artifactName, classifierSuffix)
-
     def noVersionModuleName = "%s.%s%s.jar".format(org, name, classifierSuffix)
-
-    def toDependencyStr =  s""""${org}" % "${name}" % "${revision}""""
+    def toDependencyStr = s""""${org}" % "${name}" % "${revision}""""
   }
 
   private implicit def versionStringOrdering = DefaultVersionStringOrdering
 
   val runtimeFilter = ScopeFilter(inAnyProject, inConfigurations(Runtime))
 
-  val pack = taskKey[File]("create a distributable package of the project")
-  val packInstall = inputKey[Int]("pack and install")
+  val pack          = taskKey[File]("create a distributable package of the project")
+  val packInstall   = inputKey[Int]("pack and install")
   val packTargetDir = settingKey[File]("target directory to pack default is target")
-  val packDir = settingKey[String]("pack directory name")
+  val packDir       = settingKey[String]("pack directory name")
 
   val packBashTemplate = settingKey[String]("template file for bash scripts - defaults to pack's out-of-the-box template for bash")
-  val packBatTemplate = settingKey[String]("template file for bash scripts - defaults to pack's out-of-the-box template for bat")
+  val packBatTemplate  = settingKey[String]("template file for bash scripts - defaults to pack's out-of-the-box template for bat")
   val packMakeTemplate = settingKey[String]("template file for bash scripts - defaults to pack's out-of-the-box template for make")
 
-  val packMain = TaskKey[Map[String, String]]("prog_name -> main class table")
-  val packMainDiscovered = TaskKey[Map[String, String]]("discovered prog_name -> main class table")
-  val packExclude = SettingKey[Seq[String]]("pack-exclude", "specify projects whose dependencies will be excluded when packaging")
-  val packExcludeLibJars = SettingKey[Seq[String]]("pack-exclude", "specify projects to exclude when packaging.  Its dependencies will be processed")
-  val packExcludeJars = SettingKey[Seq[String]]("pack-exclude-jars", "specify jar file name patterns to exclude when packaging")
-  val packExcludeArtifactTypes = settingKey[Seq[String]]("specify artifact types (e.g. javadoc) to exclude when packaging")
-  val packLibJars = TaskKey[Seq[(File, ProjectRef)]]("pack-lib-jars")
+  val packMain                   = TaskKey[Map[String, String]]("prog_name -> main class table")
+  val packMainDiscovered         = TaskKey[Map[String, String]]("discovered prog_name -> main class table")
+  val packExclude                = SettingKey[Seq[String]]("pack-exclude", "specify projects whose dependencies will be excluded when packaging")
+  val packExcludeLibJars         = SettingKey[Seq[String]]("pack-exclude", "specify projects to exclude when packaging.  Its dependencies will be processed")
+  val packExcludeJars            = SettingKey[Seq[String]]("pack-exclude-jars", "specify jar file name patterns to exclude when packaging")
+  val packExcludeArtifactTypes   = settingKey[Seq[String]]("specify artifact types (e.g. javadoc) to exclude when packaging")
+  val packLibJars                = TaskKey[Seq[(File, ProjectRef)]]("pack-lib-jars")
   val packGenerateWindowsBatFile = settingKey[Boolean]("Generate BAT file launch scripts for Windows")
 
-  val packMacIconFile = SettingKey[String]("pack-mac-icon-file", "icon file name for Mac")
-  val packResourceDir = SettingKey[Map[File, String]](s"pack-resource-dir", "pack resource directory. default = Map({projectRoot}/src/pack -> \"\")")
-  val packAllUnmanagedJars = taskKey[Seq[(Classpath, ProjectRef)]]("all unmanaged jar files")
-  val packModuleEntries = taskKey[Seq[ModuleEntry]]("modules that will be packed")
-  val packJvmOpts = SettingKey[Map[String, Seq[String]]]("pack-jvm-opts")
-  val packExtraClasspath = SettingKey[Map[String, Seq[String]]]("pack-extra-classpath")
-  val packExpandedClasspath = settingKey[Boolean]("Expands the wildcard classpath in launch scripts to point at specific libraries")
-  val packJarNameConvention = SettingKey[String]("pack-jarname-convention",
+  val packMacIconFile                      = SettingKey[String]("pack-mac-icon-file", "icon file name for Mac")
+  val packResourceDir                      = SettingKey[Map[File, String]](s"pack-resource-dir", "pack resource directory. default = Map({projectRoot}/src/pack -> \"\")")
+  val packAllUnmanagedJars                 = taskKey[Seq[(Classpath, ProjectRef)]]("all unmanaged jar files")
+  val packModuleEntries                    = taskKey[Seq[ModuleEntry]]("modules that will be packed")
+  val packJvmOpts                          = SettingKey[Map[String, Seq[String]]]("pack-jvm-opts")
+  val packExtraClasspath                   = SettingKey[Map[String, Seq[String]]]("pack-extra-classpath")
+  val packExpandedClasspath                = settingKey[Boolean]("Expands the wildcard classpath in launch scripts to point at specific libraries")
+  val packJarNameConvention                = SettingKey[String]("pack-jarname-convention",
     "default: (artifact name)-(version).jar; original: original JAR name; full: (organization).(artifact name)-(version).jar; no-version: (organization).(artifact name).jar")
-  val packDuplicateJarStrategy = SettingKey[String]("deal with duplicate jars. default to use latest version",
+  val packDuplicateJarStrategy             = SettingKey[String]("deal with duplicate jars. default to use latest version",
     "latest: use the jar with a higher version; exit: exit the task with error")
-  val packCopyDependenciesTarget = settingKey[File]("target folder used by the <packCopyDependencies> task.")
-  val packCopyDependencies = taskKey[Unit](
-	  """just copies the dependencies to the <packCopyDependencies> folder.
-		|Compared to the <pack> task, it doesn't try to create scripts.
-	  """.stripMargin)
+  val packCopyDependenciesTarget           = settingKey[File]("target folder used by the <packCopyDependencies> task.")
+  val packCopyDependencies                 = taskKey[Unit](
+    """just copies the dependencies to the <packCopyDependencies> folder.
+      		|Compared to the <pack> task, it doesn't try to create scripts.
+    	  """.stripMargin)
   val packCopyDependenciesUseSymbolicLinks = taskKey[Boolean](
-	  """use symbolic links instead of copying for <packCopyDependencies>.
-		|The use of symbolic links allows faster processing and save disk space.
-	  """.stripMargin)
+    """use symbolic links instead of copying for <packCopyDependencies>.
+      		|The use of symbolic links allows faster processing and save disk space.
+    	  """.stripMargin)
 
   import complete.DefaultParsers._
 
@@ -158,10 +152,10 @@ object Pack
     },
     packModuleEntries := {
       val out = streams.value
-      val jarExcludeFilter : Seq[Regex] = packExcludeJars.value.map(_.r)
-      def isExcludeJar(name:String): Boolean = {
+      val jarExcludeFilter: Seq[Regex] = packExcludeJars.value.map(_.r)
+      def isExcludeJar(name: String): Boolean = {
         val toExclude = jarExcludeFilter.exists(pattern => pattern.findFirstIn(name).isDefined)
-        if(toExclude) {
+        if (toExclude) {
           out.log.info(s"Exclude $name from the package")
         }
         toExclude
@@ -219,8 +213,7 @@ object Pack
       libs.foreach(l => IO.copyFile(l, libDir / l.getName))
 
       // Copy dependent jars
-      def resolveJarName(m: ModuleEntry, convention: String) =
-      {
+      def resolveJarName(m: ModuleEntry, convention: String) = {
         convention match {
           case "original" => m.originalFileName
           case "full" => m.fullJarName
@@ -256,8 +249,7 @@ object Pack
       out.log.info("Create a bin folder: " + rpath(base, binDir))
       binDir.mkdirs()
 
-      def write(path: String, content: String)
-      {
+      def write(path: String, content: String) {
         val p = distDir / path
         out.log.info("Generating %s".format(rpath(base, p)))
         IO.write(p, content)
@@ -271,17 +263,19 @@ object Pack
       }
 
       val progVersion = version.value
+      import sys.process._
+      // Check the current Git revision
+      val gitRevision = Try("git rev-parse HEAD".!!).getOrElse("unknown").trim
+
       val pathSeparator = "${PSEP}"
       // Render script via Scalate template
       val engine = new
-                      TemplateEngine
-
+          TemplateEngine
 
       for ((name, mainClass) <- mainTable) {
         out.log.info("main class for %s: %s".format(name, mainClass))
         def extraClasspath(sep: String): String = packExtraClasspath.value.get(name).map(_.mkString("", sep, sep)).getOrElse("")
-        def expandedClasspath(sep: String): String =
-        {
+        def expandedClasspath(sep: String): String = {
           val projJars = libs.map(l => "${PROG_HOME}/lib/" + l.getName)
           val depJars = distinctDpJars.map(m => "${PROG_HOME}/lib/" + resolveJarName(m, packJarNameConvention.value))
           val unmanagedJars = for ((m, projectRef) <- packAllUnmanagedJars.value; um <- m; f = um.data) yield {
@@ -298,6 +292,7 @@ object Pack
         val m = Map(
           "PROG_NAME" -> name,
           "PROG_VERSION" -> progVersion,
+          "PROG_REVISION" -> gitRevision,
           "MAIN_CLASS" -> mainClass,
           "MAC_ICON_FILE" -> packMacIconFile.value,
           "JVM_OPTS" -> packJvmOpts.value.getOrElse(name, Nil).map("\"%s\"".format(_)).mkString(" "),
@@ -317,7 +312,7 @@ object Pack
           else {
             Map()
           }
-          val propForWin: Map[String, Any] = (m + ("EXTRA_CLASSPATH" -> extraPath) ++ expandedClasspathM).map { case (k, v) => k -> replaceProgHome(v) }.toMap
+          val propForWin: Map[String, Any] = (m + ("EXTRA_CLASSPATH" -> extraPath) ++ expandedClasspathM).map {case (k, v) => k -> replaceProgHome(v)}.toMap
           val batScript = engine.layout(packBatTemplate.value, propForWin)
           write(s"bin/${progName}.bat", batScript)
         }
@@ -340,11 +335,17 @@ object Pack
       }
       write("Makefile", makefile)
 
-      // Output the version number
-      write("VERSION", "version:=" + progVersion + "\n")
+
+      // Retrieve build time
+      val systemZone = ZoneId.systemDefault().normalized()
+      val timestamp = ZonedDateTime.ofInstant(Instant.ofEpochMilli(new Date().getTime), systemZone)
+      val buildTime = humanReadableTimestampFormatter.format(timestamp)
+
+      // Output the version number and Git revision
+      write("VERSION", s"version:=${progVersion}\nrevision:=${gitRevision}\nbuildTime:=${buildTime}\n")
 
       // Copy other scripts
-      otherResourceDirs.foreach { otherResourceDir =>
+      otherResourceDirs.foreach {otherResourceDir =>
         val from = otherResourceDir._1
         val to = otherResourceDir._2 match {
           case "" => distDir
@@ -367,35 +368,35 @@ object Pack
       val log = streams.value.log
 
       val distinctDpJars = packModuleEntries.value.map(_.file)
-      val unmanaged = packAllUnmanagedJars.value.flatMap{_._1}.map{_.data}
+      val unmanaged = packAllUnmanagedJars.value.flatMap {_._1}.map {_.data}
       packCopyDependenciesTarget.value.mkdirs()
       IO.delete((packCopyDependenciesTarget.value * "*.jar").get)
-      (distinctDpJars ++ unmanaged) foreach { d ⇒
+      (distinctDpJars ++ unmanaged) foreach {d ⇒
         log debug s"Copying ${d.getName}"
         val dest = packCopyDependenciesTarget.value / d.getName
-        if (packCopyDependenciesUseSymbolicLinks.value)
+        if (packCopyDependenciesUseSymbolicLinks.value) {
           Files.createSymbolicLink(dest.toPath, d.toPath)
-        else
+        }
+        else {
           IO.copyFile(d, dest)
+        }
       }
       val libs = packLibJars.value.map(_._1)
       libs.foreach(l ⇒ IO.copyFile(l, packCopyDependenciesTarget.value / l.getName))
 
-      log info s"Copied ${distinctDpJars.size+libs.size} jars to ${packCopyDependenciesTarget.value}"
+      log info s"Copied ${distinctDpJars.size + libs.size} jars to ${packCopyDependenciesTarget.value}"
     }
   ) ++ packArchiveSettings
 
   lazy val packAutoSettings = packSettings :+ (
-          packMain := packMainDiscovered.value
-          )
+    packMain := packMainDiscovered.value
+    )
 
   private def getFromAllProjects[T](targetTask: TaskKey[T])(currentProject: ProjectRef, structure: BuildStructure): Task[Seq[(T, ProjectRef)]] =
     getFromSelectedProjects(targetTask)(currentProject, structure, Seq.empty)
 
-  private def getFromSelectedProjects[T](targetTask: TaskKey[T])(currentProject: ProjectRef, structure: BuildStructure, exclude: Seq[String]): Task[Seq[(T, ProjectRef)]] =
-  {
-    def allProjectRefs(currentProject: ProjectRef): Seq[ProjectRef] =
-    {
+  private def getFromSelectedProjects[T](targetTask: TaskKey[T])(currentProject: ProjectRef, structure: BuildStructure, exclude: Seq[String]): Task[Seq[(T, ProjectRef)]] = {
+    def allProjectRefs(currentProject: ProjectRef): Seq[ProjectRef] = {
       def isExcluded(p: ProjectRef) = exclude.contains(p.project)
       val children = Project.getProject(currentProject, structure).toSeq.flatMap {
         p =>
@@ -410,4 +411,20 @@ object Pack
       ((targetTask in p).value, p)
     }) evaluate structure.data).join
   }
+
+  private val humanReadableTimestampFormatter = new DateTimeFormatterBuilder()
+                                                .parseCaseInsensitive()
+                                                .appendValue(YEAR, 4, 10, SignStyle.EXCEEDS_PAD)
+                                                .appendLiteral('-')
+                                                .appendValue(MONTH_OF_YEAR, 2)
+                                                .appendLiteral('-')
+                                                .appendValue(DAY_OF_MONTH, 2)
+                                                .appendLiteral(' ')
+                                                .appendValue(HOUR_OF_DAY, 2)
+                                                .appendLiteral(':')
+                                                .appendValue(MINUTE_OF_HOUR, 2)
+                                                .appendLiteral(':')
+                                                .appendValue(SECOND_OF_MINUTE, 2)
+                                                .appendOffset("+HHMM", "Z")
+                                                .toFormatter(Locale.US)
 }

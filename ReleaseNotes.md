@@ -1,5 +1,9 @@
 ### Release Notes
 
+- 0.8.1
+  - Embed Git revision and buildTime to pack/VERSION file
+  - [internal] Migrated to from Build.scala to build.sbt
+
 - 0.8.0
   - Fixed module dependency resolusion.
     - sbt-pack now uses the results of `update` command (updateReports) of a project in which `packSetting` is defined to resolve dependencies.
