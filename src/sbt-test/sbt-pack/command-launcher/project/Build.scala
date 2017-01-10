@@ -9,7 +9,7 @@ object Build extends sbt.Build {
     base = file("."),
     settings = Defaults.defaultSettings ++ packSettings ++
       Seq(
-        scalaVersion := "2.11.6",
+        scalaVersion := "2.11.8",
         scalacOptions ++= Seq("-deprecation", "-feature"),
         // Mapping from program name -> Main class
         packMain := Map("launcher" -> "launcher.Main"),

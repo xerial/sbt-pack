@@ -11,7 +11,7 @@ object Build extends sbt.Build {
     // publish tar.gz archive to the repository (since sbt-pack-0.3.6)
     publishPackArchives ++
     Seq(
-     scalaVersion := "2.11.6",
+     scalaVersion := "2.11.8",
      version := "0.1",
      crossPaths := false
   )
