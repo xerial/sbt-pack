@@ -28,35 +28,32 @@ scriptedLaunchOpts ++= {
 //}
 
 libraryDependencies ++= Seq(
-  "org.fusesource.scalate" % "scalate-core_2.10" % "1.6.1",
+  "org.scalatra.scalate" %% "scalate-core" % "1.8.0",
   "org.apache.commons" % "commons-compress" % "1.9",
   "org.tukaani" % "xz" % "1.5",
   "org.slf4j" % "slf4j-simple" % "1.7.5",
-  "org.specs2" %% "specs2" % "2.4.1" % "test"
+  "org.specs2" %% "specs2-core" % "3.9.2" % "test"
 )
 
-releaseTagName := {(version in ThisBuild).value}
 
+releaseCrossBuild := true
+releaseTagName := {(version in ThisBuild).value}
+releasePublishArtifactsAction := PgpKeys.publishSigned.value
 releaseProcess := Seq[ReleaseStep](
       checkSnapshotDependencies,
       inquireVersions,
       runClean,
       runTest,
-      ReleaseStep(
-        action = {state =>
-          val extracted = Project extract state
-          extracted.runAggregated(scriptedTests in Global in extracted.get(thisProjectRef), state)
-        }
-      ),
+      releaseStepCommandAndRemaining("^ scripted"),
       setReleaseVersion,
       bumpVersion,
       commitReleaseVersion,
       tagRelease,
-      ReleaseStep(action = Command.process("publishSigned", _)),
+      releaseStepCommandAndRemaining("^ publishSigned"),
       setNextVersion,
       bumpVersion,
       commitNextVersion,
-      ReleaseStep(action = Command.process("sonatypeReleaseAll", _)),
+      releaseStepCommand("sonatypeReleaseAll"),
       pushChanges
     )
 
