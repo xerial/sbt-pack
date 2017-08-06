@@ -1,8 +1,6 @@
-import com.mojolly.scalate.ScalatePlugin.ScalateKeys.scalateTemplateConfig
 import ReleaseTransformations._
 
 scriptedSettings
-scalateSettings
 
 organization := "org.xerial.sbt"
 organizationName := "Xerial project"
@@ -25,9 +23,9 @@ scriptedLaunchOpts ++= {
    import scala.collection.JavaConverters._
    management.ManagementFactory.getRuntimeMXBean().getInputArguments().asScala.filter(a => Seq("-Xmx", "-Xms").contains(a) || a.startsWith("-XX")).toSeq
 }
-scalateTemplateConfig in Compile := {
-   Seq(TemplateConfig((sourceDirectory in Compile).value / "templates", Nil, Nil, Some("xerial.sbt.template")))
-}
+//scalateTemplateConfig in Compile := {
+//   Seq(TemplateConfig((sourceDirectory in Compile).value / "templates", Nil, Nil, Some("xerial.sbt.template")))
+//}
 
 libraryDependencies ++= Seq(
   "org.fusesource.scalate" % "scalate-core_2.10" % "1.6.1",
