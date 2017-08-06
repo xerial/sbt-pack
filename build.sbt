@@ -1,10 +1,7 @@
 import com.mojolly.scalate.ScalatePlugin.ScalateKeys.scalateTemplateConfig
 import ReleaseTransformations._
 
-val SCALA_VERSION = "2.10.6"
-
 scriptedSettings
-graphSettings
 scalateSettings
 
 organization := "org.xerial.sbt"
@@ -12,12 +9,14 @@ organizationName := "Xerial project"
 name := "sbt-pack"
 organizationHomepage := Some(new URL("http://xerial.org/"))
 description := "A sbt plugin for packaging distributable Scala code"
-scalaVersion := SCALA_VERSION
 publishMavenStyle := true
 publishArtifact in Test := false
 
 pomIncludeRepository := { _ => false }
+
 sbtPlugin := true
+crossSbtVersions := Vector("1.0.0-RC3", "0.13.16")
+
 parallelExecution := true
 crossPaths := false
 scalacOptions ++= Seq("-encoding", "UTF-8", "-deprecation", "-unchecked", "-target:jvm-1.6")

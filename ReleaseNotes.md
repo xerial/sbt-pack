@@ -1,5 +1,8 @@
 ### Release Notes
 
+- 0.9.0
+  - Add sbt-1.0 support
+
 - 0.8.2
   - Embed Git revision and buildTime to pack/VERSION file
   - [internal] Migrated to from Build.scala to build.sbt
