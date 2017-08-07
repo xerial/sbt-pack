@@ -9,7 +9,7 @@ A sbt plugin for creating distributable Scala packages that include dependent ja
   - All dependent jars including scala-library.jar are collected in `target/pack/lib` folder. This process is much faster than creating a single-jar as in `sbt-assembly` or `proguard` plugins. 
   - Supporting multi-module projects.
   - Useful for creating runnable [Docker](https://www.docker.com) images of Scala programs
-- `sbt pack-archive` generates `tar.gz` archive that is ready to distribute. 
+- `sbt packArchive` generates `tar.gz` archive that is ready to distribute.
   - The archive name is `target/{project name}-{version}.tar.gz`
 - `sbt pack` generates program launch scripts `target/pack/bin/{program name}`
   - To run the program no need exists to install Scala, since it is included in the lib folder. Only java command needs to be found in the system.
@@ -199,7 +199,7 @@ packMain := Map("myapp"->"org.yourdomain.MyApp")
 
 **Dockerfile**
 ```
-# Using a Alpine Linux based JDK image
+# Using an Alpine Linux based JDK image
 FROM anapsix/alpine-java:8u131b11_jdk
 
 COPY target/pack /srv/myapp
@@ -214,7 +214,7 @@ ENTRYPOINT ["./bin/myapp"]
 Then you can build a docker image of your project:
 ```
 $ sbt pack
-$ docker build -t your_org/myapp:latest
+$ docker build -t your_org/myapp:latest .
 
 
 # Run your application with Docker
