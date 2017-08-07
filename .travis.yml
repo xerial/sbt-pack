@@ -5,7 +5,9 @@ jdk:
 
 sudo: false
 
-matrix:
-  include:
-  - script: sbt "^^ 0.13.16" compile scripted
-  - script: sbt compile scripted
+env:
+  - sbt_version=0.13.16
+  - sbt_version=1.0.0-RC3
+
+script: sbt "^^ $(sbt_version)" compile scripted
+
