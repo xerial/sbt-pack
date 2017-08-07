@@ -31,7 +31,7 @@ Add `sbt-pack` plugin to your sbt configuration:
 **project/plugins.sbt**
 
 ```scala
-addSbtPlugin("org.xerial.sbt" % "sbt-pack" % "0.8.2")  // for sbt-0.13.x or higher
+addSbtPlugin("org.xerial.sbt" % "sbt-pack" % "0.9.0")  // for sbt-0.13.x, sbt-1.0.0-RC3 or higher
 
 addSbtPlugin("org.xerial.sbt" % "sbt-pack" % "0.2.5")  // for sbt-0.12.x (New features will not be supported in this version.)
 ```
@@ -43,13 +43,12 @@ Repository URL: http://repo1.maven.org/maven2/org/xerial/sbt/
 **build.sbt**
 ```
 // Automatically find def main(args:Array[String]) methods from classpath
-packAutoSettings
+enablePlugins(PackPlugin)
 ```
 
 or 
 ```
-// If you need to specify main classes manually, use packSettings and packMain
-packSettings
+// If you need to specify main classes manually, set packMain 
 
 // [Optional] Creating `hello` command that calls org.mydomain.Hello#main(Array[String]) 
 packMain := Map("hello" -> "org.mydomain.Hello")
@@ -63,50 +62,44 @@ Import `xerial.sbt.Pack.packAutoSettings` into your project settings (Since vers
 
 Alternatively, import `xerial.sbt.Pack.packSettings` instead of `xerial.sbt.Pack.packAutoSettings`. The main classes in your program will then not be guessed. Manually set the `packMain` variable, a mapping from your program names to their corresponding main classes (for example `packMain := Map("hello" -> "myprog.Hello")`).   
 
-**project/Build.scala**
+**build.sbt**
 
 ```scala
-import sbt._
-import sbt.Keys._
-import xerial.sbt.Pack._
-   
-object Build extends sbt.Build {
+
+name := "myprog"
+base := file(".")
     
-  lazy val root = Project(
-    id = "myprog",
-    base = file("."),
-    settings = Defaults.defaultSettings 
-      ++ packAutoSettings // This settings add pack and pack-archive commands to sbt
-      ++ Seq(
-        // [Optional] If you used packSettings instead of packAutoSettings, 
-        //  specify mappings from program name -> Main class (full package path)
-        // packMain := Map("hello" -> "myprog.Hello"),
-        // Add custom settings here
-        // [Optional] JVM options of scripts (program name -> Seq(JVM option, ...))
-        packJvmOpts := Map("hello" -> Seq("-Xmx512m")),
-        // [Optional] Extra class paths to look when launching a program. You can use ${PROG_HOME} to specify the base directory
-        packExtraClasspath := Map("hello" -> Seq("${PROG_HOME}/etc")), 
-        // [Optional] (Generate .bat files for Windows. The default value is true)
-        packGenerateWindowsBatFile := true,
-        // [Optional] jar file name format in pack/lib folder
-        //   "default"   (project name)-(version).jar 
-        //   "full"      (organization name).(project name)-(version).jar
-        //   "no-version" (organization name).(project name).jar
-        //   "original"  (Preserve original jar file names)
-        packJarNameConvention := "default",
-        // [Optional] Patterns of jar file names to exclude in pack
-        packExcludeJars := Seq("scala-.*\\.jar"),
-        // [Optional] List full class paths in the launch scripts (default is false) (since 0.5.1)
-        packExpandedClasspath := false,
-        // [Optional] Resource directory mapping to be copied within target/pack. Default is Map("{projectRoot}/src/pack" -> "") 
-        packResourceDir += (baseDirectory.value / "web" -> "web-content")
-      ) 
-    // To publish tar.gz, zip archives to the repository, add the following line
-    // ++ publishPackArchive
-    // Publish tar.gz archive. To publish another type of archive, use publishPackArchive(xxx) instead
-    // ++ publishPackArchiveTgz
-  )
-}
+// [Optional] Specify mappings from program name -> Main class (full package path). If no value is set, it will find main classes automatically
+packMain := Map("hello" -> "myprog.Hello")
+// [Optional] JVM options of scripts (program name -> Seq(JVM option, ...))
+packJvmOpts := Map("hello" -> Seq("-Xmx512m"))
+// [Optional] Extra class paths to look when launching a program. You can use ${PROG_HOME} to specify the base directory
+packExtraClasspath := Map("hello" -> Seq("${PROG_HOME}/etc")) 
+// [Optional] (Generate .bat files for Windows. The default is true)
+packGenerateWindowsBatFile := true
+
+// [Optional] jar file name format in pack/lib folder
+//   "default"   (project name)-(version).jar 
+//   "full"      (organization name).(project name)-(version).jar
+//   "no-version" (organization name).(project name).jar
+//   "original"  (Preserve original jar file names)
+packJarNameConvention := "default",
+
+// [Optional] Patterns of jar file names to exclude in pack
+packExcludeJars := Seq("scala-.*\\.jar")
+
+// [Optional] List full class paths in the launch scripts (default is false) (since 0.5.1)
+packExpandedClasspath := false
+// [Optional] Resource directory mapping to be copied within target/pack. Default is Map("{projectRoot}/src/pack" -> "") 
+packResourceDir += (baseDirectory.value / "web" -> "web-content")
+
+
+// To publish tar.gz, zip archives to the repository, add the following lines
+import xerial.sbt.pack.PackPlugin._
+publishPackArchive
+
+// Publish only tar.gz archive. To publish another type of archive, use publishPackArchive(xxx) instead
+//publishPackArchiveTgz
 ```
 
 **src/main/scala/Hello.scala**
