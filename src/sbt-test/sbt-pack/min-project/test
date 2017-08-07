@@ -4,7 +4,7 @@ $ exists target/pack/Makefile
 $ exists target/pack/bin/hello
 $ exists target/pack/lib/scala-library-2.11.8.jar
 $ exec sh ./target/pack/bin/hello
-> pack-archive
+> packArchive
 $ exists target/min-project-0.1.tar.gz
 > packInstall ../../local
 $ exists local/bin/hello
