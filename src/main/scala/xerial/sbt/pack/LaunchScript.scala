@@ -1,5 +1,4 @@
-package xerial.sbt
-
+package xerial.sbt.pack
 
 object LaunchScript {
 

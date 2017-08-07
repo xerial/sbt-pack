@@ -1,4 +1,4 @@
-@(opts:xerial.sbt.LaunchScript.Opts, expandedClasspath:Option[String])
+@(opts:xerial.sbt.pack.LaunchScript.Opts, expandedClasspath:Option[String])
 #!/bin/sh
 #/*--------------------------------------------------------------------------
 # *  Copyright 2012 Taro L. Saito

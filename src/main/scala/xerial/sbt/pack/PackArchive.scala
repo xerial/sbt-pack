@@ -1,8 +1,7 @@
-package xerial.sbt
+package xerial.sbt.pack
 
-import sbt._
-import Keys._
 import java.io._
+
 import org.apache.commons.compress.archivers._
 import org.apache.commons.compress.archivers.tar._
 import org.apache.commons.compress.archivers.zip._
@@ -10,21 +9,10 @@ import org.apache.commons.compress.compressors.bzip2.BZip2CompressorOutputStream
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream
 import org.apache.commons.compress.compressors.xz.XZCompressorOutputStream
 import org.apache.commons.compress.utils.IOUtils
+import sbt.Keys._
+import sbt._
 
 trait PackArchive {
-  val packArchivePrefix = SettingKey[String]("prefix of (prefix)-(version).(format) archive file name")
-  val packArchiveName = SettingKey[String]("archive file name. Default is (project-name)-(version)")
-  val packArchiveStem = SettingKey[String]("directory name within the archive. Default is (archive-name)")
-  val packArchiveExcludes = SettingKey[Seq[String]]("List of excluding files from the archive")
-  val packArchiveTgzArtifact = SettingKey[Artifact]("tar.gz archive artifact")
-  val packArchiveTbzArtifact = SettingKey[Artifact]("tar.bz2 archive artifact")
-  val packArchiveTxzArtifact = SettingKey[Artifact]("tar.xz archive artifact")
-  val packArchiveZipArtifact = SettingKey[Artifact]("zip archive artifact")
-  val packArchiveTgz = TaskKey[File]("pack-archive-tgz", "create a tar.gz archive of the distributable package")
-  val packArchiveTbz = TaskKey[File]("pack-archive-tbz", "create a tar.bz2 archive of the distributable package")
-  val packArchiveTxz = TaskKey[File]("pack-archive-txz", "create a tar.xz archive of the distributable package")
-  val packArchiveZip = TaskKey[File]("pack-archive-zip", "create a zip archive of the distributable package")
-  val packArchive = TaskKey[Seq[File]]("pack-archive", "create a tar.gz and a zip archive of the distributable package")
 
   import PackPlugin.autoImport._
 

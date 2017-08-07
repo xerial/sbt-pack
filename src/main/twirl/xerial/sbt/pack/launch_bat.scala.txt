@@ -1,4 +1,4 @@
-@(opts:xerial.sbt.LaunchScript.Opts, expandedClasspath:Option[String])
+@(opts:xerial.sbt.pack.LaunchScript.Opts, expandedClasspath:Option[String])
 @@REM ----------------------------------------------------------------------------
 @@REM Licensed to the Apache Software Foundation (ASF) under one
 @@REM or more contributor license agreements.  See the NOTICE file
