@@ -15,6 +15,7 @@ import java.util.{Date, Locale}
 
 import sbt._
 import sbt.Keys._
+import xerial.sbt.PackPlugin.autoImport.{packMain, packMainDiscovered}
 
 import scala.util.Try
 import scala.util.matching.Regex
@@ -24,7 +25,7 @@ import scala.util.matching.Regex
   *
   * @author Taro L. Saito
   */
-object PackPlugin extends AutoPlugin { // with PackArchive {
+object PackPlugin extends AutoPlugin with PackArchive {
 
   override def trigger = allRequirements
 
@@ -46,14 +47,11 @@ object PackPlugin extends AutoPlugin { // with PackArchive {
   }
 
 
-
-  //val runtimeFilter = ScopeFilter(inAnyProject, inConfigurations(Runtime))
-
   object autoImport {
     val pack          = taskKey[File]("create a distributable package of the project")
     val packInstall   = inputKey[Int]("pack and install")
-    val packTargetDir = settingKey[File]("target directory to pack default is target")
-    val packDir       = settingKey[String]("pack directory name")
+    val packTargetDir = taskKey[File]("target directory to pack default is target")
+    val packDir       = taskKey[String]("pack directory name")
 
     val packBashTemplate = settingKey[String]("template file for bash scripts - defaults to pack's out-of-the-box template for bash")
     val packBatTemplate  = settingKey[String]("template file for bash scripts - defaults to pack's out-of-the-box template for bat")
@@ -79,7 +77,7 @@ object PackPlugin extends AutoPlugin { // with PackArchive {
       "default: (artifact name)-(version).jar; original: original JAR name; full: (organization).(artifact name)-(version).jar; no-version: (organization).(artifact name).jar")
     val packDuplicateJarStrategy             = SettingKey[String]("deal with duplicate jars. default to use latest version",
       "latest: use the jar with a higher version; exit: exit the task with error")
-    val packCopyDependenciesTarget           = settingKey[File]("target folder used by the <packCopyDependencies> task.")
+    val packCopyDependenciesTarget           = taskKey[File]("target folder used by the <packCopyDependencies> task.")
     val packCopyDependencies                 = taskKey[Unit](
       """just copies the dependencies to the <packCopyDependencies> folder.
         		|Compared to the <pack> task, it doesn't try to create scripts.
@@ -95,7 +93,7 @@ object PackPlugin extends AutoPlugin { // with PackArchive {
   private val targetFolderParser: complete.Parser[Option[String]] =
     (Space ~> token(StringBasic, "(target folder)")).?.!!!("invalid input. please input target folder name")
 
-  override lazy val buildSettings = packSettings
+  override lazy val projectSettings = packSettings ++ packArchiveSettings
 
   import autoImport._
 
@@ -105,7 +103,7 @@ object PackPlugin extends AutoPlugin { // with PackArchive {
     packBashTemplate := "/xerial/sbt/template/launch.mustache",
     packBatTemplate := "/xerial/sbt/template/launch-bat.mustache",
     packMakeTemplate := "/xerial/sbt/template/Makefile.mustache",
-    packMain := Map.empty,
+    packMain := packMainDiscovered.value,
     packExclude := Seq.empty,
     packExcludeLibJars := Seq.empty,
     packExcludeJars := Seq.empty,
@@ -174,6 +172,33 @@ object PackPlugin extends AutoPlugin { // with PackArchive {
                                }
                            }
       distinctDpJars.toSeq
+    },
+    packCopyDependenciesUseSymbolicLinks := true,
+    packCopyDependenciesTarget := target.value / "lib",
+    packCopyDependencies := {
+      val log = streams.value.log
+
+      val distinctDpJars = packModuleEntries.value.map(_.file)
+      val unmanaged = packAllUnmanagedJars.value.flatMap {_._1}.map {_.data}
+      val copyDepTargetDir = packCopyDependenciesTarget.value
+      val useSymlink = packCopyDependenciesUseSymbolicLinks.value
+
+      copyDepTargetDir.mkdirs()
+      IO.delete((copyDepTargetDir * "*.jar").get)
+      (distinctDpJars ++ unmanaged) foreach {d ⇒
+        log debug s"Copying ${d.getName}"
+        val dest = copyDepTargetDir / d.getName
+        if (useSymlink) {
+          Files.createSymbolicLink(dest.toPath, d.toPath)
+        }
+        else {
+          IO.copyFile(d, dest)
+        }
+      }
+      val libs = packLibJars.value.map(_._1)
+      libs.foreach(l ⇒ IO.copyFile(l, copyDepTargetDir / l.getName))
+
+      log info s"Copied ${distinctDpJars.size + libs.size} jars to ${copyDepTargetDir}"
     },
     pack := {
       val out = streams.value
@@ -362,41 +387,9 @@ object PackPlugin extends AutoPlugin { // with PackArchive {
           s"make install"
       }
       sys.process.Process(cmd, Some(packDir)).!
-    },
-
-    packCopyDependenciesUseSymbolicLinks := true,
-    packCopyDependenciesTarget := target.value / "lib",
-
-    packCopyDependencies := {
-      val log = streams.value.log
-
-      val distinctDpJars = packModuleEntries.value.map(_.file)
-      val unmanaged = packAllUnmanagedJars.value.flatMap {_._1}.map {_.data}
-      val copyDepTargetDir = packCopyDependenciesTarget.value
-      val useSymlink = packCopyDependenciesUseSymbolicLinks.value
-
-      copyDepTargetDir.mkdirs()
-      IO.delete((copyDepTargetDir * "*.jar").get)
-      (distinctDpJars ++ unmanaged) foreach {d ⇒
-        log debug s"Copying ${d.getName}"
-        val dest = copyDepTargetDir / d.getName
-        if (useSymlink) {
-          Files.createSymbolicLink(dest.toPath, d.toPath)
-        }
-        else {
-          IO.copyFile(d, dest)
-        }
-      }
-      val libs = packLibJars.value.map(_._1)
-      libs.foreach(l ⇒ IO.copyFile(l, copyDepTargetDir / l.getName))
-
-      log info s"Copied ${distinctDpJars.size + libs.size} jars to ${copyDepTargetDir}"
     }
-  ) //++ packArchiveSettings
+  )
 
-  lazy val packAutoSettings = packSettings :+ (
-    packMain := packMainDiscovered.value
-    )
 
   //private def getFromAllProjects[T](targetTask: TaskKey[T])(currentProject: ProjectRef, structure: BuildStructure): Task[Seq[(T, ProjectRef)]] =
   private def getFromAllProjects[T](targetTask: TaskKey[T], state:State): Task[Seq[(T, ProjectRef)]] =
