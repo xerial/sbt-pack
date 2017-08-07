@@ -50,8 +50,8 @@ object PackPlugin extends AutoPlugin with PackArchive {
   object autoImport {
     val pack          = taskKey[File]("create a distributable package of the project")
     val packInstall   = inputKey[Int]("pack and install")
-    val packTargetDir = taskKey[File]("target directory to pack default is target")
-    val packDir       = taskKey[String]("pack directory name")
+    val packTargetDir = settingKey[File]("target directory to pack default is target")
+    val packDir       = settingKey[String]("pack directory name")
 
     val packBashTemplate = settingKey[String]("template file for bash scripts - defaults to pack's out-of-the-box template for bash")
     val packBatTemplate  = settingKey[String]("template file for bash scripts - defaults to pack's out-of-the-box template for bat")
@@ -77,7 +77,7 @@ object PackPlugin extends AutoPlugin with PackArchive {
       "default: (artifact name)-(version).jar; original: original JAR name; full: (organization).(artifact name)-(version).jar; no-version: (organization).(artifact name).jar")
     val packDuplicateJarStrategy             = SettingKey[String]("deal with duplicate jars. default to use latest version",
       "latest: use the jar with a higher version; exit: exit the task with error")
-    val packCopyDependenciesTarget           = taskKey[File]("target folder used by the <packCopyDependencies> task.")
+    val packCopyDependenciesTarget           = settingKey[File]("target folder used by the <packCopyDependencies> task.")
     val packCopyDependencies                 = taskKey[Unit](
       """just copies the dependencies to the <packCopyDependencies> folder.
         		|Compared to the <pack> task, it doesn't try to create scripts.
