@@ -1,17 +1,11 @@
 language: scala
-scala:
-  - 2.10.5
 
 jdk:
   - oraclejdk8
 
 sudo: false
 
-script: sbt scripted
-
-branches:
-  only:
-    - master
-    - develop
-    - /^release\/.*$/
-    - feature/sbt-0.12.x
+matrix:
+  include:
+  - script: sbt "^^ 0.13.16" compile scripted
+  - script: sbt compile scripted
