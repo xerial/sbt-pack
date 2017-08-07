@@ -1,17 +1,13 @@
 language: scala
-scala:
-  - 2.10.5
 
 jdk:
   - oraclejdk8
 
 sudo: false
 
-script: sbt scripted
+env:
+  - sbt_version=0.13.16
+  - sbt_version=1.0.0-RC3
 
-branches:
-  only:
-    - master
-    - develop
-    - /^release\/.*$/
-    - feature/sbt-0.12.x
+script:
+  - sbt "^^ ${sbt_version}" compile scripted

@@ -1,3 +1,4 @@
+@(opts:xerial.sbt.pack.LaunchScript.Opts, expandedClasspath:Option[String])
 #!/bin/sh
 #/*--------------------------------------------------------------------------
 # *  Copyright 2012 Taro L. Saito
@@ -58,7 +59,7 @@ case "`uname`" in
            if [ -z "$JAVA_HOME" ] ; then
              JAVA_HOME=/System/Library/Frameworks/JavaVM.framework/Versions/${JAVA_VERSION}/Home
            fi
-           JAVA_OPTS="$JAVA_OPTS -Xdock:name=\"${PROG_NAME}\" -Xdock:icon=\"$PROG_HOME/{{{MAC_ICON_FILE}}}\" -Dapple.laf.useScreenMenuBar=true"
+           JAVA_OPTS="$JAVA_OPTS -Xdock:name=\"${PROG_NAME}\" -Xdock:icon=\"$PROG_HOME/@(opts.MAC_ICON_FILE)\" -Dapple.laf.useScreenMenuBar=true"
            JAVACMD="`which java`"
            ;;
 esac
@@ -128,21 +129,16 @@ if $mingw ; then
 fi
 
 
-PROG_NAME={{{PROG_NAME}}}
-PROG_VERSION={{{PROG_VERSION}}}
-PROG_REVISION={{{PROG_REVISION}}}
+PROG_NAME=@(opts.PROG_NAME)
+PROG_VERSION=@(opts.PROG_VERSION)
+PROG_REVISION=@(opts.PROG_REVISION)
 
 eval exec "\"$JAVACMD\"" \
-     {{{JVM_OPTS}}} \
+     @(opts.JVM_OPTS) \
      ${JAVA_OPTS} \
-     {{^EXPANDED_CLASSPATH}}
-     -cp "'{{{EXTRA_CLASSPATH}}}${PROG_HOME}/lib/*${CLASSPATH_SUFFIX}'" \
-     {{/EXPANDED_CLASSPATH}}
-     {{#EXPANDED_CLASSPATH}}
-     -cp "'{{{EXTRA_CLASSPATH}}}{{{EXPANDED_CLASSPATH}}}${CLASSPATH_SUFFIX}'" \
-     {{/EXPANDED_CLASSPATH}}
+     @if(expandedClasspath.isEmpty) { -cp "'@(opts.EXTRA_CLASSPATH)${PROG_HOME}/lib/*${CLASSPATH_SUFFIX}'" } else { -cp "'@(opts.EXTRA_CLASSPATH)@(expandedClasspath.get)${CLASSPATH_SUFFIX}'" }\
      -Dprog.home="'${PROG_HOME}'" \
      -Dprog.version="${PROG_VERSION}" \
      -Dprog.revision="${PROG_REVISION}" \
-     {{{MAIN_CLASS}}} \"\$@\"
+     @(opts.MAIN_CLASS) \"\$@@\"
 exit $?

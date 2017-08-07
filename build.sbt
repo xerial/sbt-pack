@@ -1,65 +1,60 @@
-import com.mojolly.scalate.ScalatePlugin.ScalateKeys.scalateTemplateConfig
 import ReleaseTransformations._
 
-val SCALA_VERSION = "2.10.6"
-
 scriptedSettings
-graphSettings
-scalateSettings
+enablePlugins(SbtTwirl)
 
 organization := "org.xerial.sbt"
 organizationName := "Xerial project"
 name := "sbt-pack"
 organizationHomepage := Some(new URL("http://xerial.org/"))
 description := "A sbt plugin for packaging distributable Scala code"
-scalaVersion := SCALA_VERSION
 publishMavenStyle := true
 publishArtifact in Test := false
 
 pomIncludeRepository := { _ => false }
+
 sbtPlugin := true
+crossSbtVersions := Vector("1.0.0-RC3", "0.13.16")
+
 parallelExecution := true
 crossPaths := false
-scalacOptions ++= Seq("-encoding", "UTF-8", "-deprecation", "-unchecked", "-target:jvm-1.6")
+scalacOptions ++= Seq("-encoding", "UTF-8", "-deprecation", "-unchecked")
 scriptedBufferLog := false
 scriptedLaunchOpts ++= {
    import scala.collection.JavaConverters._
    management.ManagementFactory.getRuntimeMXBean().getInputArguments().asScala.filter(a => Seq("-Xmx", "-Xms").contains(a) || a.startsWith("-XX")).toSeq
 }
-scalateTemplateConfig in Compile := {
-   Seq(TemplateConfig((sourceDirectory in Compile).value / "templates", Nil, Nil, Some("xerial.sbt.template")))
-}
+//scalateTemplateConfig in Compile := {
+//   Seq(TemplateConfig((sourceDirectory in Compile).value / "templates", Nil, Nil, Some("xerial.sbt.template")))
+//}
 
 libraryDependencies ++= Seq(
-  "org.fusesource.scalate" % "scalate-core_2.10" % "1.6.1",
+  "org.scalatra.scalate" %% "scalate-core" % "1.8.0",
   "org.apache.commons" % "commons-compress" % "1.9",
   "org.tukaani" % "xz" % "1.5",
   "org.slf4j" % "slf4j-simple" % "1.7.5",
-  "org.specs2" %% "specs2" % "2.4.1" % "test"
+  "org.specs2" %% "specs2-core" % "3.9.2" % "test"
 )
 
-releaseTagName := {(version in ThisBuild).value}
 
+releaseCrossBuild := true
+releaseTagName := {(version in ThisBuild).value}
+releasePublishArtifactsAction := PgpKeys.publishSigned.value
 releaseProcess := Seq[ReleaseStep](
       checkSnapshotDependencies,
       inquireVersions,
       runClean,
       runTest,
-      ReleaseStep(
-        action = {state =>
-          val extracted = Project extract state
-          extracted.runAggregated(scriptedTests in Global in extracted.get(thisProjectRef), state)
-        }
-      ),
+      releaseStepCommandAndRemaining("^ scripted"),
       setReleaseVersion,
       bumpVersion,
       commitReleaseVersion,
       tagRelease,
-      ReleaseStep(action = Command.process("publishSigned", _)),
+      releaseStepCommandAndRemaining("^ publishSigned"),
       setNextVersion,
       bumpVersion,
       commitNextVersion,
-      ReleaseStep(action = Command.process("sonatypeReleaseAll", _)),
+      releaseStepCommand("sonatypeReleaseAll"),
       pushChanges
     )
 

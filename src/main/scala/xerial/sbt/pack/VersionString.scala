@@ -5,7 +5,7 @@
 //
 //--------------------------------------
 
-package xerial.sbt
+package xerial.sbt.pack
 
 import scala.util.{Success, Try}
 

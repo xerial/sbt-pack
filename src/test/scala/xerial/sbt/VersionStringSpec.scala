@@ -1,6 +1,7 @@
 package xerial.sbt
 
 import org.specs2.mutable.Specification
+import xerial.sbt.pack.{DefaultVersionStringOrdering, VersionString}
 
 class VersionStringSpec extends Specification {
   implicit val versionStringOrdering = DefaultVersionStringOrdering
