@@ -11,7 +11,7 @@ pomExtra := {
     <scm>
       <connection>scm:git:github.com/xerial/sbt-pack.git</connection>
       <developerConnection>scm:git:git@github.com:xerial/sbt-pack.git</developerConnection>
-      <url>github.com/xerial/sbt-pack.git</url>
+      <url>https://github.com/xerial/sbt-pack</url>
     </scm>
     <developers>
       <developer>
@@ -21,3 +21,11 @@ pomExtra := {
       </developer>
     </developers>
 }
+
+// Add sonatype repository settings
+publishTo := Some(
+  if (isSnapshot.value)
+    Opts.resolver.sonatypeSnapshots
+  else
+    Opts.resolver.sonatypeStaging
+)
