@@ -51,9 +51,9 @@ object PackPlugin extends AutoPlugin with PackArchive {
     val packTargetDir = settingKey[File]("target directory to pack default is target")
     val packDir       = settingKey[String]("pack directory name")
 
-    val packBashTemplate = settingKey[String]("template file for bash scripts - defaults to pack's out-of-the-box template for bash")
-    val packBatTemplate  = settingKey[String]("template file for bash scripts - defaults to pack's out-of-the-box template for bat")
-    val packMakeTemplate = settingKey[String]("template file for bash scripts - defaults to pack's out-of-the-box template for make")
+    //val packBashTemplate = settingKey[String]("template file for bash scripts - defaults to pack's out-of-the-box template for bash")
+    //val packBatTemplate  = settingKey[String]("template file for bash scripts - defaults to pack's out-of-the-box template for bat")
+    //val packMakeTemplate = settingKey[String]("template file for bash scripts - defaults to pack's out-of-the-box template for make")
 
     val packMain                   = TaskKey[Map[String, String]]("prog_name -> main class table")
     val packMainDiscovered         = TaskKey[Map[String, String]]("discovered prog_name -> main class table")
@@ -112,9 +112,9 @@ object PackPlugin extends AutoPlugin with PackArchive {
   lazy val packSettings = Seq[Def.Setting[_]](
     packTargetDir := target.value,
     packDir := "pack",
-    packBashTemplate := "/xerial/sbt/template/launch.mustache",
-    packBatTemplate := "/xerial/sbt/template/launch-bat.mustache",
-    packMakeTemplate := "/xerial/sbt/template/Makefile.mustache",
+    //packBashTemplate := "/xerial/sbt/template/launch.mustache",
+    //packBatTemplate := "/xerial/sbt/template/launch-bat.mustache",
+    //packMakeTemplate := "/xerial/sbt/template/Makefile.mustache",
     packMain := packMainDiscovered.value,
     packExclude := Seq.empty,
     packExcludeLibJars := Seq.empty,
