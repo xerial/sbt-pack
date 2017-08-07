@@ -7,6 +7,7 @@
 
 package xerial.sbt
 
+import java.io.{BufferedOutputStream, ByteArrayOutputStream, PrintStream, StringWriter}
 import java.nio.file.Files
 import java.time.format.{DateTimeFormatterBuilder, SignStyle}
 import java.time.temporal.ChronoField._
@@ -264,14 +265,15 @@ object Pack
 
       val progVersion = version.value
       import sys.process._
+
       // Check the current Git revision
-      val gitRevision = Try("git rev-parse HEAD".!!).getOrElse("unknown").trim
+      val gitRevision: String = Try {
+        out.log.info("Checking the git revison of the current project")
+        "git rev-parse HEAD".!!
+      }.getOrElse("unknown").trim
 
       val pathSeparator = "${PSEP}"
       // Render script via Scalate template
-      val engine = new
-          TemplateEngine
-
       for ((name, mainClass) <- mainTable) {
         out.log.info("main class for %s: %s".format(name, mainClass))
         def extraClasspath(sep: String): String = packExtraClasspath.value.get(name).map(_.mkString("", sep, sep)).getOrElse("")
@@ -284,21 +286,25 @@ object Pack
           (projJars ++ depJars ++ unmanagedJars).mkString("", sep, sep)
         }
         val expandedClasspathM = if (packExpandedClasspath.value) {
-          Map("EXPANDED_CLASSPATH" -> expandedClasspath(pathSeparator))
+          Some(expandedClasspath(pathSeparator))
         }
         else {
-          Map()
+          None
         }
-        val m = Map(
-          "PROG_NAME" -> name,
-          "PROG_VERSION" -> progVersion,
-          "PROG_REVISION" -> gitRevision,
-          "MAIN_CLASS" -> mainClass,
-          "MAC_ICON_FILE" -> packMacIconFile.value,
-          "JVM_OPTS" -> packJvmOpts.value.getOrElse(name, Nil).map("\"%s\"".format(_)).mkString(" "),
-          "EXTRA_CLASSPATH" -> extraClasspath(pathSeparator))
-        val launchScript = engine.layout(packBashTemplate.value, m ++ expandedClasspathM)
-        val progName = m("PROG_NAME").replaceAll(" ", "") // remove white spaces
+
+        val scriptOpts = LaunchScript.Opts(
+          PROG_NAME= name,
+          PROG_VERSION = progVersion,
+          PROG_REVISION = gitRevision,
+          MAIN_CLASS =  mainClass,
+          JVM_OPTS = packJvmOpts.value.getOrElse(name, Nil).map("\"%s\"".format(_)).mkString(" "),
+          EXTRA_CLASSPATH = extraClasspath(pathSeparator),
+          MAC_ICON_FILE = packMacIconFile.value
+        )
+
+        // TODO use custom template (packBashTemplate)
+        val launchScript = LaunchScript.generateLaunchScript(scriptOpts, expandedClasspathM)
+        val progName = name.replaceAll(" ", "") // remove white spaces
         write(s"bin/$progName", launchScript)
 
         // Create BAT file
@@ -307,13 +313,23 @@ object Pack
 
           val extraPath = extraClasspath("%PSEP%").replaceAll("/", """\\""")
           val expandedClasspathM = if (packExpandedClasspath.value) {
-            Map("EXPANDED_CLASSPATH" -> expandedClasspath("%PSEP%").replaceAll("/", """\\"""))
+            Some(replaceProgHome(expandedClasspath("%PSEP%").replaceAll("/", """\\""")))
           }
           else {
-            Map()
+            None
           }
-          val propForWin: Map[String, Any] = (m + ("EXTRA_CLASSPATH" -> extraPath) ++ expandedClasspathM).map {case (k, v) => k -> replaceProgHome(v)}.toMap
-          val batScript = engine.layout(packBatTemplate.value, propForWin)
+          // TODO use custom templte (packBatTemplate)
+          val batScriptOpts = LaunchScript.Opts(
+            PROG_NAME = name,
+            PROG_VERSION = progVersion,
+            PROG_REVISION = gitRevision,
+            MAIN_CLASS = mainClass,
+            JVM_OPTS = replaceProgHome(scriptOpts.JVM_OPTS),
+            EXTRA_CLASSPATH = replaceProgHome(extraPath),
+            MAC_ICON_FILE = replaceProgHome(packMacIconFile.value)
+          )
+
+          val batScript = LaunchScript.generateBatScript(batScriptOpts, expandedClasspathM)
           write(s"bin/${progName}.bat", batScript)
         }
       }
@@ -327,14 +343,13 @@ object Pack
         "\t" + """ln -sf "../$(PROG)/current/bin/%s" "$(PREFIX)/bin/%s"""".format(name, name)
 
       // Create Makefile
+      // TODO Use custom template (packMakefileTemplate)
       val makefile = {
         val additionalScripts = binScriptsDir.flatMap(_.listFiles).map(_.getName)
         val symlink = (mainTable.keys ++ additionalScripts).map(linkToScript).mkString("\n")
-        val globalVar = Map("PROG_NAME" -> name.value, "PROG_SYMLINK" -> symlink)
-        engine.layout(packMakeTemplate.value, globalVar)
+        LaunchScript.generateMakefile(name.value, symlink)
       }
       write("Makefile", makefile)
-
 
       // Retrieve build time
       val systemZone = ZoneId.systemDefault().normalized()

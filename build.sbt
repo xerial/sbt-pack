@@ -1,6 +1,7 @@
 import ReleaseTransformations._
 
 scriptedSettings
+enablePlugins(SbtTwirl)
 
 organization := "org.xerial.sbt"
 organizationName := "Xerial project"
