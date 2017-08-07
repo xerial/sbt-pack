@@ -1,6 +1,6 @@
 import sbt._
 import sbt.Keys._
-import xerial.sbt.Pack._
+import xerial.sbt.PackPlugin._
 
 
 object Build extends sbt.Build {

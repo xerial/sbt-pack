@@ -18,7 +18,7 @@ crossSbtVersions := Vector("1.0.0-RC3", "0.13.16")
 
 parallelExecution := true
 crossPaths := false
-scalacOptions ++= Seq("-encoding", "UTF-8", "-deprecation", "-unchecked", "-target:jvm-1.6")
+scalacOptions ++= Seq("-encoding", "UTF-8", "-deprecation", "-unchecked")
 scriptedBufferLog := false
 scriptedLaunchOpts ++= {
    import scala.collection.JavaConverters._

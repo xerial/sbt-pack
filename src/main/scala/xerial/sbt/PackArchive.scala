@@ -11,7 +11,9 @@ import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream
 import org.apache.commons.compress.compressors.xz.XZCompressorOutputStream
 import org.apache.commons.compress.utils.IOUtils
 
+/*
 trait PackArchive {
+
   val packArchivePrefix = SettingKey[String]("prefix of (prefix)-(version).(format) archive file name")
   val packArchiveName = SettingKey[String]("archive file name. Default is (project-name)-(version)")
   val packArchiveStem = SettingKey[String]("directory name within the archive. Default is (archive-name)")
@@ -27,12 +29,14 @@ trait PackArchive {
   val packArchive = TaskKey[Seq[File]]("pack-archive", "create a tar.gz and a zip archive of the distributable package")
 
   private def createArchive(
+    targetDir: File,
+    distDir: File,
     archiveSuffix: String,
     createOutputStream: (OutputStream) => ArchiveOutputStream,
     createEntry: (File, String, File) => ArchiveEntry) = Def.task {
     val out = streams.value
-    val targetDir: File = Pack.packTargetDir.value
-    val distDir: File = Pack.pack.value // run pack command here
+    //val targetDir: File = packTargetDir.value
+    //val distDir: File = pack.value // run pack command here
     val binDir = distDir / "bin"
     val archiveStem = s"${packArchiveStem.value}"
     val archiveName = s"${packArchiveName.value}.${archiveSuffix}"
@@ -78,6 +82,7 @@ trait PackArchive {
     tos
   }
 
+
   lazy val packArchiveSettings = Seq[Def.Setting[_]](
     packArchivePrefix := name.value,
     packArchiveName := s"${packArchivePrefix.value}-${version.value}",
@@ -87,16 +92,16 @@ trait PackArchive {
     packArchiveTbzArtifact := Artifact(packArchivePrefix.value, "arch", "tar.bz2"),
     packArchiveTxzArtifact := Artifact(packArchivePrefix.value, "arch", "tar.xz"),
     packArchiveZipArtifact := Artifact(packArchivePrefix.value, "arch", "zip"),
-    packArchiveTgz := createArchive("tar.gz",
+    packArchiveTgz := createArchive(packTargetDir.value, pack.value, "tar.gz",
       (fos) => createTarArchiveOutputStream(new GzipCompressorOutputStream(fos)),
       createTarEntry).value,
-    packArchiveTbz := createArchive("tar.bz2",
+    packArchiveTbz := createArchive(packTargetDir.value, pack.value, "tar.bz2",
       (fos) => createTarArchiveOutputStream(new BZip2CompressorOutputStream(fos)),
       createTarEntry).value,
-    packArchiveTxz := createArchive("tar.xz",
+    packArchiveTxz := createArchive(packTargetDir.value, pack.value, "tar.xz",
       (fos) => createTarArchiveOutputStream(new XZCompressorOutputStream(fos)),
       createTarEntry).value,
-    packArchiveZip := createArchive("zip", new ZipArchiveOutputStream(_),
+    packArchiveZip := createArchive(packTargetDir.value, pack.value, "zip", new ZipArchiveOutputStream(_),
       (file, fileName, _) => new ZipArchiveEntry(file, fileName)).value,
     packArchive := Seq(
       packArchiveTgz.value,
@@ -121,3 +126,4 @@ trait PackArchive {
   def publishPackArchives: SettingsDefinition =
     publishPackArchiveTgz ++ publishPackArchiveZip
 }
+*/
