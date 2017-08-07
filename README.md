@@ -42,15 +42,11 @@ Repository URL: http://repo1.maven.org/maven2/org/xerial/sbt/
 
 **build.sbt**
 ```
-// Automatically find def main(args:Array[String]) methods from classpath
+// [Required] Enable plugin and automatically find def main(args:Array[String]) methods from the classpath
 enablePlugins(PackPlugin)
-```
 
-or 
-```
-// If you need to specify main classes manually, set packMain 
-
-// [Optional] Creating `hello` command that calls org.mydomain.Hello#main(Array[String]) 
+// [Optional] Specify main classes manually
+// This example creates `hello` command (target/pack/bin/hello) that calls org.mydomain.Hello#main(Array[String]) 
 packMain := Map("hello" -> "org.mydomain.Hello")
 ```
 
@@ -65,16 +61,18 @@ Alternatively, import `xerial.sbt.Pack.packSettings` instead of `xerial.sbt.Pack
 **build.sbt**
 
 ```scala
-
 name := "myprog"
 base := file(".")
     
 // [Optional] Specify mappings from program name -> Main class (full package path). If no value is set, it will find main classes automatically
 packMain := Map("hello" -> "myprog.Hello")
+
 // [Optional] JVM options of scripts (program name -> Seq(JVM option, ...))
 packJvmOpts := Map("hello" -> Seq("-Xmx512m"))
+
 // [Optional] Extra class paths to look when launching a program. You can use ${PROG_HOME} to specify the base directory
 packExtraClasspath := Map("hello" -> Seq("${PROG_HOME}/etc")) 
+
 // [Optional] (Generate .bat files for Windows. The default is true)
 packGenerateWindowsBatFile := true
 
@@ -94,7 +92,7 @@ packExpandedClasspath := false
 packResourceDir += (baseDirectory.value / "web" -> "web-content")
 
 
-// To publish tar.gz, zip archives to the repository, add the following lines
+// To publish tar.gz, zip archives to the repository, add the following lines:
 import xerial.sbt.pack.PackPlugin._
 publishPackArchive
 
