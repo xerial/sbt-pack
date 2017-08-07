@@ -11,7 +11,7 @@ lazy val root = (project in file(".")).settings(
       // custom settings here
     ): _*
 ).enablePlugins(PackPlugin)
- .dependsOn(module1, module2)
+ .aggregate(module1, module2, module3, module4)
 
 lazy val module1 = project.settings(
   commonSettings ++ Seq(
