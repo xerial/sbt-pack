@@ -8,6 +8,7 @@ A sbt plugin for creating distributable Scala packages that include dependent ja
 - `sbt pack` creates a distributable package in `target/pack` folder.
   - All dependent jars including scala-library.jar are collected in `target/pack/lib` folder. This process is much faster than creating a single-jar as in `sbt-assembly` or `proguard` plugins. 
   - Supporting multi-module projects.
+  - Useful for creating runnable [Docker](https://www.docker.com) images of Scala programs
 - `sbt pack-archive` generates `tar.gz` archive that is ready to distribute. 
   - The archive name is `target/{project name}-{version}.tar.gz`
 - `sbt pack` generates program launch scripts `target/pack/bin/{program name}`
@@ -183,6 +184,42 @@ in the source code. It contains several Scala project examples using sbt-pack.
 
 - scala-min: A minimal Scala project using sbt-pack: <https://github.com/xerial/scala-min>
  - A minimal project to start writing Scala programs. 
+
+
+## Building A Docker image file with sbt-pack
+
+Building a docker image of Scala application becomes easier with sbt-pack: 
+
+**build.sbt**
+```scala
+enablePlugins(PackPlugin)
+name := "myapp"
+packMain := Map("myapp"->"org.yourdomain.MyApp")
+```
+
+**Dockerfile**
+```
+# Using a Alpine Linux based JDK image
+FROM anapsix/alpine-java:8u131b11_jdk
+
+COPY target/pack /srv/myapp
+
+# Using a non-privileged user:
+USER nobody
+WORKDIR /srv/myapp
+
+ENTRYPOINT ["./bin/myapp"]
+```
+
+Then you can build a docker image of your project:
+```
+$ sbt pack
+$ docker build -t your_org/myapp:latest
+
+
+# Run your application with Docker
+$ docker run -it -rm your_org/myapp:latest (command line arg...)
+```
 
 	
 ### For developers
