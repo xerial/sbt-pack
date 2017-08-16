@@ -208,7 +208,7 @@ COPY target/pack /srv/myapp
 USER nobody
 WORKDIR /srv/myapp
 
-ENTRYPOINT ["./bin/myapp"]
+ENTRYPOINT ["sh", "./bin/myapp"]
 ```
 
 Then you can build a docker image of your project:
@@ -218,7 +218,7 @@ $ docker build -t your_org/myapp:latest .
 
 
 # Run your application with Docker
-$ docker run -it -rm your_org/myapp:latest (command line arg...)
+$ docker run -it --rm your_org/myapp:latest (command line arg...)
 ```
 
 	
