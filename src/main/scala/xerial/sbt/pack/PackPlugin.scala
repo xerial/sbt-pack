@@ -63,6 +63,7 @@ object PackPlugin extends AutoPlugin with PackArchive {
     val packExcludeArtifactTypes   = settingKey[Seq[String]]("specify artifact types (e.g. javadoc) to exclude when packaging")
     val packLibJars                = TaskKey[Seq[(File, ProjectRef)]]("pack-lib-jars")
     val packGenerateWindowsBatFile = settingKey[Boolean]("Generate BAT file launch scripts for Windows")
+    val packGenerateMakefile       = settingKey[Boolean]("Generate Makefile")
 
     val packMacIconFile                      = SettingKey[String]("pack-mac-icon-file", "icon file name for Mac")
     val packResourceDir                      = SettingKey[Map[File, String]](s"pack-resource-dir", "pack resource directory. default = Map({projectRoot}/src/pack -> \"\")")
@@ -128,6 +129,7 @@ object PackPlugin extends AutoPlugin with PackArchive {
     packJarNameConvention := "default",
     packDuplicateJarStrategy := "latest",
     packGenerateWindowsBatFile := true,
+    packGenerateMakefile := true,
     packMainDiscovered := Def.taskDyn {
       val mainClasses = getFromSelectedProjects(discoveredMainClasses in Compile, state.value, packExclude.value)
       Def.task {mainClasses.value.flatMap(_._1.map(mainClass => hyphenize(mainClass.split('.').last) -> mainClass).toMap).toMap}
@@ -355,14 +357,17 @@ object PackPlugin extends AutoPlugin with PackArchive {
       def linkToScript(name: String) =
         "\t" + """ln -sf "../$(PROG)/current/bin/%s" "$(PREFIX)/bin/%s"""".format(name, name)
 
-      // Create Makefile
-      // TODO Use custom template (packMakefileTemplate)
-      val makefile = {
-        val additionalScripts = binScriptsDir.flatMap(_.listFiles).map(_.getName)
-        val symlink = (mainTable.keys ++ additionalScripts).map(linkToScript).mkString("\n")
-        LaunchScript.generateMakefile(name.value, symlink)
+      val projectName = name.value
+      if (packGenerateMakefile.value) {
+        // Create Makefile
+        // TODO Use custom template (packMakefileTemplate)
+        val makefile = {
+          val additionalScripts = binScriptsDir.flatMap(_.listFiles).map(_.getName)
+          val symlink = (mainTable.keys ++ additionalScripts).map(linkToScript).mkString("\n")
+          LaunchScript.generateMakefile(projectName, symlink)
+        }
+        write("Makefile", makefile)
       }
-      write("Makefile", makefile)
 
       // Retrieve build time
       val systemZone = ZoneId.systemDefault().normalized()
