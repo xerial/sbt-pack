@@ -1,5 +1,8 @@
 ### Release Notes
 
+- 0.9.1
+ - Add `packGenerateMakefile := true/false (default = true)` option when you don't need to generate Makefile
+
 - 0.9.0
   - Add sbt-1.0 support
   - `enablePlugins(PackPlugin)` is required
