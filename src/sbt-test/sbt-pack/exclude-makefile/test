@@ -1,0 +1,6 @@
+> 'set version := "0.1"'
+> pack
+$ absent target/pack/Makefile
+$ absent target/pack/lib/scala-library-2.10.5.jar
+$ absent target/pack/lib/scala-reflect-2.10.5.jar
+$ exists target/pack/lib/exclude-makefile-0.1.jar
