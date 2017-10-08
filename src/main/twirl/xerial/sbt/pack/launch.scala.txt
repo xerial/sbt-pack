@@ -133,6 +133,14 @@ PROG_NAME=@(opts.PROG_NAME)
 PROG_VERSION=@(opts.PROG_VERSION)
 PROG_REVISION=@(opts.PROG_REVISION)
 
+for arg do
+  shift
+  case $arg in
+    -D*) JAVA_OPTS="$JAVA_OPTS $arg" ;;
+      *) set -- "$@@" "$arg" ;;
+  esac
+done
+
 eval exec "\"$JAVACMD\"" \
      @(opts.JVM_OPTS) \
      ${JAVA_OPTS} \
