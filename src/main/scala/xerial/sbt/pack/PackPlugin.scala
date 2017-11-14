@@ -319,6 +319,7 @@ object PackPlugin extends AutoPlugin with PackArchive {
 
         // TODO use custom template (packBashTemplate)
         val launchScript = LaunchScript.generateLaunchScript(scriptOpts, expandedClasspathM)
+          .replace("\n#!/bin/sh", "#!/bin/sh")
         val progName = name.replaceAll(" ", "") // remove white spaces
         write(s"bin/$progName", launchScript)
 
