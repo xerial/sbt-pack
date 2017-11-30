@@ -63,6 +63,9 @@ Alternatively, import `xerial.sbt.Pack.packSettings` instead of `xerial.sbt.Pack
 **build.sbt**
 
 ```scala
+// [Required] Enable plugin and automatically find def main(args:Array[String]) methods from the classpath
+enablePlugins(PackPlugin)
+
 name := "myprog"
 base := file(".")
     
