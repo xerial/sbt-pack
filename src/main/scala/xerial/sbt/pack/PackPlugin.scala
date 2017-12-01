@@ -55,27 +55,27 @@ object PackPlugin extends AutoPlugin with PackArchive {
     //val packBatTemplate  = settingKey[String]("template file for bash scripts - defaults to pack's out-of-the-box template for bat")
     //val packMakeTemplate = settingKey[String]("template file for bash scripts - defaults to pack's out-of-the-box template for make")
 
-    val packMain                   = TaskKey[Map[String, String]]("prog_name -> main class table")
-    val packMainDiscovered         = TaskKey[Map[String, String]]("discovered prog_name -> main class table")
-    val packExclude                = SettingKey[Seq[String]]("pack-exclude", "specify projects whose dependencies will be excluded when packaging")
-    val packExcludeLibJars         = SettingKey[Seq[String]]("pack-exclude", "specify projects to exclude when packaging.  Its dependencies will be processed")
-    val packExcludeJars            = SettingKey[Seq[String]]("pack-exclude-jars", "specify jar file name patterns to exclude when packaging")
+    val packMain                   = taskKey[Map[String, String]]("prog_name -> main class table")
+    val packMainDiscovered         = taskKey[Map[String, String]]("discovered prog_name -> main class table")
+    val packExclude                = settingKey[Seq[String]]("specify projects whose dependencies will be excluded when packaging")
+    val packExcludeLibJars         = settingKey[Seq[String]]("specify projects to exclude when packaging.  Its dependencies will be processed")
+    val packExcludeJars            = settingKey[Seq[String]]("specify jar file name patterns to exclude when packaging")
     val packExcludeArtifactTypes   = settingKey[Seq[String]]("specify artifact types (e.g. javadoc) to exclude when packaging")
-    val packLibJars                = TaskKey[Seq[(File, ProjectRef)]]("pack-lib-jars")
+    val packLibJars                = taskKey[Seq[(File, ProjectRef)]]("pack-lib-jars")
     val packGenerateWindowsBatFile = settingKey[Boolean]("Generate BAT file launch scripts for Windows")
     val packGenerateMakefile       = settingKey[Boolean]("Generate Makefile")
 
-    val packMacIconFile                      = SettingKey[String]("pack-mac-icon-file", "icon file name for Mac")
-    val packResourceDir                      = SettingKey[Map[File, String]](s"pack-resource-dir", "pack resource directory. default = Map({projectRoot}/src/pack -> \"\")")
+    val packMacIconFile                      = settingKey[String]("icon file name for Mac")
+    val packResourceDir                      = settingKey[Map[File, String]]("pack resource directory. default = Map({projectRoot}/src/pack -> \"\")")
     val packAllUnmanagedJars                 = taskKey[Seq[(Classpath, ProjectRef)]]("all unmanaged jar files")
     val packModuleEntries                    = taskKey[Seq[ModuleEntry]]("modules that will be packed")
-    val packJvmOpts                          = SettingKey[Map[String, Seq[String]]]("pack-jvm-opts")
-    val packExtraClasspath                   = SettingKey[Map[String, Seq[String]]]("pack-extra-classpath")
+    val packJvmOpts                          = settingKey[Map[String, Seq[String]]]("pack-jvm-opts")
+    val packExtraClasspath                   = settingKey[Map[String, Seq[String]]]("pack-extra-classpath")
     val packExpandedClasspath                = settingKey[Boolean]("Expands the wildcard classpath in launch scripts to point at specific libraries")
-    val packJarNameConvention                = SettingKey[String]("pack-jarname-convention",
-      "default: (artifact name)-(version).jar; original: original JAR name; full: (organization).(artifact name)-(version).jar; no-version: (organization).(artifact name).jar")
-    val packDuplicateJarStrategy             = SettingKey[String]("deal with duplicate jars. default to use latest version",
-      "latest: use the jar with a higher version; exit: exit the task with error")
+    val packJarNameConvention                = settingKey[String]("default: (artifact name)-(version).jar; original: original JAR name; full: (organization).(artifact name)-(version).jar; no-version: (organization).(artifact name).jar")
+    val packDuplicateJarStrategy             = settingKey[String](
+      """deal with duplicate jars. default to use latest version
+        |latest: use the jar with a higher version; exit: exit the task with error""".stripMargin)
     val packCopyDependenciesTarget           = settingKey[File]("target folder used by the <packCopyDependencies> task.")
     val packCopyDependencies                 = taskKey[Unit](
       """just copies the dependencies to the <packCopyDependencies> folder.
@@ -86,19 +86,19 @@ object PackPlugin extends AutoPlugin with PackArchive {
         		|The use of symbolic links allows faster processing and save disk space.
       	  """.stripMargin)
 
-    val packArchivePrefix      = SettingKey[String]("prefix of (prefix)-(version).(format) archive file name")
-    val packArchiveName        = SettingKey[String]("archive file name. Default is (project-name)-(version)")
-    val packArchiveStem        = SettingKey[String]("directory name within the archive. Default is (archive-name)")
-    val packArchiveExcludes    = SettingKey[Seq[String]]("List of excluding files from the archive")
-    val packArchiveTgzArtifact = SettingKey[Artifact]("tar.gz archive artifact")
-    val packArchiveTbzArtifact = SettingKey[Artifact]("tar.bz2 archive artifact")
-    val packArchiveTxzArtifact = SettingKey[Artifact]("tar.xz archive artifact")
-    val packArchiveZipArtifact = SettingKey[Artifact]("zip archive artifact")
-    val packArchiveTgz         = TaskKey[File]("pack-archive-tgz", "create a tar.gz archive of the distributable package")
-    val packArchiveTbz         = TaskKey[File]("pack-archive-tbz", "create a tar.bz2 archive of the distributable package")
-    val packArchiveTxz         = TaskKey[File]("pack-archive-txz", "create a tar.xz archive of the distributable package")
-    val packArchiveZip         = TaskKey[File]("pack-archive-zip", "create a zip archive of the distributable package")
-    val packArchive            = TaskKey[Seq[File]]("pack-archive", "create a tar.gz and a zip archive of the distributable package")
+    val packArchivePrefix      = settingKey[String]("prefix of (prefix)-(version).(format) archive file name")
+    val packArchiveName        = settingKey[String]("archive file name. Default is (project-name)-(version)")
+    val packArchiveStem        = settingKey[String]("directory name within the archive. Default is (archive-name)")
+    val packArchiveExcludes    = settingKey[Seq[String]]("List of excluding files from the archive")
+    val packArchiveTgzArtifact = settingKey[Artifact]("tar.gz archive artifact")
+    val packArchiveTbzArtifact = settingKey[Artifact]("tar.bz2 archive artifact")
+    val packArchiveTxzArtifact = settingKey[Artifact]("tar.xz archive artifact")
+    val packArchiveZipArtifact = settingKey[Artifact]("zip archive artifact")
+    val packArchiveTgz         = taskKey[File]("create a tar.gz archive of the distributable package")
+    val packArchiveTbz         = taskKey[File]("create a tar.bz2 archive of the distributable package")
+    val packArchiveTxz         = taskKey[File]("create a tar.xz archive of the distributable package")
+    val packArchiveZip         = taskKey[File]("create a zip archive of the distributable package")
+    val packArchive            = taskKey[Seq[File]]("create a tar.gz and a zip archive of the distributable package")
   }
 
   import complete.DefaultParsers._
@@ -407,7 +407,7 @@ object PackPlugin extends AutoPlugin with PackArchive {
     }
   )
 
-  //private def getFromAllProjects[T](targetTask: TaskKey[T])(currentProject: ProjectRef, structure: BuildStructure): Task[Seq[(T, ProjectRef)]] =
+  //private def getFromAllProjects[T](targetTask: taskKey[T])(currentProject: ProjectRef, structure: BuildStructure): Task[Seq[(T, ProjectRef)]] =
   private def getFromAllProjects[T](targetTask: TaskKey[T], state: State): Task[Seq[(T, ProjectRef)]] =
     getFromSelectedProjects(targetTask, state, Seq.empty)
 
