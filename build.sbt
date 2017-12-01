@@ -15,6 +15,8 @@ pomIncludeRepository := { _ => false }
 sbtPlugin := true
 crossSbtVersions := Vector("1.0.4", "0.13.16")
 
+scalaVersion in ThisBuild := "2.12.4"
+
 parallelExecution := true
 crossPaths := false
 scalacOptions ++= Seq("-encoding", "UTF-8", "-deprecation", "-unchecked")
