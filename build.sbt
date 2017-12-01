@@ -14,7 +14,7 @@ publishArtifact in Test := false
 pomIncludeRepository := { _ => false }
 
 sbtPlugin := true
-crossSbtVersions := Vector("1.1.0-RC1", "1.0.4", "0.13.16")
+crossSbtVersions := Vector("1.0.4", "0.13.16")
 
 parallelExecution := true
 crossPaths := false
