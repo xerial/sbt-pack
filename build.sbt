@@ -1,6 +1,5 @@
 import ReleaseTransformations._
 
-scriptedSettings
 enablePlugins(SbtTwirl)
 
 organization := "org.xerial.sbt"
@@ -63,8 +62,8 @@ val bumpVersion = ReleaseStep(
      val extracted = Project extract state
       state.log.info("Bump plugin version in scripted tests")
       val command =
-        Process("./bin/bump-version.sh") #&&
-          Process("git add src/sbt-test")
+        sys.process.Process("./bin/bump-version.sh") #&&
+          sys.process.Process("git add src/sbt-test")
       val ret = command.!
       ret match {
         case 0 => state
