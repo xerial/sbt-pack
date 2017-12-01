@@ -7,7 +7,7 @@ import sbt._
 package object pack {
   implicit class ArchiveFile(f: File) {
     def toList: List[String] = Option(f.getParentFile) match {
-      case None => f.getName :: Nil
+      case None    => f.getName :: Nil
       case Some(p) => p.toList :+ f.getName
     }
 

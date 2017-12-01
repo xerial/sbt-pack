@@ -28,21 +28,16 @@ object PackPlugin extends AutoPlugin with PackArchive {
 
   override def trigger = allRequirements
 
-  case class ModuleEntry(org: String,
-    name: String,
-    revision: VersionString,
-    artifactName: String,
-    classifier: Option[String],
-    file: File) {
+  case class ModuleEntry(org: String, name: String, revision: VersionString, artifactName: String, classifier: Option[String], file: File) {
     private def classifierSuffix = classifier.map("-" + _).getOrElse("")
 
-    override def toString = "%s:%s:%s%s".format(org, artifactName, revision, classifierSuffix)
-    def originalFileName = file.getName
-    def jarName = "%s-%s%s.jar".format(artifactName, revision, classifierSuffix)
-    def fullJarName = "%s.%s-%s%s.jar".format(org, artifactName, revision, classifierSuffix)
-    def noVersionJarName = "%s.%s%s.jar".format(org, artifactName, classifierSuffix)
+    override def toString   = "%s:%s:%s%s".format(org, artifactName, revision, classifierSuffix)
+    def originalFileName    = file.getName
+    def jarName             = "%s-%s%s.jar".format(artifactName, revision, classifierSuffix)
+    def fullJarName         = "%s.%s-%s%s.jar".format(org, artifactName, revision, classifierSuffix)
+    def noVersionJarName    = "%s.%s%s.jar".format(org, artifactName, classifierSuffix)
     def noVersionModuleName = "%s.%s%s.jar".format(org, name, classifierSuffix)
-    def toDependencyStr = s""""${org}" % "${name}" % "${revision}""""
+    def toDependencyStr     = s""""${org}" % "${name}" % "${revision}""""
   }
 
   object autoImport {
@@ -65,24 +60,22 @@ object PackPlugin extends AutoPlugin with PackArchive {
     val packGenerateWindowsBatFile = settingKey[Boolean]("Generate BAT file launch scripts for Windows")
     val packGenerateMakefile       = settingKey[Boolean]("Generate Makefile")
 
-    val packMacIconFile                      = settingKey[String]("icon file name for Mac")
-    val packResourceDir                      = settingKey[Map[File, String]]("pack resource directory. default = Map({projectRoot}/src/pack -> \"\")")
-    val packAllUnmanagedJars                 = taskKey[Seq[(Classpath, ProjectRef)]]("all unmanaged jar files")
-    val packModuleEntries                    = taskKey[Seq[ModuleEntry]]("modules that will be packed")
-    val packJvmOpts                          = settingKey[Map[String, Seq[String]]]("pack-jvm-opts")
-    val packExtraClasspath                   = settingKey[Map[String, Seq[String]]]("pack-extra-classpath")
-    val packExpandedClasspath                = settingKey[Boolean]("Expands the wildcard classpath in launch scripts to point at specific libraries")
-    val packJarNameConvention                = settingKey[String]("default: (artifact name)-(version).jar; original: original JAR name; full: (organization).(artifact name)-(version).jar; no-version: (organization).(artifact name).jar")
-    val packDuplicateJarStrategy             = settingKey[String](
-      """deal with duplicate jars. default to use latest version
+    val packMacIconFile       = settingKey[String]("icon file name for Mac")
+    val packResourceDir       = settingKey[Map[File, String]]("pack resource directory. default = Map({projectRoot}/src/pack -> \"\")")
+    val packAllUnmanagedJars  = taskKey[Seq[(Classpath, ProjectRef)]]("all unmanaged jar files")
+    val packModuleEntries     = taskKey[Seq[ModuleEntry]]("modules that will be packed")
+    val packJvmOpts           = settingKey[Map[String, Seq[String]]]("pack-jvm-opts")
+    val packExtraClasspath    = settingKey[Map[String, Seq[String]]]("pack-extra-classpath")
+    val packExpandedClasspath = settingKey[Boolean]("Expands the wildcard classpath in launch scripts to point at specific libraries")
+    val packJarNameConvention = settingKey[String](
+      "default: (artifact name)-(version).jar; original: original JAR name; full: (organization).(artifact name)-(version).jar; no-version: (organization).(artifact name).jar")
+    val packDuplicateJarStrategy             = settingKey[String]("""deal with duplicate jars. default to use latest version
         |latest: use the jar with a higher version; exit: exit the task with error""".stripMargin)
     val packCopyDependenciesTarget           = settingKey[File]("target folder used by the <packCopyDependencies> task.")
-    val packCopyDependencies                 = taskKey[Unit](
-      """just copies the dependencies to the <packCopyDependencies> folder.
+    val packCopyDependencies                 = taskKey[Unit]("""just copies the dependencies to the <packCopyDependencies> folder.
         		|Compared to the <pack> task, it doesn't try to create scripts.
       	  """.stripMargin)
-    val packCopyDependenciesUseSymbolicLinks = taskKey[Boolean](
-      """use symbolic links instead of copying for <packCopyDependencies>.
+    val packCopyDependenciesUseSymbolicLinks = taskKey[Boolean]("""use symbolic links instead of copying for <packCopyDependencies>.
         		|The use of symbolic links allows faster processing and save disk space.
       	  """.stripMargin)
 
@@ -132,19 +125,19 @@ object PackPlugin extends AutoPlugin with PackArchive {
     packGenerateMakefile := true,
     packMainDiscovered := Def.taskDyn {
       val mainClasses = getFromSelectedProjects(discoveredMainClasses in Compile, state.value, packExclude.value)
-      Def.task {mainClasses.value.flatMap(_._1.map(mainClass => hyphenize(mainClass.split('.').last) -> mainClass).toMap).toMap}
+      Def.task { mainClasses.value.flatMap(_._1.map(mainClass => hyphenize(mainClass.split('.').last) -> mainClass).toMap).toMap }
     }.value,
     packAllUnmanagedJars := Def.taskDyn {
       val allUnmanagedJars = getFromSelectedProjects(unmanagedJars in Runtime, state.value, packExclude.value)
-      Def.task {allUnmanagedJars.value}
+      Def.task { allUnmanagedJars.value }
     }.value,
     packLibJars := Def.taskDyn {
       val libJars = getFromSelectedProjects(packageBin in Runtime, state.value, packExcludeLibJars.value)
-      Def.task {libJars.value}
+      Def.task { libJars.value }
     }.value,
     (mappings in pack) := Seq.empty,
     packModuleEntries := {
-      val out = streams.value
+      val out                          = streams.value
       val jarExcludeFilter: Seq[Regex] = packExcludeJars.value.map(_.r)
       def isExcludeJar(name: String): Boolean = {
         val toExclude = jarExcludeFilter.exists(pattern => pattern.findFirstIn(name).isDefined)
@@ -158,8 +151,8 @@ object PackPlugin extends AutoPlugin with PackArchive {
 
       val dependentJars =
         for {
-          c <- update.value.filter(df).configurations
-          m <- c.modules if !m.evicted
+          c                <- update.value.filter(df).configurations
+          m                <- c.modules if !m.evicted
           (artifact, file) <- m.artifacts
           if !packExcludeArtifactTypes.value.contains(artifact.`type`) && !isExcludeJar(file.name)
         } yield {
@@ -169,22 +162,22 @@ object PackPlugin extends AutoPlugin with PackArchive {
 
       implicit val versionStringOrdering = DefaultVersionStringOrdering
       val distinctDpJars = dependentJars
-                           .groupBy(_.noVersionModuleName)
-                           .flatMap {
-                             case (key, entries) if entries.groupBy(_.revision).size == 1 => entries
-                             case (key, entries) =>
-                               val revisions = entries.groupBy(_.revision).map(_._1).toList.sorted
-                               val latestRevision = revisions.last
-                               packDuplicateJarStrategy.value match {
-                                 case "latest" =>
-                                   out.log.debug(s"Version conflict on $key. Using ${latestRevision} (found ${revisions.mkString(", ")})")
-                                   entries.filter(_.revision == latestRevision)
-                                 case "exit" =>
-                                   sys.error(s"Version conflict on $key (found ${revisions.mkString(", ")})")
-                                 case x =>
-                                   sys.error("Unknown duplicate JAR strategy '%s'".format(x))
-                               }
-                           }
+        .groupBy(_.noVersionModuleName)
+        .flatMap {
+          case (key, entries) if entries.groupBy(_.revision).size == 1 => entries
+          case (key, entries) =>
+            val revisions      = entries.groupBy(_.revision).map(_._1).toList.sorted
+            val latestRevision = revisions.last
+            packDuplicateJarStrategy.value match {
+              case "latest" =>
+                out.log.debug(s"Version conflict on $key. Using ${latestRevision} (found ${revisions.mkString(", ")})")
+                entries.filter(_.revision == latestRevision)
+              case "exit" =>
+                sys.error(s"Version conflict on $key (found ${revisions.mkString(", ")})")
+              case x =>
+                sys.error("Unknown duplicate JAR strategy '%s'".format(x))
+            }
+        }
       distinctDpJars.toSeq
     },
     packCopyDependenciesUseSymbolicLinks := true,
@@ -192,20 +185,19 @@ object PackPlugin extends AutoPlugin with PackArchive {
     packCopyDependencies := {
       val log = streams.value.log
 
-      val distinctDpJars = packModuleEntries.value.map(_.file)
-      val unmanaged = packAllUnmanagedJars.value.flatMap {_._1}.map {_.data}
+      val distinctDpJars   = packModuleEntries.value.map(_.file)
+      val unmanaged        = packAllUnmanagedJars.value.flatMap { _._1 }.map { _.data }
       val copyDepTargetDir = packCopyDependenciesTarget.value
-      val useSymlink = packCopyDependenciesUseSymbolicLinks.value
+      val useSymlink       = packCopyDependenciesUseSymbolicLinks.value
 
       copyDepTargetDir.mkdirs()
       IO.delete((copyDepTargetDir * "*.jar").get)
-      (distinctDpJars ++ unmanaged) foreach {d ⇒
+      (distinctDpJars ++ unmanaged) foreach { d ⇒
         log debug s"Copying ${d.getName}"
         val dest = copyDepTargetDir / d.getName
         if (useSymlink) {
           Files.createSymbolicLink(dest.toPath, d.toPath)
-        }
-        else {
+        } else {
           IO.copyFile(d, dest)
         }
       }
@@ -286,7 +278,7 @@ object PackPlugin extends AutoPlugin with PackArchive {
       }.getOrElse("unknown").trim
 
       val pathSeparator = "${PSEP}"
-      val expandedCp = packExpandedClasspath.value
+      val expandedCp    = packExpandedClasspath.value
 
       // Render script via Scalate template
       for ((name, mainClass) <- mainTable) {
@@ -294,7 +286,7 @@ object PackPlugin extends AutoPlugin with PackArchive {
         def extraClasspath(sep: String): String = packExtraClasspath.value.get(name).map(_.mkString("", sep, sep)).getOrElse("")
         def expandedClasspath(sep: String): String = {
           val projJars = libs.map(l => "${PROG_HOME}/lib/" + l.getName)
-          val depJars = distinctDpJars.map(m => "${PROG_HOME}/lib/" + resolveJarName(m, jarNameConvention))
+          val depJars  = distinctDpJars.map(m => "${PROG_HOME}/lib/" + resolveJarName(m, jarNameConvention))
           val unmanagedJars = for ((m, projectRef) <- packAllUnmanagedJars.value; um <- m; f = um.data) yield {
             "${PROG_HOME}/lib/" + f.getName
           }
@@ -302,8 +294,7 @@ object PackPlugin extends AutoPlugin with PackArchive {
         }
         val expandedClasspathM = if (expandedCp) {
           Some(expandedClasspath(pathSeparator))
-        }
-        else {
+        } else {
           None
         }
 
@@ -318,20 +309,20 @@ object PackPlugin extends AutoPlugin with PackArchive {
         )
 
         // TODO use custom template (packBashTemplate)
-        val launchScript = LaunchScript.generateLaunchScript(scriptOpts, expandedClasspathM)
+        val launchScript = LaunchScript
+          .generateLaunchScript(scriptOpts, expandedClasspathM)
           .replace("\n#!/bin/sh", "#!/bin/sh")
         val progName = name.replaceAll(" ", "") // remove white spaces
         write(s"bin/$progName", launchScript)
 
         // Create BAT file
         if (packGenerateWindowsBatFile.value) {
-          def replaceProgHome(s: String) = s.replaceAll( """\$\{PROG_HOME\}""", "%PROG_HOME%")
+          def replaceProgHome(s: String) = s.replaceAll("""\$\{PROG_HOME\}""", "%PROG_HOME%")
 
           val extraPath = extraClasspath("%PSEP%").replaceAll("/", """\\""")
           val expandedClasspathM = if (expandedCp) {
             Some(replaceProgHome(expandedClasspath("%PSEP%").replaceAll("/", """\\""")))
-          }
-          else {
+          } else {
             None
           }
           // TODO use custom templte (packBatTemplate)
@@ -352,7 +343,7 @@ object PackPlugin extends AutoPlugin with PackArchive {
 
       // Copy resources
       val otherResourceDirs = packResourceDir.value
-      val binScriptsDir = otherResourceDirs.map(_._1 / "bin").filter(_.exists)
+      val binScriptsDir     = otherResourceDirs.map(_._1 / "bin").filter(_.exists)
       out.log.info(s"packed resource directories = ${otherResourceDirs.map(_._1).mkString(",")}")
 
       def linkToScript(name: String) =
@@ -364,7 +355,7 @@ object PackPlugin extends AutoPlugin with PackArchive {
         // TODO Use custom template (packMakefileTemplate)
         val makefile = {
           val additionalScripts = binScriptsDir.flatMap(_.listFiles).map(_.getName)
-          val symlink = (mainTable.keys ++ additionalScripts).map(linkToScript).mkString("\n")
+          val symlink           = (mainTable.keys ++ additionalScripts).map(linkToScript).mkString("\n")
           LaunchScript.generateMakefile(projectName, symlink)
         }
         write("Makefile", makefile)
@@ -372,18 +363,18 @@ object PackPlugin extends AutoPlugin with PackArchive {
 
       // Retrieve build time
       val systemZone = ZoneId.systemDefault().normalized()
-      val timestamp = ZonedDateTime.ofInstant(Instant.ofEpochMilli(new Date().getTime), systemZone)
-      val buildTime = humanReadableTimestampFormatter.format(timestamp)
+      val timestamp  = ZonedDateTime.ofInstant(Instant.ofEpochMilli(new Date().getTime), systemZone)
+      val buildTime  = humanReadableTimestampFormatter.format(timestamp)
 
       // Output the version number and Git revision
       write("VERSION", s"version:=${progVersion}\nrevision:=${gitRevision}\nbuildTime:=${buildTime}\n")
 
       // Copy other scripts
-      otherResourceDirs.foreach {otherResourceDir =>
+      otherResourceDirs.foreach { otherResourceDir =>
         val from = otherResourceDir._1
         val to = otherResourceDir._2 match {
           case "" => distDir
-          case p => distDir / p
+          case p  => distDir / p
         }
         IO.copyDirectory(from, to, overwrite = true, preserveLastModified = true)
       }
@@ -396,7 +387,7 @@ object PackPlugin extends AutoPlugin with PackArchive {
     },
     packInstall := {
       val arg: Option[String] = targetFolderParser.parsed
-      val packDir = pack.value
+      val packDir             = pack.value
       val cmd = arg match {
         case Some(target) =>
           s"make install PREFIX=${target}"
@@ -423,38 +414,35 @@ object PackPlugin extends AutoPlugin with PackArchive {
       (currentProject +: (children flatMap (allProjectRefs(_)))) filterNot (isExcluded)
     }
     val projects: Seq[ProjectRef] = allProjectRefs(extracted.currentRef).distinct
-    projects.map(p => (Def.task {((targetTask in p).value, p)}) evaluate structure.data).join
+    projects.map(p => (Def.task { ((targetTask in p).value, p) }) evaluate structure.data).join
   }
 
   private val humanReadableTimestampFormatter = new DateTimeFormatterBuilder()
-                                                .parseCaseInsensitive()
-                                                .appendValue(YEAR, 4, 10, SignStyle.EXCEEDS_PAD)
-                                                .appendLiteral('-')
-                                                .appendValue(MONTH_OF_YEAR, 2)
-                                                .appendLiteral('-')
-                                                .appendValue(DAY_OF_MONTH, 2)
-                                                .appendLiteral(' ')
-                                                .appendValue(HOUR_OF_DAY, 2)
-                                                .appendLiteral(':')
-                                                .appendValue(MINUTE_OF_HOUR, 2)
-                                                .appendLiteral(':')
-                                                .appendValue(SECOND_OF_MINUTE, 2)
-                                                .appendOffset("+HHMM", "Z")
-                                                .toFormatter(Locale.US)
+    .parseCaseInsensitive()
+    .appendValue(YEAR, 4, 10, SignStyle.EXCEEDS_PAD)
+    .appendLiteral('-')
+    .appendValue(MONTH_OF_YEAR, 2)
+    .appendLiteral('-')
+    .appendValue(DAY_OF_MONTH, 2)
+    .appendLiteral(' ')
+    .appendValue(HOUR_OF_DAY, 2)
+    .appendLiteral(':')
+    .appendValue(MINUTE_OF_HOUR, 2)
+    .appendLiteral(':')
+    .appendValue(SECOND_OF_MINUTE, 2)
+    .appendOffset("+HHMM", "Z")
+    .toFormatter(Locale.US)
 
   private def pascalCaseSplit(s: List[Char]): List[String] =
     if (s.isEmpty) {
       Nil
-    }
-    else if (!s.head.isUpper) {
+    } else if (!s.head.isUpper) {
       val (w, tail) = s.span(!_.isUpper)
       w.mkString :: pascalCaseSplit(tail)
-    }
-    else if (s.tail.headOption.forall(!_.isUpper)) {
+    } else if (s.tail.headOption.forall(!_.isUpper)) {
       val (w, tail) = s.tail.span(!_.isUpper)
       (s.head :: w).mkString :: pascalCaseSplit(tail)
-    }
-    else {
+    } else {
       val (w, tail) = s.span(_.isUpper)
       w.init.mkString :: pascalCaseSplit(w.last :: tail)
     }
@@ -464,10 +452,10 @@ object PackPlugin extends AutoPlugin with PackArchive {
 
   private def resolveJarName(m: ModuleEntry, convention: String) = {
     convention match {
-      case "original" => m.originalFileName
-      case "full" => m.fullJarName
+      case "original"   => m.originalFileName
+      case "full"       => m.fullJarName
       case "no-version" => m.noVersionJarName
-      case _ => m.jarName
+      case _            => m.jarName
     }
   }
 
