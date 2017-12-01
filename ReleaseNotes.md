@@ -1,7 +1,10 @@
 ### Release Notes
 
+- 0.9.2
+  - Fixes [#119](https://github.com/xerial/sbt-pack/issues/119) for docker compatibility
+  - Allow setting jvm options [#118](https://github.com/xerial/sbt-pack/issues/118)
 - 0.9.1
- - Add `packGenerateMakefile := true/false (default = true)` option when you don't need to generate Makefile
+  - Add `packGenerateMakefile := true/false (default = true)` option when you don't need to generate Makefile
 
 - 0.9.0
   - Add sbt-1.0 support
