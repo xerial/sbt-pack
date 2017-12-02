@@ -1,8 +1,7 @@
-addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "2.0")
-addSbtPlugin("com.jsuereth" % "sbt-pgp" % "1.1.0")
-addSbtPlugin("com.github.gseitz" % "sbt-release" % "1.0.6")
-//addSbtPlugin("com.mojolly.scalate" % "xsbt-scalate-generator" % "0.5.0")
-addSbtPlugin("com.typesafe.sbt" % "sbt-twirl" % "1.3.2")
-addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "0.8.2")
+addSbtPlugin("org.xerial.sbt"    % "sbt-sonatype" % "2.0")
+addSbtPlugin("com.jsuereth"      % "sbt-pgp"      % "1.1.0")
+addSbtPlugin("com.github.gseitz" % "sbt-release"  % "1.0.6")
+addSbtPlugin("com.typesafe.sbt"  % "sbt-twirl"    % "1.3.13")
+addSbtPlugin("com.geirsson"      % "sbt-scalafmt" % "1.3.0")
 
-libraryDependencies += "org.scala-sbt" % "scripted-plugin" % sbtVersion.value
+libraryDependencies += "org.scala-sbt" %% "scripted-plugin" % sbtVersion.value

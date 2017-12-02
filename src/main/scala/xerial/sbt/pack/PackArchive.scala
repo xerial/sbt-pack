@@ -16,38 +16,36 @@ trait PackArchive {
 
   import PackPlugin.autoImport._
 
-  private def createArchive(archiveSuffix: String,
-    createOutputStream: (OutputStream) => ArchiveOutputStream,
-    createEntry: (File, String, File) => ArchiveEntry) = Def.task {
-    val out = streams.value
+  private def createArchive(archiveSuffix: String, createOutputStream: (OutputStream) => ArchiveOutputStream, createEntry: (File, String, File) => ArchiveEntry) = Def.task {
+    val out             = streams.value
     val targetDir: File = packTargetDir.value
-    val distDir: File = pack.value // run pack command here
-    val binDir = distDir / "bin"
-    val archiveStem = s"${packArchiveStem.value}"
-    val archiveName = s"${packArchiveName.value}.${archiveSuffix}"
+    val distDir: File   = pack.value // run pack command here
+    val binDir          = distDir / "bin"
+    val archiveStem     = s"${packArchiveStem.value}"
+    val archiveName     = s"${packArchiveName.value}.${archiveSuffix}"
     out.log.info("Generating " + rpath(baseDirectory.value, targetDir / archiveName))
-    val aos = createOutputStream(new BufferedOutputStream(new FileOutputStream(targetDir / archiveName)))
+    val aos          = createOutputStream(new BufferedOutputStream(new FileOutputStream(targetDir / archiveName)))
     val excludeFiles = packArchiveExcludes.value.toSet
-    def addFilesToArchive(dir: File): Unit = Option(dir.listFiles)
-            .getOrElse(Array.empty)
-            .filterNot(f => excludeFiles.contains(rpath(distDir, f)))
-            .foreach { file =>
-      aos.putArchiveEntry(createEntry(file, archiveStem ++ "/" ++ rpath(distDir, file, "/"), binDir))
-      if (file.isDirectory) {
-        aos.closeArchiveEntry()
-        addFilesToArchive(file)
-      } else {
-        val in = new BufferedInputStream(new FileInputStream(file))
-        try {
-          IOUtils.copy(in, aos)
-          aos.closeArchiveEntry()
+    def addFilesToArchive(dir: File): Unit =
+      Option(dir.listFiles)
+        .getOrElse(Array.empty)
+        .filterNot(f => excludeFiles.contains(rpath(distDir, f)))
+        .foreach { file =>
+          aos.putArchiveEntry(createEntry(file, archiveStem ++ "/" ++ rpath(distDir, file, "/"), binDir))
+          if (file.isDirectory) {
+            aos.closeArchiveEntry()
+            addFilesToArchive(file)
+          } else {
+            val in = new BufferedInputStream(new FileInputStream(file))
+            try {
+              IOUtils.copy(in, aos)
+              aos.closeArchiveEntry()
+            } finally {
+              if (in != null)
+                in.close()
+            }
+          }
         }
-        finally {
-          if(in != null)
-            in.close()
-        }
-      }
-    }
     addFilesToArchive(distDir)
     aos.close()
     targetDir / archiveName
@@ -76,36 +74,20 @@ trait PackArchive {
     packArchiveTbzArtifact := Artifact(packArchivePrefix.value, "arch", "tar.bz2"),
     packArchiveTxzArtifact := Artifact(packArchivePrefix.value, "arch", "tar.xz"),
     packArchiveZipArtifact := Artifact(packArchivePrefix.value, "arch", "zip"),
-    packArchiveTgz := createArchive("tar.gz",
-      (fos) => createTarArchiveOutputStream(new GzipCompressorOutputStream(fos)),
-      createTarEntry).value,
-    packArchiveTbz := createArchive("tar.bz2",
-      (fos) => createTarArchiveOutputStream(new BZip2CompressorOutputStream(fos)),
-      createTarEntry).value,
-    packArchiveTxz := createArchive("tar.xz",
-      (fos) => createTarArchiveOutputStream(new XZCompressorOutputStream(fos)),
-      createTarEntry).value,
-    packArchiveZip := createArchive("zip", new ZipArchiveOutputStream(_),
-      (file, fileName, _) => new ZipArchiveEntry(file, fileName)).value,
-    packArchive := Seq(
-      packArchiveTgz.value,
-      packArchiveZip.value))
+    packArchiveTgz := createArchive("tar.gz", (fos) => createTarArchiveOutputStream(new GzipCompressorOutputStream(fos)), createTarEntry).value,
+    packArchiveTbz := createArchive("tar.bz2", (fos) => createTarArchiveOutputStream(new BZip2CompressorOutputStream(fos)), createTarEntry).value,
+    packArchiveTxz := createArchive("tar.xz", (fos) => createTarArchiveOutputStream(new XZCompressorOutputStream(fos)), createTarEntry).value,
+    packArchiveZip := createArchive("zip", new ZipArchiveOutputStream(_), (file, fileName, _) => new ZipArchiveEntry(file, fileName)).value,
+    packArchive := Seq(packArchiveTgz.value, packArchiveZip.value)
+  )
 
-  def publishPackArchiveTgz: SettingsDefinition = Seq(
-    artifacts += packArchiveTgzArtifact.value,
-    packagedArtifacts += packArchiveTgzArtifact.value -> packArchiveTgz.value)
+  def publishPackArchiveTgz: SettingsDefinition = Seq(artifacts += packArchiveTgzArtifact.value, packagedArtifacts += packArchiveTgzArtifact.value -> packArchiveTgz.value)
 
-  def publishPackArchiveTbz: SettingsDefinition = Seq(
-    artifacts += packArchiveTbzArtifact.value,
-    packagedArtifacts += packArchiveTbzArtifact.value -> packArchiveTbz.value)
+  def publishPackArchiveTbz: SettingsDefinition = Seq(artifacts += packArchiveTbzArtifact.value, packagedArtifacts += packArchiveTbzArtifact.value -> packArchiveTbz.value)
 
-  def publishPackArchiveTxz: SettingsDefinition = Seq(
-    artifacts += packArchiveTxzArtifact.value,
-    packagedArtifacts += packArchiveTxzArtifact.value -> packArchiveTxz.value)
+  def publishPackArchiveTxz: SettingsDefinition = Seq(artifacts += packArchiveTxzArtifact.value, packagedArtifacts += packArchiveTxzArtifact.value -> packArchiveTxz.value)
 
-  def publishPackArchiveZip: SettingsDefinition = Seq(
-    artifacts += packArchiveZipArtifact.value,
-    packagedArtifacts += packArchiveZipArtifact.value -> packArchiveZip.value)
+  def publishPackArchiveZip: SettingsDefinition = Seq(artifacts += packArchiveZipArtifact.value, packagedArtifacts += packArchiveZipArtifact.value -> packArchiveZip.value)
 
   def publishPackArchives: SettingsDefinition =
     publishPackArchiveTgz ++ publishPackArchiveZip

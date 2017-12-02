@@ -1,9 +1,8 @@
 package example
 
-
 object Hello {
 
-  def main(args:Array[String]) {
+  def main(args: Array[String]) {
     println("Hello World!")
 
     // sbt-pack script sets prog.version and prog.home JVM options
