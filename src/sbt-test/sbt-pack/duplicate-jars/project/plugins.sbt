@@ -1,1 +1,1 @@
-addSbtPlugin("org.xerial.sbt" % "sbt-pack" % "0.9.4-SNAPSHOT")
+addSbtPlugin("org.xerial.sbt" % "sbt-pack" % "0.10.0")
