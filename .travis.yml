@@ -7,8 +7,7 @@ sudo: false
 
 env:
   - sbt_version=0.13.16
-  - sbt_version=1.0.4
-  - sbt_version=1.1.0-RC1
+  - sbt_version=1.1.0
 
 script:
   - sbt "^^ ${sbt_version}" compile scripted
