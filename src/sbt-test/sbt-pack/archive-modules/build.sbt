@@ -15,7 +15,8 @@ lazy val root =
   ).enablePlugins(PackPlugin)
     .settings(commonSettings)
     .settings(publishPackArchives)
-    .aggregate(module1, module2)
+    .aggregate(module1, module2) // dependency of module2 should not be included
+    .dependsOn(module1)
 
 lazy val module1 = Project(
   id = "module1",

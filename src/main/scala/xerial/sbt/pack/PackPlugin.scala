@@ -219,7 +219,7 @@ object PackPlugin extends AutoPlugin with PackArchive {
       libDir.mkdirs()
 
       // Copy project jars
-      val base: File = baseDirectory.value
+      val base: File = new File(".") // Using the working directory as base for readability
       out.log.info("Copying libraries to " + rpath(base, libDir))
       val libs: Seq[File] = packLibJars.value.map(_._1)
       out.log.info("project jars:\n" + libs.map(path => rpath(base, path)).mkString("\n"))
@@ -407,13 +407,14 @@ object PackPlugin extends AutoPlugin with PackArchive {
     val extracted = Project.extract(state)
     val structure = extracted.structure
 
-    def allProjectRefs(currentProject: ProjectRef): Seq[ProjectRef] = {
+    def transitiveDependencies(currentProject: ProjectRef): Seq[ProjectRef] = {
       def isExcluded(p: ProjectRef) = exclude.contains(p.project)
 
-      val children = Project.getProject(currentProject, structure).toSeq.flatMap(_.uses)
-      (currentProject +: (children flatMap (allProjectRefs(_)))) filterNot (isExcluded)
+      // Traverse all dependent projects
+      val children = Project.getProject(currentProject, structure).toSeq.flatMap(_.dependencies.map(_.project))
+      (currentProject +: (children flatMap (transitiveDependencies(_)))) filterNot (isExcluded)
     }
-    val projects: Seq[ProjectRef] = allProjectRefs(extracted.currentRef).distinct
+    val projects: Seq[ProjectRef] = transitiveDependencies(extracted.currentRef).distinct
     projects.map(p => (Def.task { ((targetTask in p).value, p) }) evaluate structure.data).join
   }
 
