@@ -1,0 +1,16 @@
+> 'set version := "0.1"'
+> pack
+$ exists target/pack/lib/module1_2.12-0.1.jar
+$ exists target/pack/lib/module2_2.12-0.1.jar
+$ exists target/pack/lib/lib1_2.12-0.1.jar
+$ exists target/pack/lib/lib2_2.12-0.1.jar
+$ absent modules/module1/target/pack/lib/module1_2.12-0.1.jar
+$ absent modules/module1/target/pack/lib/module2_2.12-0.1.jar
+$ absent modules/module1/target/pack/lib/lib1_2.12-0.1.jar
+$ absent modules/module1/target/pack/lib/lib2_2.12-0.1.jar
+
+> module1/pack
+$ exists modules/module1/target/pack/lib/module1_2.12-0.1.jar
+$ absent modules/module1/target/pack/lib/module2_2.12-0.1.jar
+$ exists modules/module1/target/pack/lib/lib1_2.12-0.1.jar
+$ absent modules/module1/target/pack/lib/lib2_2.12-0.1.jar
