@@ -209,8 +209,10 @@ object PackPlugin extends AutoPlugin with PackArchive {
     pack := {
       val out = streams.value
       val logPrefix = "[" + name.value + "] "
+      val base: File = new File(".") // Using the working directory as base for readability
+
       val distDir: File = packTargetDir.value / packDir.value
-      out.log.info(logPrefix + "Creating a distributable package in " + rpath(baseDirectory.value, distDir))
+      out.log.info(logPrefix + "Creating a distributable package in " + rpath(base, distDir))
       IO.delete(distDir)
       distDir.mkdirs()
 
@@ -219,7 +221,6 @@ object PackPlugin extends AutoPlugin with PackArchive {
       libDir.mkdirs()
 
       // Copy project jars
-      val base: File = new File(".") // Using the working directory as base for readability
       out.log.info(logPrefix  + "Copying libraries to " + rpath(base, libDir))
       val libs: Seq[File] = packLibJars.value.map(_._1)
       out.log.info(logPrefix + "project jars:\n" + libs.map(path => rpath(base, path)).mkString("\n"))
@@ -273,8 +274,13 @@ object PackPlugin extends AutoPlugin with PackArchive {
 
       // Check the current Git revision
       val gitRevision: String = Try {
-        out.log.info(logPrefix + "Checking the git revision of the current project")
-        sys.process.Process("git rev-parse HEAD").!!
+        if((base / ".git").exists()) {
+          out.log.info(logPrefix + "Checking the git revision of the current project")
+          sys.process.Process("git rev-parse HEAD").!!
+        }
+        else {
+          "unknown"
+        }
       }.getOrElse("unknown").trim
 
       val pathSeparator = "${PSEP}"
