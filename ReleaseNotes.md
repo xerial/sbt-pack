@@ -1,5 +1,8 @@
 ### Release Notes
 
+## 0.10.1
+  - Fix a [bug](https://github.com/xerial/sbt-pack/issues/132) in packing multiple projects
+
 ## 0.10.0
   - [Important] sbt-pack no longer copy dependencies from aggregated projects. To include project dependencies, you need to explicitly use `dependsOn(project, ...)`  [#67](https://github.com/xerial/sbt-pack/issues/67)
   - Upgrade to sbt 1.1.0
