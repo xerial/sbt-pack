@@ -4,7 +4,7 @@
 >module1/packCopyDependencies
 $exists module1/target/WEB-INF/lib/module1-0.1.jar
 $exists module1/target/WEB-INF/lib/jakarta-regexp-1.4.jar
-$exists module1/target/WEB-INF/lib/scala-library-2.11.8.jar
+$exists module1/target/WEB-INF/lib/scala-library-2.12.4.jar
 $exists module1/target/WEB-INF/lib/scala-parser-combinators_2.11-1.0.3.jar
 $exists module1/target/WEB-INF/lib/serializer-2.7.1.jar
 $exists module1/target/WEB-INF/lib/slf4j-api-1.7.2.jar
