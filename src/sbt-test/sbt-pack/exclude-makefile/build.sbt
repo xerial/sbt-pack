@@ -1,5 +1,5 @@
 enablePlugins(PackPlugin)
-scalaVersion := "2.10.5"
+scalaVersion := "2.12.4"
 crossPaths := false
 
 libraryDependencies ++= Seq(

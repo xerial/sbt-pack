@@ -15,18 +15,25 @@ pomIncludeRepository := { _ =>
 }
 
 sbtPlugin := true
-crossSbtVersions := Vector("1.1.0", "0.13.16")
+crossSbtVersions := Vector("1.1.4", "0.13.16")
 
 scalaVersion in ThisBuild := "2.12.4"
 
 parallelExecution := true
 crossPaths := false
 scalacOptions ++= Seq("-encoding", "UTF-8", "-deprecation", "-unchecked")
+
 scriptedBufferLog := false
 scriptedLaunchOpts ++= {
   import scala.collection.JavaConverters._
-  management.ManagementFactory.getRuntimeMXBean().getInputArguments().asScala.filter(a => Seq("-Xmx", "-Xms").contains(a) || a.startsWith("-XX")).toSeq
+  management.ManagementFactory
+    .getRuntimeMXBean()
+    .getInputArguments().asScala
+    .filter(a => Seq("-Xmx", "-Xms").contains(a) || a.startsWith("-XX")).toSeq ++
+    Seq("-Dplugin.version=" + version.value)
 }
+
+scriptedBufferLog := false
 //scalateTemplateConfig in Compile := {
 //   Seq(TemplateConfig((sourceDirectory in Compile).value / "templates", Nil, Nil, Some("xerial.sbt.template")))
 //}
@@ -40,7 +47,6 @@ libraryDependencies ++= Seq(
 )
 
 releaseCrossBuild := true
-releaseTagName := { (version in ThisBuild).value }
 releasePublishArtifactsAction := PgpKeys.publishSigned.value
 releaseProcess := Seq[ReleaseStep](
   checkSnapshotDependencies,
@@ -49,12 +55,10 @@ releaseProcess := Seq[ReleaseStep](
   runTest,
   releaseStepCommandAndRemaining("^ scripted"),
   setReleaseVersion,
-  bumpVersion,
   commitReleaseVersion,
   tagRelease,
   releaseStepCommandAndRemaining("^ publishSigned"),
   setNextVersion,
-  bumpVersion,
   commitNextVersion,
   releaseStepCommand("sonatypeReleaseAll"),
   pushChanges

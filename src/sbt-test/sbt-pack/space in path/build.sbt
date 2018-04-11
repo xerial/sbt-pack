@@ -1,3 +1,3 @@
 enablePlugins(PackPlugin)
 
-scalaVersion := "2.11.6"
+scalaVersion := "2.12.4"
