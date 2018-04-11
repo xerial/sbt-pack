@@ -1,5 +1,3 @@
-import ReleaseTransformations._
-
 enablePlugins(SbtTwirl)
 
 organization := "org.xerial.sbt"
@@ -44,24 +42,6 @@ libraryDependencies ++= Seq(
   "org.tukaani"          % "xz"               % "1.5",
   "org.slf4j"            % "slf4j-simple"     % "1.7.5",
   "org.specs2"           %% "specs2-core"     % "3.9.2" % "test"
-)
-
-releaseCrossBuild := true
-releasePublishArtifactsAction := PgpKeys.publishSigned.value
-releaseProcess := Seq[ReleaseStep](
-  checkSnapshotDependencies,
-  inquireVersions,
-  runClean,
-  runTest,
-  releaseStepCommandAndRemaining("^ scripted"),
-  setReleaseVersion,
-  commitReleaseVersion,
-  tagRelease,
-  releaseStepCommandAndRemaining("^ publishSigned"),
-  setNextVersion,
-  commitNextVersion,
-  releaseStepCommand("sonatypeReleaseAll"),
-  pushChanges
 )
 
 val bumpVersion = ReleaseStep(

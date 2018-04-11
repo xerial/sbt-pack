@@ -235,3 +235,13 @@ To test sbt-pack plugin, run
 Run a single test project, e.g., `src/sbt-test/sbt-pack/multi-module`:
 
     $ ./sbt "scripted sbt-pack/multi-module"
+
+For releasing:
+
+```
+$ ./sbt
+# cross tests for sbt 0.13 and 1.1
+> ^ scripted
+> ^ publishSigned
+> sonatypeReleaseAll
+```
