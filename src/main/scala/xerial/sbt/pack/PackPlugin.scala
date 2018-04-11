@@ -26,7 +26,7 @@ import scala.util.matching.Regex
   */
 object PackPlugin extends AutoPlugin with PackArchive {
 
-  override def trigger = allRequirements
+  override def trigger = noTrigger
 
   case class ModuleEntry(org: String, name: String, revision: VersionString, artifactName: String, classifier: Option[String], file: File) {
     private def classifierSuffix = classifier.map("-" + _).getOrElse("")
