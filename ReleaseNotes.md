@@ -1,5 +1,8 @@
 ### Release Notes
 
+## 0.11
+  - Pack only projects that have enablePlugins(PackPlugin) #137
+
 ## 0.10.1
   - Fix a [bug](https://github.com/xerial/sbt-pack/issues/132) in packing multiple projects
 
