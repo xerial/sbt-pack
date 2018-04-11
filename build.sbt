@@ -40,7 +40,6 @@ libraryDependencies ++= Seq(
 )
 
 releaseCrossBuild := true
-releaseTagName := { (version in ThisBuild).value }
 releasePublishArtifactsAction := PgpKeys.publishSigned.value
 releaseProcess := Seq[ReleaseStep](
   checkSnapshotDependencies,
