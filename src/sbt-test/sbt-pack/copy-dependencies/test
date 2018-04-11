@@ -4,16 +4,12 @@
 >module1/packCopyDependencies
 $exists module1/target/WEB-INF/lib/module1-0.1.jar
 $exists module1/target/WEB-INF/lib/jakarta-regexp-1.4.jar
-$exists module1/target/WEB-INF/lib/scala-library-2.12.4.jar
-$exists module1/target/WEB-INF/lib/scala-parser-combinators_2.11-1.0.3.jar
 $exists module1/target/WEB-INF/lib/serializer-2.7.1.jar
 $exists module1/target/WEB-INF/lib/slf4j-api-1.7.2.jar
 $exists module1/target/WEB-INF/lib/xalan-2.7.1.jar
 $exists module1/target/WEB-INF/lib/xerial-core-3.3.6.jar
 $exists module1/target/WEB-INF/lib/xml-apis-1.3.04.jar
 -$exec test -L module1/target/WEB-INF/lib/jakarta-regexp-1.4.jar
--$exec test -L module1/target/WEB-INF/lib/scala-library-2.12.4.jar
--$exec test -L module1/target/WEB-INF/lib/scala-parser-combinators_2.11-1.0.3.jar
 -$exec test -L module1/target/WEB-INF/lib/serializer-2.7.1.jar
 -$exec test -L module1/target/WEB-INF/lib/slf4j-api-1.7.2.jar
 -$exec test -L module1/target/WEB-INF/lib/xalan-2.7.1.jar
@@ -24,16 +20,12 @@ $exists module1/target/WEB-INF/lib/xml-apis-1.3.04.jar
 >module1/packCopyDependencies
 $exists module1/target/WEB-INF/lib/module1-0.1.jar
 $exists module1/target/WEB-INF/lib/jakarta-regexp-1.4.jar
-$exists module1/target/WEB-INF/lib/scala-library-2.12.4.jar
-$exists module1/target/WEB-INF/lib/scala-parser-combinators_2.11-1.0.3.jar
 $exists module1/target/WEB-INF/lib/serializer-2.7.1.jar
 $exists module1/target/WEB-INF/lib/slf4j-api-1.7.2.jar
 $exists module1/target/WEB-INF/lib/xalan-2.7.1.jar
 $exists module1/target/WEB-INF/lib/xerial-core-3.3.6.jar
 $exists module1/target/WEB-INF/lib/xml-apis-1.3.04.jar
 $exec test -L module1/target/WEB-INF/lib/jakarta-regexp-1.4.jar
-$exec test -L module1/target/WEB-INF/lib/scala-library-2.12.4.jar
-$exec test -L module1/target/WEB-INF/lib/scala-parser-combinators_2.11-1.0.3.jar
 $exec test -L module1/target/WEB-INF/lib/serializer-2.7.1.jar
 $exec test -L module1/target/WEB-INF/lib/slf4j-api-1.7.2.jar
 $exec test -L module1/target/WEB-INF/lib/xalan-2.7.1.jar
@@ -47,7 +39,6 @@ $exists module4/target/WEB-INF/lib/module4-0.1.jar
 $exists module4/target/WEB-INF/lib/commons-collections-3.2.1.jar
 $exists module4/target/WEB-INF/lib/commons-digester-2.1.jar
 $exists module4/target/WEB-INF/lib/commons-logging-1.1.1.jar
-$exists module4/target/WEB-INF/lib/scala-library-2.12.4.jar
 $exists module4/target/WEB-INF/lib/slf4j-api-1.7.6.jar
 $exists module4/target/WEB-INF/lib/snappy-java-1.1.1.6.jar
 
@@ -58,7 +49,6 @@ $exists module4/target/WEB-INF/lib/module4-0.1.jar
 $exists module4/target/WEB-INF/lib/commons-collections-3.2.1.jar
 $exists module4/target/WEB-INF/lib/commons-digester-2.1.jar
 $exists module4/target/WEB-INF/lib/commons-logging-1.1.1.jar
-$exists module4/target/WEB-INF/lib/scala-library-2.12.4.jar
 $exists module4/target/WEB-INF/lib/slf4j-api-1.7.6.jar
 $exists module4/target/WEB-INF/lib/snappy-java-1.1.1.6.jar
 
@@ -69,6 +59,5 @@ $exists module4/target/WEB-INF/lib/module4-0.1.jar
 $exists module4/target/WEB-INF/lib/commons-collections-3.2.1.jar
 $exists module4/target/WEB-INF/lib/commons-digester-2.1.jar
 $exists module4/target/WEB-INF/lib/commons-logging-1.1.1.jar
-$exists module4/target/WEB-INF/lib/scala-library-2.12.4.jar
 $exists module4/target/WEB-INF/lib/slf4j-api-1.7.6.jar
 -$exists module4/target/WEB-INF/lib/snappy-java-1.1.1.6.jar
