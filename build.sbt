@@ -13,7 +13,7 @@ pomIncludeRepository := { _ =>
 }
 
 sbtPlugin := true
-crossSbtVersions := Vector("1.1.4", "0.13.16")
+crossSbtVersions := Vector("1.1.6", "0.13.17")
 
 scalaVersion in ThisBuild := "2.12.4"
 
