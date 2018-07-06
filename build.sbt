@@ -15,7 +15,7 @@ pomIncludeRepository := { _ =>
 sbtPlugin := true
 crossSbtVersions := Vector("1.1.6", "0.13.17")
 
-scalaVersion in ThisBuild := "2.12.4"
+scalaVersion in ThisBuild := "2.12.6"
 
 parallelExecution := true
 crossPaths := false

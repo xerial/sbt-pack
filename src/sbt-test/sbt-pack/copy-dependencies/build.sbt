@@ -1,7 +1,7 @@
-scalaVersion in ThisBuild := "2.12.4"
+scalaVersion in ThisBuild := "2.12.6"
 
 val commonSettings = Seq(
-  scalaVersion := "2.12.4",
+  scalaVersion := "2.12.6",
   version := "0.1",
   crossPaths := false,
   packCopyDependenciesTarget := target.value / "WEB-INF/lib"
