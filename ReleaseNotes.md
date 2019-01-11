@@ -1,5 +1,8 @@
 ### Release Notes
 
+# 0.12
+  - Print launch script error messages to stderr
+
 ## 0.11
   - Pack only projects that have enablePlugins(PackPlugin) #137
 
