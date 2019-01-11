@@ -32,9 +32,6 @@ scriptedLaunchOpts ++= {
 }
 
 scriptedBufferLog := false
-//scalateTemplateConfig in Compile := {
-//   Seq(TemplateConfig((sourceDirectory in Compile).value / "templates", Nil, Nil, Some("xerial.sbt.template")))
-//}
 
 libraryDependencies ++= Seq(
   "org.scalatra.scalate" %% "scalate-core"    % "1.8.0",
@@ -42,19 +39,4 @@ libraryDependencies ++= Seq(
   "org.tukaani"          % "xz"               % "1.5",
   "org.slf4j"            % "slf4j-simple"     % "1.7.5",
   "org.specs2"           %% "specs2-core"     % "3.9.2" % "test"
-)
-
-val bumpVersion = ReleaseStep(
-  action = { state =>
-    val extracted = Project extract state
-    state.log.info("Bump plugin version in scripted tests")
-    val command =
-      sys.process.Process("./bin/bump-version.sh") #&&
-        sys.process.Process("git add src/sbt-test")
-    val ret = command.!
-    ret match {
-      case 0 => state
-      case _ => state.fail
-    }
-  }
 )
