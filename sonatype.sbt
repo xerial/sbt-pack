@@ -29,3 +29,5 @@ publishTo := Some(
   else
     Opts.resolver.sonatypeStaging
 )
+
+dynverSonatypeSnapshots in ThisBuild := true
