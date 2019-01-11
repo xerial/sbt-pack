@@ -5,6 +5,8 @@ organizationName := "Xerial project"
 name := "sbt-pack"
 organizationHomepage := Some(new URL("http://xerial.org/"))
 description := "A sbt plugin for packaging distributable Scala code"
+
+dynverSonatypeSnapshots := true
 publishMavenStyle := true
 publishArtifact in Test := false
 
