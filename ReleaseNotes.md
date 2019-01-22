@@ -1,6 +1,6 @@
 ### Release Notes
 
-# 0.12
+## 0.12
   - Print launch script error messages to stderr
 
 ## 0.11
