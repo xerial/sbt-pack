@@ -274,13 +274,13 @@ object PackPlugin extends AutoPlugin with PackArchive {
 
       // Check the current Git revision
       val gitRevision: String = Try {
-        if((base / ".git").exists()) {
+        // if((base / ".git").exists()) {
           out.log.info(logPrefix + "Checking the git revision of the current project")
           sys.process.Process("git rev-parse HEAD").!!
-        }
-        else {
-          "unknown"
-        }
+        // }
+        // else {
+          // "unknown"
+        // }
       }.getOrElse("unknown").trim
 
       val pathSeparator = "${PSEP}"
