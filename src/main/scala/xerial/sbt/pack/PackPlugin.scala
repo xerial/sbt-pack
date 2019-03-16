@@ -273,14 +273,10 @@ object PackPlugin extends AutoPlugin with PackArchive {
       val macIconFile = packMacIconFile.value
 
       // Check the current Git revision
-      val gitRevision: String = Try {
-        // if((base / ".git").exists()) {
-          out.log.info(logPrefix + "Checking the git revision of the current project")
-          sys.process.Process("git rev-parse HEAD").!!
-        // }
-        // else {
-          // "unknown"
-        // }
+      val gitRevision = Try {
+        out.log.info(logPrefix + "Checking the git revision of the current project")
+        val s = sys.process.Process("git rev-parse HEAD") lineStream_! sys.process.ProcessLogger(_ => {}, _ => {})
+        s.head
       }.getOrElse("unknown").trim
 
       val pathSeparator = "${PSEP}"
