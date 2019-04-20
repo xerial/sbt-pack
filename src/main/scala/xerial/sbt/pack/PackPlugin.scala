@@ -154,7 +154,7 @@ object PackPlugin extends AutoPlugin with PackArchive {
           c                <- update.value.filter(df).configurations
           m                <- c.modules if !m.evicted
           (artifact, file) <- m.artifacts
-          if !packExcludeArtifactTypes.value.contains(artifact.`type`) && !isExcludeJar(file.name)
+          if !packExcludeArtifactTypes.value.contains(artifact.`type`) && !isExcludeJar(file.name) && file.getName.endsWith(".jar")
         } yield {
           val mid = m.module
           ModuleEntry(mid.organization, mid.name, VersionString(mid.revision), artifact.name, artifact.classifier, file)
