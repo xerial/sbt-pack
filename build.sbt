@@ -37,7 +37,7 @@ scriptedBufferLog := false
 libraryDependencies ++= Seq(
   "org.scalatra.scalate" %% "scalate-core"    % "1.8.0",
   "org.apache.commons"   % "commons-compress" % "1.9",
-  "org.tukaani"          % "xz"               % "1.5",
+  "org.tukaani"          % "xz"               % "1.8",
   "org.slf4j"            % "slf4j-simple"     % "1.7.5",
   "org.specs2"           %% "specs2-core"     % "3.9.2" % "test"
 )
