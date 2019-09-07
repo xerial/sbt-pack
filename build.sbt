@@ -39,5 +39,5 @@ libraryDependencies ++= Seq(
   "org.apache.commons"   % "commons-compress" % "1.9",
   "org.tukaani"          % "xz"               % "1.8",
   "org.slf4j"            % "slf4j-simple"     % "1.7.5",
-  "org.specs2"           %% "specs2-core"     % "3.9.2" % "test"
+  "org.specs2"           %% "specs2-core"     % "3.9.5" % "test"
 )
