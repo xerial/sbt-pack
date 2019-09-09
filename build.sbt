@@ -35,8 +35,8 @@ scriptedLaunchOpts ++= {
 scriptedBufferLog := false
 
 libraryDependencies ++= Seq(
+  "org.apache.commons"   % "commons-compress" % "1.19",
   "org.scalatra.scalate" %% "scalate-core"    % "1.9.4",
-  "org.apache.commons"   % "commons-compress" % "1.9",
   "org.tukaani"          % "xz"               % "1.8",
   "org.slf4j"            % "slf4j-simple"     % "1.7.5",
   "org.specs2"           %% "specs2-core"     % "3.9.5" % "test"
