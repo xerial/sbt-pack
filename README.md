@@ -99,7 +99,7 @@ packResourceDir += (baseDirectory.value / "web" -> "web-content")
 
 // To publish tar.gz, zip archives to the repository, add the following lines:
 import xerial.sbt.pack.PackPlugin._
-publishPackArchive
+publishPackArchives
 
 // Publish only tar.gz archive. To publish another type of archive, use publishPackArchive(xxx) instead
 //publishPackArchiveTgz
