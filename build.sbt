@@ -1,4 +1,5 @@
 enablePlugins(SbtTwirl)
+enablePlugins(SbtPlugin)
 
 organization := "org.xerial.sbt"
 organizationName := "Xerial project"
@@ -13,7 +14,6 @@ pomIncludeRepository := { _ =>
   false
 }
 
-sbtPlugin := true
 crossSbtVersions := Vector("1.2.8", "0.13.17")
 
 scalaVersion in ThisBuild := "2.12.8"
@@ -31,8 +31,6 @@ scriptedLaunchOpts ++= {
     .filter(a => Seq("-Xmx", "-Xms").contains(a) || a.startsWith("-XX")).toSeq ++
     Seq("-Dplugin.version=" + version.value)
 }
-
-scriptedBufferLog := false
 
 libraryDependencies ++= Seq(
   "org.slf4j"            % "slf4j-simple"     % "1.7.28",
