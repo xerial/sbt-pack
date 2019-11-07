@@ -1,0 +1,16 @@
+#exec commands are system dependent and have been tested in a Linux environment
+> 'set version := "0.1"'
+
+>server/pack
+$exists server/target/pack/lib/slf4j-api-1.7.6.jar
+$exists server/target/pack/lib/module1-0.1.jar
+$exists server/target/pack/lib/snappy-java-1.1.1.6.jar
+$exists server/target/pack/lib/module2-0.1.jar
+$exists server/target/pack/lib/server-0.1.jar
+
+>client/pack
+$exists client/target/pack/lib/slf4j-api-1.7.6.jar
+$exists client/target/pack/lib/module1-0.1.jar
+$absent client/target/pack/lib/snappy-java-1.1.1.6.jar
+$absent client/target/pack/lib/module2-0.1.jar
+$exists client/target/pack/lib/client-0.1.jar

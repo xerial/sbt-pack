@@ -414,13 +414,15 @@ object PackPlugin extends AutoPlugin with PackArchive {
     def transitiveDependencies(currentProject: ProjectRef): Seq[ProjectRef] = {
       def isExcluded(p: ProjectRef) = exclude.contains(p.project)
 
+      def isCompileConfig(cp: ClasspathDep[ProjectRef]) = cp.configuration.forall(_.contains("compile->"))
+
       // Traverse all dependent projects
       val children = Project
               .getProject(currentProject, structure)
               .toSeq
-              .flatMap{ _.dependencies.map(_.project) }
+              .flatMap{ _.dependencies.filter(isCompileConfig).map(_.project) }
 
-      (currentProject +: (children flatMap (transitiveDependencies(_)))) filterNot (isExcluded)
+      (currentProject +: (children flatMap transitiveDependencies)) filterNot (isExcluded)
     }
     val projects: Seq[ProjectRef] = transitiveDependencies(contextProject).distinct
     projects.map(p => (Def.task { ((targetTask in p).value, p) }) evaluate structure.data).join
