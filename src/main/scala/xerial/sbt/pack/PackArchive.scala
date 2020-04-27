@@ -67,8 +67,9 @@ trait PackArchive {
 
   private def createZipEntry(file: File, fileName: String, binDir: File) = {
     val archiveEntry = new ZipArchiveEntry(file, fileName)
-    if (file.getAbsolutePath startsWith binDir.getAbsolutePath)
+    if (file.getAbsolutePath.startsWith(binDir.getAbsolutePath)) {
       archiveEntry.setUnixMode(Integer.parseInt("0755", 8))
+    }
     archiveEntry
   }
 
