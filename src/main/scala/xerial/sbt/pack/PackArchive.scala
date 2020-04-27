@@ -65,6 +65,13 @@ trait PackArchive {
     tos
   }
 
+  private def createZipEntry(file: File, fileName: String, binDir: File) = {
+    val archiveEntry = new ZipArchiveEntry(file, fileName)
+    if (file.getAbsolutePath startsWith binDir.getAbsolutePath)
+      archiveEntry.setUnixMode(Integer.parseInt("0755", 8))
+    archiveEntry
+  }
+
   lazy val packArchiveSettings = Seq[Def.Setting[_]](
     packArchivePrefix := name.value,
     packArchiveName := s"${packArchivePrefix.value}-${version.value}",
@@ -77,7 +84,7 @@ trait PackArchive {
     packArchiveTgz := createArchive("tar.gz", (fos) => createTarArchiveOutputStream(new GzipCompressorOutputStream(fos)), createTarEntry).value,
     packArchiveTbz := createArchive("tar.bz2", (fos) => createTarArchiveOutputStream(new BZip2CompressorOutputStream(fos)), createTarEntry).value,
     packArchiveTxz := createArchive("tar.xz", (fos) => createTarArchiveOutputStream(new XZCompressorOutputStream(fos)), createTarEntry).value,
-    packArchiveZip := createArchive("zip", new ZipArchiveOutputStream(_), (file, fileName, _) => new ZipArchiveEntry(file, fileName)).value,
+    packArchiveZip := createArchive("zip", new ZipArchiveOutputStream(_), createZipEntry).value,
     packArchive := Seq(packArchiveTgz.value, packArchiveZip.value)
   )
 
