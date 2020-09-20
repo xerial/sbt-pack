@@ -1,5 +1,9 @@
 ### Release Notes
 
+## 0.13
+  - Fixed the packZipArchive perfmission issue https://github.com/xerial/sbt-pack/pull/204
+  - Drop the support for sbt 0.13.x 
+
 ## 0.12
   - Print launch script error messages to stderr
 
