@@ -7,6 +7,7 @@
 
 package xerial.sbt.pack
 
+import java.io.{BufferedWriter, FileWriter}
 import java.nio.file.Files
 import java.time.format.{DateTimeFormatterBuilder, SignStyle}
 import java.time.temporal.ChronoField._
@@ -224,32 +225,50 @@ object PackPlugin extends AutoPlugin with PackArchive {
       out.log.info(logPrefix  + "Copying libraries to " + rpath(base, libDir))
       val libs: Seq[File] = packLibJars.value.map(_._1)
       out.log.info(logPrefix + "project jars:\n" + libs.map(path => rpath(base, path)).mkString("\n"))
-      libs.foreach(l => IO.copyFile(l, libDir / l.getName))
+      val projectJars = libs.map(l => {
+        val dest = libDir / l.getName
+        IO.copyFile(l, dest)
+        dest
+      })
 
       // Copy dependent jars
 
       val distinctDpJars = packModuleEntries.value
       out.log.info(logPrefix + "project dependencies:\n" + distinctDpJars.mkString("\n"))
       val jarNameConvention = packJarNameConvention.value
-      for (m <- distinctDpJars) {
+      val projectDepsJars = for (m <- distinctDpJars) yield {
         val targetFileName = resolveJarName(m, jarNameConvention)
-        IO.copyFile(m.file, libDir / targetFileName, true)
+        val dest = libDir / targetFileName
+        IO.copyFile(m.file, dest, true)
+        dest
       }
 
       // Copy unmanaged jars in ${baseDir}/lib folder
       out.log.info(logPrefix + "unmanaged dependencies:")
-      for ((m, projectRef) <- packAllUnmanagedJars.value; um <- m; f = um.data) {
+      val unmanagedDepsJars = for ((m, projectRef) <- packAllUnmanagedJars.value; um <- m; f = um.data) yield {
         out.log.info(f.getPath)
-        IO.copyFile(f, libDir / f.getName, true)
+        val dest = libDir / f.getName
+        IO.copyFile(f, dest, true)
+        dest
       }
 
       // Copy explicitly added dependencies
       val mapped: Seq[(File, String)] = (mappings in pack).value
       out.log.info(logPrefix + "explicit dependencies:")
-      for ((file, path) <- mapped) {
+      val explicitDepsJars = for ((file, path) <- mapped) yield {
         out.log.info(file.getPath)
-        IO.copyFile(file, distDir / path, true)
+        val dest = distDir / path
+        IO.copyFile(file, dest, true)
+        dest
       }
+
+      // put the list of jars in a file
+      val bw = new BufferedWriter(new FileWriter(libDir / "jars.mf"))
+      for (line <- projectJars ++ projectDepsJars ++ unmanagedDepsJars ++ explicitDepsJars) {
+        bw.write(line.relativeTo(distDir).get.toString)
+        bw.newLine()
+      }
+      bw.close()
 
       // Create target/pack/bin folder
       val binDir = distDir / "bin"
