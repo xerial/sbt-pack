@@ -83,6 +83,7 @@ object PackPlugin extends AutoPlugin with PackArchive {
     val packArchivePrefix      = settingKey[String]("prefix of (prefix)-(version).(format) archive file name")
     val packArchiveName        = settingKey[String]("archive file name. Default is (project-name)-(version)")
     val packArchiveStem        = settingKey[String]("directory name within the archive. Default is (archive-name)")
+    val packJarListFile        = settingKey[Option[String]]("jars list manifest file name, relative to packDir unless an absolute path. Default is None which means to not generate such a file")
     val packArchiveExcludes    = settingKey[Seq[String]]("List of excluding files from the archive")
     val packArchiveTgzArtifact = settingKey[Artifact]("tar.gz archive artifact")
     val packArchiveTbzArtifact = settingKey[Artifact]("tar.bz2 archive artifact")
@@ -114,6 +115,7 @@ object PackPlugin extends AutoPlugin with PackArchive {
     packExclude := Seq.empty,
     packExcludeLibJars := Seq.empty,
     packExcludeJars := Seq.empty,
+    packJarListFile := None,
     packExcludeArtifactTypes := Seq("source", "javadoc", "test"),
     packMacIconFile := "icon-mac.png",
     packResourceDir := Map(baseDirectory.value / "src/pack" -> ""),
@@ -262,13 +264,18 @@ object PackPlugin extends AutoPlugin with PackArchive {
         dest
       }
 
-      // put the list of jars in a file
-      val bw = new BufferedWriter(new FileWriter(libDir / "jars.mf"))
-      for (line <- projectJars ++ projectDepsJars ++ unmanagedDepsJars ++ explicitDepsJars) {
-        bw.write(line.relativeTo(distDir).get.toString)
-        bw.newLine()
+      if (packJarListFile.value.isDefined) {
+        // put the list of jars in a file
+        val jarListFileRelative = new File(packJarListFile.value.get)
+        val jarListFile = if (jarListFileRelative.isAbsolute) jarListFileRelative else new File(distDir, packJarListFile.value.get)
+        jarListFile.getParentFile.mkdirs()
+        val bw = new BufferedWriter(new FileWriter(jarListFile))
+        for (line <- projectJars ++ projectDepsJars ++ unmanagedDepsJars ++ explicitDepsJars) {
+          bw.write(line.relativeTo(distDir).get.toString)
+          bw.newLine()
+        }
+        bw.close()
       }
-      bw.close()
 
       // Create target/pack/bin folder
       val binDir = distDir / "bin"
