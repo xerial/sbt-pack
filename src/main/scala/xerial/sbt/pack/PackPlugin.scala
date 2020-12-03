@@ -7,6 +7,7 @@
 
 package xerial.sbt.pack
 
+import java.io.{BufferedWriter, FileWriter}
 import java.nio.file.Files
 import java.time.format.{DateTimeFormatterBuilder, SignStyle}
 import java.time.temporal.ChronoField._
@@ -82,6 +83,7 @@ object PackPlugin extends AutoPlugin with PackArchive {
     val packArchivePrefix      = settingKey[String]("prefix of (prefix)-(version).(format) archive file name")
     val packArchiveName        = settingKey[String]("archive file name. Default is (project-name)-(version)")
     val packArchiveStem        = settingKey[String]("directory name within the archive. Default is (archive-name)")
+    val packJarListFile        = settingKey[Option[String]]("jars list manifest file name, relative to packDir unless an absolute path. Default is None which means to not generate such a file")
     val packArchiveExcludes    = settingKey[Seq[String]]("List of excluding files from the archive")
     val packArchiveTgzArtifact = settingKey[Artifact]("tar.gz archive artifact")
     val packArchiveTbzArtifact = settingKey[Artifact]("tar.bz2 archive artifact")
@@ -113,6 +115,7 @@ object PackPlugin extends AutoPlugin with PackArchive {
     packExclude := Seq.empty,
     packExcludeLibJars := Seq.empty,
     packExcludeJars := Seq.empty,
+    packJarListFile := None,
     packExcludeArtifactTypes := Seq("source", "javadoc", "test"),
     packMacIconFile := "icon-mac.png",
     packResourceDir := Map(baseDirectory.value / "src/pack" -> ""),
@@ -224,31 +227,54 @@ object PackPlugin extends AutoPlugin with PackArchive {
       out.log.info(logPrefix  + "Copying libraries to " + rpath(base, libDir))
       val libs: Seq[File] = packLibJars.value.map(_._1)
       out.log.info(logPrefix + "project jars:\n" + libs.map(path => rpath(base, path)).mkString("\n"))
-      libs.foreach(l => IO.copyFile(l, libDir / l.getName))
+      val projectJars = libs.map(l => {
+        val dest = libDir / l.getName
+        IO.copyFile(l, dest)
+        dest
+      })
 
       // Copy dependent jars
 
       val distinctDpJars = packModuleEntries.value
       out.log.info(logPrefix + "project dependencies:\n" + distinctDpJars.mkString("\n"))
       val jarNameConvention = packJarNameConvention.value
-      for (m <- distinctDpJars) {
+      val projectDepsJars = for (m <- distinctDpJars) yield {
         val targetFileName = resolveJarName(m, jarNameConvention)
-        IO.copyFile(m.file, libDir / targetFileName, true)
+        val dest = libDir / targetFileName
+        IO.copyFile(m.file, dest, true)
+        dest
       }
 
       // Copy unmanaged jars in ${baseDir}/lib folder
       out.log.info(logPrefix + "unmanaged dependencies:")
-      for ((m, projectRef) <- packAllUnmanagedJars.value; um <- m; f = um.data) {
+      val unmanagedDepsJars = for ((m, projectRef) <- packAllUnmanagedJars.value; um <- m; f = um.data) yield {
         out.log.info(f.getPath)
-        IO.copyFile(f, libDir / f.getName, true)
+        val dest = libDir / f.getName
+        IO.copyFile(f, dest, true)
+        dest
       }
 
       // Copy explicitly added dependencies
       val mapped: Seq[(File, String)] = (mappings in pack).value
       out.log.info(logPrefix + "explicit dependencies:")
-      for ((file, path) <- mapped) {
+      val explicitDepsJars = for ((file, path) <- mapped) yield {
         out.log.info(file.getPath)
-        IO.copyFile(file, distDir / path, true)
+        val dest = distDir / path
+        IO.copyFile(file, dest, true)
+        dest
+      }
+
+      if (packJarListFile.value.isDefined) {
+        // put the list of jars in a file
+        val jarListFileRelative = new File(packJarListFile.value.get)
+        val jarListFile = if (jarListFileRelative.isAbsolute) jarListFileRelative else new File(distDir, packJarListFile.value.get)
+        jarListFile.getParentFile.mkdirs()
+        val bw = new BufferedWriter(new FileWriter(jarListFile))
+        for (line <- projectJars ++ projectDepsJars ++ unmanagedDepsJars ++ explicitDepsJars) {
+          bw.write(line.relativeTo(distDir).get.toString)
+          bw.newLine()
+        }
+        bw.close()
       }
 
       // Create target/pack/bin folder

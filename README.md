@@ -91,6 +91,9 @@ packJarNameConvention := "default",
 // [Optional] Patterns of jar file names to exclude in pack
 packExcludeJars := Seq("scala-.*\\.jar")
 
+// [Optional] Generate a text file containing the list of copied jars.
+packJarListFile := Some("lib/jars.mf")
+
 // [Optional] List full class paths in the launch scripts (default is false) (since 0.5.1)
 packExpandedClasspath := false
 // [Optional] Resource directory mapping to be copied within target/pack. Default is Map("{projectRoot}/src/pack" -> "") 
