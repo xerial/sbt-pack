@@ -22,6 +22,7 @@ object LaunchScript {
       PROG_REVISION: String,
       JVM_OPTS: String = "",
       EXTRA_CLASSPATH: String,
-      MAC_ICON_FILE: String = "icon-mac.png"
+      MAC_ICON_FILE: String = "icon-mac.png",
+      ENV_VARS: String = ""
   )
 }

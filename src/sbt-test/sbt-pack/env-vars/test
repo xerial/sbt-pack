@@ -1,0 +1,4 @@
+> 'set version := "0.1"'
+> pack
+$ exec sh ./target/pack/bin/test
+
