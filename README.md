@@ -56,9 +56,10 @@ Now you can use `sbt pack` command in your project.
 
 #### Full build configuration
 
-Import `xerial.sbt.Pack.packAutoSettings` into your project settings (Since version 0.6.2). sbt-pack finds main classes in your code and generates programs for them accordingly. The main classes must be Scala objects that define `def main(args:Array[])` method. The program names are the main classes names, hyphenized. (For example, main class `myprog.ExampleProg` gives program name `example-prog`.) 
+sbt-pack will generate launcher scripts for calling `def main(args:Array[String]): Unit` method. You can manually set the `packMain` variable to specify mappings from launcher scripts to their corresponding main classes (for example `packMain := Map("hello" -> "myprog.Hello")`) will create `target/pack/bin/hello` script and it will call `myprog.Hello` method. 
 
-Alternatively, import `xerial.sbt.Pack.packSettings` instead of `xerial.sbt.Pack.packAutoSettings`. The main classes in your program will then not be guessed. Manually set the `packMain` variable, a mapping from your program names to their corresponding main classes (for example `packMain := Map("hello" -> "myprog.Hello")`).   
+If `packMain` setting is missing, sbt-pack will find main classes in your code and generates launcher scripts for them. The main classes must be Scala objects that define `def main(args:Array[])` method. The program names will be the main classes names, hyphenized. (For example, main class `myprog.ExampleProg` gives program name `example-prog`.) 
+
 
 **build.sbt**
 
