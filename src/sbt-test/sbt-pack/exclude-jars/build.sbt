@@ -1,7 +1,8 @@
 enablePlugins(PackPlugin)
-scalaVersion := "2.12.13"
+version := "0.1"
+scalaVersion := "2.12.14"
 crossPaths := false
-
+name := "exclude-jars"
 libraryDependencies ++= Seq(
   "org.scala-lang" % "scala-reflect" % scalaVersion.value
 )

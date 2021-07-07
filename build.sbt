@@ -16,7 +16,7 @@ pomIncludeRepository := { _ =>
   false
 }
 
-ThisBuild / scalaVersion := "2.12.13"
+ThisBuild / scalaVersion := "2.12.14"
 
 parallelExecution := true
 crossPaths := false
