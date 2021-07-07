@@ -1,3 +1,5 @@
+Global / onChangedBuildSource := ReloadOnSourceChanges
+
 enablePlugins(SbtTwirl)
 enablePlugins(SbtPlugin)
 
@@ -14,9 +16,7 @@ pomIncludeRepository := { _ =>
   false
 }
 
-crossSbtVersions := Vector("1.2.8")
-
-scalaVersion in ThisBuild := "2.12.13"
+ThisBuild / scalaVersion := "2.12.14"
 
 parallelExecution := true
 crossPaths := false
