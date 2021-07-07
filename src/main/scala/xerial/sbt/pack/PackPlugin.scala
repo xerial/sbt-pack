@@ -255,11 +255,12 @@ object PackPlugin extends AutoPlugin with PackArchive {
       // Copy dependent jars
 
       val distinctDpJars = packModuleEntries.value
-      out.log.info(logPrefix + "project dependencies:\n" + distinctDpJars.mkString("\n"))
+      out.log.info(logPrefix + "project dependencies:")
       val jarNameConvention = packJarNameConvention.value
       val projectDepsJars = for (m <- distinctDpJars) yield {
         val targetFileName = resolveJarName(m, jarNameConvention)
         val dest           = libDir / targetFileName
+        out.log.info(s"${m}")
         IO.copyFile(m.file, dest, true)
         dest
       }
