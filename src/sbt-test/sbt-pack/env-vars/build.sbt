@@ -1,7 +1,7 @@
 enablePlugins(PackPlugin)
 name := "env-vars"
 
-scalaVersion := "2.12.6"
+scalaVersion := "2.12.14"
 // custom settings here
 crossPaths := false
 
