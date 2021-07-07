@@ -26,7 +26,7 @@ jobs:
       - name: scalafmt test
         run: ./sbt scalafmtCheckAll
   test_sbt_plugin:
-    name: sbt-airframe
+    name: sbt plugin test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
