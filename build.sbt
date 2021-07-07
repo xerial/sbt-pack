@@ -1,3 +1,5 @@
+Global / onChangedBuildSource := ReloadOnSourceChanges
+
 enablePlugins(SbtTwirl)
 enablePlugins(SbtPlugin)
 
@@ -13,8 +15,6 @@ publishArtifact in Test := false
 pomIncludeRepository := { _ =>
   false
 }
-
-crossSbtVersions := Vector("1.2.8")
 
 ThisBuild / scalaVersion := "2.12.13"
 
