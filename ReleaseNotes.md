@@ -1,5 +1,11 @@
 ### Release Notes
 
+## 0.14
+  - packArchiveStem := "" setting can be used for creating package for AWS Lambda
+  - Add packEnvVars setting for setting environment variables
+  - Improved packaging performance by removing redundant jar file copies
+  - Add packJarListFile setting to dump the list of written files
+
 ## 0.13
   - Fixed the packZipArchive perfmission issue https://github.com/xerial/sbt-pack/pull/204
   - Drop the support for sbt 0.13.x 
