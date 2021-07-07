@@ -363,7 +363,8 @@ object PackPlugin extends AutoPlugin with PackArchive {
           JVM_OPTS = packJvmOpts.value.getOrElse(name, Nil).map("\"%s\"".format(_)).mkString(" "),
           EXTRA_CLASSPATH = extraClasspath(pathSeparator),
           MAC_ICON_FILE = macIconFile,
-          ENV_VARS = packEnvVars.value.getOrElse(name, Map.empty).map{ case (key, value) => s"$key=$value" }.mkString(" ")
+          ENV_VARS =
+            packEnvVars.value.getOrElse(name, Map.empty).map { case (key, value) => s"$key=$value" }.mkString(" ")
         )
 
         // TODO use custom template (packBashTemplate)
