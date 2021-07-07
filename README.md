@@ -109,6 +109,9 @@ publishPackArchives
 
 // Publish only tar.gz archive. To publish another type of archive, use publishPackArchive(xxx) instead
 //publishPackArchiveTgz
+
+// [Optional] Set a root folder name of archive contents. (defualt is (project-name)-(version). Setting this to an empty string is useful for packaging projects for AWS lambda. 
+packArchiveStem := ""
 ```
 
 **src/main/scala/Hello.scala**
