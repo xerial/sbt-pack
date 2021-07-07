@@ -108,6 +108,7 @@ object PackPlugin extends AutoPlugin with PackArchive {
     val packArchiveTxz         = taskKey[File]("create a tar.xz archive of the distributable package")
     val packArchiveZip         = taskKey[File]("create a zip archive of the distributable package")
     val packArchive            = taskKey[Seq[File]]("create a tar.gz and a zip archive of the distributable package")
+    val packEnvVars            = taskKey[Map[String, Map[String, String]]]("environment variables")
   }
 
   import complete.DefaultParsers._
@@ -228,6 +229,7 @@ object PackPlugin extends AutoPlugin with PackArchive {
 
       log info s"Copied ${distinctDpJars.size + libs.size} jars to ${copyDepTargetDir}"
     },
+    packEnvVars := Map.empty,
     pack := {
       val out        = streams.value
       val logPrefix  = "[" + name.value + "] "
@@ -360,7 +362,8 @@ object PackPlugin extends AutoPlugin with PackArchive {
           MAIN_CLASS = mainClass,
           JVM_OPTS = packJvmOpts.value.getOrElse(name, Nil).map("\"%s\"".format(_)).mkString(" "),
           EXTRA_CLASSPATH = extraClasspath(pathSeparator),
-          MAC_ICON_FILE = macIconFile
+          MAC_ICON_FILE = macIconFile,
+          ENV_VARS = packEnvVars.value.getOrElse(name, Map.empty).map{ case (key, value) => s"$key=$value" }.mkString(" ")
         )
 
         // TODO use custom template (packBashTemplate)

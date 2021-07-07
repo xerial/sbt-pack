@@ -100,6 +100,8 @@ packExpandedClasspath := false
 // [Optional] Resource directory mapping to be copied within target/pack. Default is Map("{projectRoot}/src/pack" -> "") 
 packResourceDir += (baseDirectory.value / "web" -> "web-content")
 
+// [Optional] Environment variables
+packEnvVars := Map("hello" -> Map("key1" -> "value1", "key2" -> "value2"))
 
 // To publish tar.gz, zip archives to the repository, add the following lines:
 import xerial.sbt.pack.PackPlugin._
