@@ -200,7 +200,7 @@ object PackPlugin extends AutoPlugin with PackArchive {
                 sys.error("Unknown duplicate JAR strategy '%s'".format(x))
             }
         }
-      distinctDpJars.toSeq
+      distinctDpJars.toSeq.distinct.sortBy(_.noVersionModuleName)
     },
     packCopyDependenciesUseSymbolicLinks := true,
     packCopyDependenciesTarget := target.value / "lib",
@@ -255,17 +255,18 @@ object PackPlugin extends AutoPlugin with PackArchive {
       // Copy dependent jars
 
       val distinctDpJars = packModuleEntries.value
-      out.log.info(logPrefix + "project dependencies:\n" + distinctDpJars.mkString("\n"))
+      out.log.info(logPrefix + "Copying project dependencies:")
       val jarNameConvention = packJarNameConvention.value
       val projectDepsJars = for (m <- distinctDpJars) yield {
         val targetFileName = resolveJarName(m, jarNameConvention)
         val dest           = libDir / targetFileName
+        out.log.info(s"${m}")
         IO.copyFile(m.file, dest, true)
         dest
       }
 
       // Copy unmanaged jars in ${baseDir}/lib folder
-      out.log.info(logPrefix + "unmanaged dependencies:")
+      out.log.info(logPrefix + "Copying unmanaged dependencies:")
       val unmanagedDepsJars = for ((m, projectRef) <- packAllUnmanagedJars.value; um <- m; f = um.data) yield {
         out.log.info(f.getPath)
         val dest = libDir / f.getName
@@ -275,7 +276,7 @@ object PackPlugin extends AutoPlugin with PackArchive {
 
       // Copy explicitly added dependencies
       val mapped: Seq[(File, String)] = (mappings in pack).value
-      out.log.info(logPrefix + "explicit dependencies:")
+      out.log.info(logPrefix + "Copying explicit dependencies:")
       val explicitDepsJars = for ((file, path) <- mapped) yield {
         out.log.info(file.getPath)
         val dest = distDir / path
