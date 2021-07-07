@@ -26,12 +26,12 @@ jobs:
       - name: scalafmt test
         run: ./sbt scalafmtCheckAll
   test_sbt_plugin:
-    name: sbt plugin test
+    name: plugin test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - uses: olafurpg/setup-scala@v10
         with:
           java-version: adopt@1.11
-      - name: sbt-airframe test
+      - name: scripted tests
         run: ./sbt scripted
