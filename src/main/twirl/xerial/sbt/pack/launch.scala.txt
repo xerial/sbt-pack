@@ -141,6 +141,11 @@ for arg do
   esac
 done
 
+ENV_VARS='@(opts.ENV_VARS)'
+if [ -n "$ENV_VARS" ] ; then
+  export $ENV_VARS
+fi
+
 eval exec "\"$JAVACMD\"" \
      @(opts.JVM_OPTS) \
      ${JAVA_OPTS} \
