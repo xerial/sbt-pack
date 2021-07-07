@@ -200,7 +200,7 @@ object PackPlugin extends AutoPlugin with PackArchive {
                 sys.error("Unknown duplicate JAR strategy '%s'".format(x))
             }
         }
-      distinctDpJars.toSeq
+      distinctDpJars.toSeq.distinct.sortBy(_.noVersionModuleName)
     },
     packCopyDependenciesUseSymbolicLinks := true,
     packCopyDependenciesTarget := target.value / "lib",
