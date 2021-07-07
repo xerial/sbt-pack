@@ -21,12 +21,13 @@ trait PackArchive {
       createOutputStream: (OutputStream) => ArchiveOutputStream,
       createEntry: (File, String, File) => ArchiveEntry
   ) = Def.task {
-    val out             = streams.value
-    val targetDir: File = packTargetDir.value
-    val distDir: File   = pack.value // run pack command here
-    val binDir          = distDir / "bin"
-    val archiveStem     = s"${packArchiveStem.value}"
-    val archiveName     = s"${packArchiveName.value}.${archiveSuffix}"
+    val out                    = streams.value
+    val targetDir: File        = packTargetDir.value
+    val distDir: File          = pack.value // run pack command here
+    val binDir                 = distDir / "bin"
+    val archiveStem            = s"${packArchiveStem.value}"
+    val archiveBaseDir: String = if (archiveStem.isEmpty) "" else s"${archiveStem}/"
+    val archiveName            = s"${packArchiveName.value}.${archiveSuffix}"
     out.log.info("Generating " + rpath(baseDirectory.value, targetDir / archiveName))
     val aos          = createOutputStream(new BufferedOutputStream(new FileOutputStream(targetDir / archiveName)))
     val excludeFiles = packArchiveExcludes.value.toSet
@@ -35,7 +36,7 @@ trait PackArchive {
         .getOrElse(Array.empty)
         .filterNot(f => excludeFiles.contains(rpath(distDir, f)))
         .foreach { file =>
-          aos.putArchiveEntry(createEntry(file, archiveStem ++ "/" ++ rpath(distDir, file, "/"), binDir))
+          aos.putArchiveEntry(createEntry(file, archiveBaseDir ++ rpath(distDir, file, "/"), binDir))
           if (file.isDirectory) {
             aos.closeArchiveEntry()
             addFilesToArchive(file)

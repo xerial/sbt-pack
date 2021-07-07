@@ -18,6 +18,13 @@ $ exists module1/target/module1-0.1.zip
 $ exists module1/target/pack/bin/module1
 $ exists module1/target/pack/lib/xerial-core-3.3.6.jar
 $ exec sh ./module1/target/pack/bin/module1
+$ exec tar tvfz module1/target/module1-0.1.tar.gz
+
 > 'set packArchiveName := "my-archive"'
 > packArchiveTgz
 $ exists target/my-archive.tar.gz
+$ exec tar tvfz target/my-archive.tar.gz
+
+> module3/packArchiveTgz
+$ exists module3/target/module3-0.1.tar.gz
+$ exec tar tvfz module3/target/module3-0.1.tar.gz
