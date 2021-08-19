@@ -13,11 +13,13 @@ object Main {
 
 class Main(
     @option(prefix = "-h,--help", description = "Display help messages", isHelp = true)
-    help: Boolean = false)
-    extends DefaultCommand
+    help: Boolean = false
+) extends DefaultCommand
     with Logger {
 
-  def default = println("Type --help for the list of commands.\nTo see the detailed help of each command, type (command name) --help")
+  def default = println(
+    "Type --help for the list of commands.\nTo see the detailed help of each command, type (command name) --help"
+  )
 
   @command(description = "Say hello")
   def hello = println("Hello World!")
@@ -25,7 +27,8 @@ class Main(
   @command(description = "Repeat say hello")
   def repeat(
       @option(prefix = "-r", description = "Repeat hello")
-      repeat: Int = 3) {
+      repeat: Int = 3
+  ) {
 
     for (i <- 0 until repeat)
       hello
@@ -46,16 +49,18 @@ class Main(
   }
 
   @command(description = "option setting examples")
-  def complexCommands(@option(prefix = "--min", description = "min value")
-                      min: Int = 0,
-                      @option(prefix = "--max", description = "max value")
-                      max: Int = 10,
-                      @option(prefix = "-c", description = "card: spade|diamond|heard|clover")
-                      card: Option[Card] = None,
-                      @option(prefix = "-f", description = "flag")
-                      flag: Option[Boolean] = None,
-                      @argument
-                      otherArg: String) {
+  def complexCommands(
+      @option(prefix = "--min", description = "min value")
+      min: Int = 0,
+      @option(prefix = "--max", description = "max value")
+      max: Int = 10,
+      @option(prefix = "-c", description = "card: spade|diamond|heard|clover")
+      card: Option[Card] = None,
+      @option(prefix = "-f", description = "flag")
+      flag: Option[Boolean] = None,
+      @argument
+      otherArg: String
+  ) {
     info(s"min:$min, max:$max")
     info(s"card:${card getOrElse ("no card is selected")}")
     info(s"flag:$flag")
@@ -64,8 +69,7 @@ class Main(
 
 }
 
-/**
-  * Define your enum class
+/** Define your enum class
   */
 object Card {
 

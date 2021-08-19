@@ -7,8 +7,8 @@ ThisBuild / scalaVersion := "2.12.14"
 enablePlugins(PackPlugin)
 
 lazy val root = (project in file("."))
-        .dependsOn(module1, module2)
-        .enablePlugins(PackPlugin)
+  .dependsOn(module1, module2)
+  .enablePlugins(PackPlugin)
 
 lazy val module1 = (project in file("modules/module1")).dependsOn(lib1).enablePlugins(PackPlugin)
 lazy val module2 = (project in file("modules/module2")).dependsOn(lib2)
