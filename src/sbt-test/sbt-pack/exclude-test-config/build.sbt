@@ -2,8 +2,8 @@ ThisBuild / scalaVersion := "2.12.14"
 
 val commonSettings = Seq(
   scalaVersion := "2.12.14",
-  version := "0.1",
-  crossPaths := false
+  version      := "0.1",
+  crossPaths   := false
 )
 
 lazy val module1 =
@@ -11,8 +11,8 @@ lazy val module1 =
     .settings(commonSettings)
     .settings(
       libraryDependencies ++= Seq(
-        "org.slf4j"         % "slf4j-api"   % "1.7.6"
-      ),
+        "org.slf4j" % "slf4j-api" % "1.7.6"
+      )
     )
     .enablePlugins(PackPlugin)
 

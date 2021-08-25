@@ -1,7 +1,7 @@
 val commonSettings = Defaults.coreDefaultSettings ++ Seq(
   scalaVersion := "2.12.14",
-  version := "0.1",
-  crossPaths := false
+  version      := "0.1",
+  crossPaths   := false
 )
 
 lazy val root = Project(
