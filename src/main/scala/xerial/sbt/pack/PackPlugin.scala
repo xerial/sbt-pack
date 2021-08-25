@@ -22,7 +22,8 @@ import scala.util.matching.Regex
 
 /** Plugin for packaging projects
   *
-  * @author Taro L. Saito
+  * @author
+  *   Taro L. Saito
   */
 object PackPlugin extends AutoPlugin with PackArchive {
 
@@ -59,7 +60,7 @@ object PackPlugin extends AutoPlugin with PackArchive {
 
     val packMain           = taskKey[Map[String, String]]("prog_name -> main class table")
     val packMainDiscovered = taskKey[Map[String, String]]("discovered prog_name -> main class table")
-    val packExclude        = settingKey[Seq[String]]("specify projects whose dependencies will be excluded when packaging")
+    val packExclude = settingKey[Seq[String]]("specify projects whose dependencies will be excluded when packaging")
     val packExcludeLibJars =
       settingKey[Seq[String]]("specify projects to exclude when packaging.  Its dependencies will be processed")
     val packExcludeJars = settingKey[Seq[String]]("specify jar file name patterns to exclude when packaging")
@@ -81,10 +82,10 @@ object PackPlugin extends AutoPlugin with PackArchive {
     val packJarNameConvention = settingKey[String](
       "default: (artifact name)-(version).jar; original: original JAR name; full: (organization).(artifact name)-(version).jar; no-version: (organization).(artifact name).jar"
     )
-    val packDuplicateJarStrategy   = settingKey[String]("""deal with duplicate jars. default to use latest version
+    val packDuplicateJarStrategy = settingKey[String]("""deal with duplicate jars. default to use latest version
         |latest: use the jar with a higher version; exit: exit the task with error""".stripMargin)
     val packCopyDependenciesTarget = settingKey[File]("target folder used by the <packCopyDependencies> task.")
-    val packCopyDependencies       = taskKey[Unit]("""just copies the dependencies to the <packCopyDependencies> folder.
+    val packCopyDependencies = taskKey[Unit]("""just copies the dependencies to the <packCopyDependencies> folder.
         		|Compared to the <pack> task, it doesn't try to create scripts.
       	  """.stripMargin)
     val packCopyDependenciesUseSymbolicLinks =
@@ -122,25 +123,25 @@ object PackPlugin extends AutoPlugin with PackArchive {
 
   lazy val packSettings = Seq[Def.Setting[_]](
     packTargetDir := target.value,
-    packDir := "pack",
+    packDir       := "pack",
     //packBashTemplate := "/xerial/sbt/template/launch.mustache",
     //packBatTemplate := "/xerial/sbt/template/launch-bat.mustache",
     //packMakeTemplate := "/xerial/sbt/template/Makefile.mustache",
-    packMain := packMainDiscovered.value,
-    packExclude := Seq.empty,
-    packExcludeLibJars := Seq.empty,
-    packExcludeJars := Seq.empty,
-    packJarListFile := None,
-    packExcludeArtifactTypes := Seq("source", "javadoc", "test"),
-    packMacIconFile := "icon-mac.png",
-    packResourceDir := Map(baseDirectory.value / "src/pack" -> ""),
-    packJvmOpts := Map.empty,
-    packExtraClasspath := Map.empty,
-    packExpandedClasspath := false,
-    packJarNameConvention := "default",
-    packDuplicateJarStrategy := "latest",
+    packMain                   := packMainDiscovered.value,
+    packExclude                := Seq.empty,
+    packExcludeLibJars         := Seq.empty,
+    packExcludeJars            := Seq.empty,
+    packJarListFile            := None,
+    packExcludeArtifactTypes   := Seq("source", "javadoc", "test"),
+    packMacIconFile            := "icon-mac.png",
+    packResourceDir            := Map(baseDirectory.value / "src/pack" -> ""),
+    packJvmOpts                := Map.empty,
+    packExtraClasspath         := Map.empty,
+    packExpandedClasspath      := false,
+    packJarNameConvention      := "default",
+    packDuplicateJarStrategy   := "latest",
     packGenerateWindowsBatFile := true,
-    packGenerateMakefile := true,
+    packGenerateMakefile       := true,
     packMainDiscovered := Def.taskDyn {
       val mainClasses =
         getFromSelectedProjects(thisProjectRef.value, discoveredMainClasses in Compile, state.value, packExclude.value)
@@ -204,7 +205,7 @@ object PackPlugin extends AutoPlugin with PackArchive {
       distinctDpJars.toSeq.distinct.sortBy(_.noVersionModuleName)
     },
     packCopyDependenciesUseSymbolicLinks := true,
-    packCopyDependenciesTarget := target.value / "lib",
+    packCopyDependenciesTarget           := target.value / "lib",
     packCopyDependencies := {
       val log = streams.value.log
 

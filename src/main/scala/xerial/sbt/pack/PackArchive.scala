@@ -79,10 +79,10 @@ trait PackArchive {
   }
 
   lazy val packArchiveSettings = Seq[Def.Setting[_]](
-    packArchivePrefix := name.value,
-    packArchiveName := s"${packArchivePrefix.value}-${version.value}",
-    packArchiveStem := s"${packArchiveName.value}",
-    packArchiveExcludes := Seq.empty,
+    packArchivePrefix      := name.value,
+    packArchiveName        := s"${packArchivePrefix.value}-${version.value}",
+    packArchiveStem        := s"${packArchiveName.value}",
+    packArchiveExcludes    := Seq.empty,
     packArchiveTgzArtifact := Artifact(packArchivePrefix.value, "arch", "tar.gz"),
     packArchiveTbzArtifact := Artifact(packArchivePrefix.value, "arch", "tar.bz2"),
     packArchiveTxzArtifact := Artifact(packArchivePrefix.value, "arch", "tar.xz"),
@@ -103,7 +103,7 @@ trait PackArchive {
       createTarEntry
     ).value,
     packArchiveZip := createArchive("zip", new ZipArchiveOutputStream(_), createZipEntry).value,
-    packArchive := Seq(packArchiveTgz.value, packArchiveZip.value)
+    packArchive    := Seq(packArchiveTgz.value, packArchiveZip.value)
   )
 
   def publishPackArchiveTgz: SettingsDefinition = Seq(
