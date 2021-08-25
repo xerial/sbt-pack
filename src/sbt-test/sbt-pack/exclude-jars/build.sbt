@@ -1,6 +1,6 @@
 enablePlugins(PackPlugin)
 version      := "0.1"
-scalaVersion := "2.12.14"
+scalaVersion := "2.13.6"
 crossPaths   := false
 name         := "exclude-jars"
 libraryDependencies ++= Seq(
