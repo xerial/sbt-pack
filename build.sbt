@@ -33,7 +33,7 @@ scriptedLaunchOpts ++= {
 }
 
 libraryDependencies ++= Seq(
-  "org.slf4j"             % "slf4j-simple"     % "1.7.32",
+  "org.slf4j"             % "slf4j-simple"     % "1.7.36",
   "org.apache.commons"    % "commons-compress" % "1.21",
   "org.scalatra.scalate" %% "scalate-core"     % "1.9.8",
   "org.tukaani"           % "xz"               % "1.9",
