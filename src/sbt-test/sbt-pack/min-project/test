@@ -2,11 +2,11 @@
 > pack
 $ exists target/pack/Makefile
 $ exists target/pack/bin/hello
-$ exists target/pack/lib/scala-library-2.12.14.jar
+$ exists target/pack/lib/scala-library-2.12.15.jar
 $ exec sh ./target/pack/bin/hello
 > packArchive
 $ exists target/min-project-0.1.tar.gz
 > packInstall ../../local
 $ exists local/bin/hello
 $ exists local/min-project/min-project-0.1/lib/min-project-0.1.jar
-$ exists local/min-project/min-project-0.1/lib/scala-library-2.12.14.jar
+$ exists local/min-project/min-project-0.1/lib/scala-library-2.12.15.jar
