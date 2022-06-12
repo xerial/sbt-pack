@@ -37,5 +37,5 @@ libraryDependencies ++= Seq(
   "org.apache.commons"    % "commons-compress" % "1.21",
   "org.scalatra.scalate" %% "scalate-core"     % "1.9.8",
   "org.tukaani"           % "xz"               % "1.9",
-  "org.specs2"           %% "specs2-core"      % "4.8.3" % "test"
+  "org.specs2"           %% "specs2-core"      % "4.16.0" % "test"
 )
