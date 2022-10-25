@@ -1,4 +1,4 @@
-ThisBuild / scalaVersion := "2.12.15"
+ThisBuild / scalaVersion := "2.12.17"
 val commonSettings = Defaults.coreDefaultSettings ++ Seq(
   version    := "0.1",
   crossPaths := false
