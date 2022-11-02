@@ -1,5 +1,8 @@
 ### Release Notes
 
+## 0.15
+  - Update dependencies to use scala-xml 2.x
+
 ## 0.14
   - packArchiveStem := "" setting can be used for creating package for AWS Lambda
   - Add packEnvVars setting for setting environment variables
