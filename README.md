@@ -38,7 +38,7 @@ Add `sbt-pack` plugin to your sbt configuration:
 addSbtPlugin("org.xerial.sbt" % "sbt-pack" % "(version)")  
 ```
 
-Repository URL: http://repo1.maven.org/maven2/org/xerial/sbt/
+Repository URL: https://repo1.maven.org/maven2/org/xerial/sbt/
 
 #### Minimum configuration
 
