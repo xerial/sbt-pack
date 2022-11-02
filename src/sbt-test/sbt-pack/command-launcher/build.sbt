@@ -4,7 +4,7 @@ lazy val root = Project(
 ).enablePlugins(PackPlugin)
   .settings(Defaults.coreDefaultSettings)
   .settings(
-    scalaVersion := "2.11.12",
+    scalaVersion := "2.12.17",
     scalacOptions ++= Seq("-deprecation", "-feature"),
     // Mapping from program name -> Main class
     packMain := Map("launcher" -> "launcher.Main"),
