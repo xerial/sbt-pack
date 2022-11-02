@@ -249,8 +249,7 @@ For releasing:
 
 ```
 $ ./sbt
-# cross tests for sbt 0.13 and 1.1
-> ^ scripted
-> ^ publishSigned
-> sonatypeReleaseAll
+> scripted
+> publishSigned
+> sonatypeBundleRelease
 ```
