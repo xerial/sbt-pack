@@ -10,13 +10,13 @@ organizationHomepage := Some(new URL("http://xerial.org/"))
 description          := "A sbt plugin for packaging distributable Scala code"
 
 publishMavenStyle       := true
-publishArtifact in Test := false
+Test / publishArtifact  := false
 
 pomIncludeRepository := { _ =>
   false
 }
 
-ThisBuild / scalaVersion := "2.12.15"
+ThisBuild / scalaVersion := "2.12.17"
 
 parallelExecution := true
 crossPaths        := false
@@ -33,9 +33,8 @@ scriptedLaunchOpts ++= {
 }
 
 libraryDependencies ++= Seq(
-  "org.slf4j"             % "slf4j-simple"     % "1.7.36",
+  "org.slf4j"             % "slf4j-api"        % "1.7.36",
   "org.apache.commons"    % "commons-compress" % "1.21",
-  "org.scalatra.scalate" %% "scalate-core"     % "1.9.8",
   "org.tukaani"           % "xz"               % "1.9",
-  "org.specs2"           %% "specs2-core"      % "4.16.1" % "test"
+  "org.specs2"           %% "specs2-core"      % "4.17.0" % "test"
 )
