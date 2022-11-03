@@ -32,9 +32,10 @@ scriptedLaunchOpts ++= {
     Seq("-Dplugin.version=" + version.value)
 }
 
+testFrameworks += new TestFramework("wvlet.airspec.Framework")
+
 libraryDependencies ++= Seq(
-  "org.slf4j"          % "slf4j-api"        % "2.0.3",
-  "org.apache.commons" % "commons-compress" % "1.22",
-  "org.tukaani"        % "xz"               % "1.9",
-  "org.specs2"        %% "specs2-core"      % "4.18.0" % "test"
+  "org.wvlet.airframe" %% "airspec"          % "22.11.0" % Test,
+  "org.apache.commons"  % "commons-compress" % "1.22",
+  "org.tukaani"         % "xz"               % "1.9"
 )
