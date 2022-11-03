@@ -3,7 +3,7 @@ lazy val root = Project(
   base = file(".")
 ).enablePlugins(PackPlugin)
   .settings(
-    scalaVersion := "2.12.17",
+    scalaVersion := "2.13.10",
     // Copy files from ${root}/web/... to ${root}/target/pack/web-content...
     packResourceDir += (baseDirectory.value / "web" -> "web-content"),
     // custom settings here
