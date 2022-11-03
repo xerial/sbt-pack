@@ -3,7 +3,7 @@ import xerial.sbt.pack.PackPlugin._
 
 val commonSettings = Defaults.coreDefaultSettings ++
   Seq(
-    scalaVersion := "2.13.10",
+    scalaVersion := "2.12.17",
     version      := "0.1",
     crossPaths   := false
   )
