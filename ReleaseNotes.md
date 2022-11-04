@@ -1,5 +1,9 @@
 ### Release Notes
 
+## 0.16
+  - Remove unnecessary dependencies to slf4j
+  - Upgrade various dependency versions
+
 ## 0.15
   - Update dependencies to use scala-xml 2.x
 
