@@ -1,4 +1,4 @@
-sbt-pack plugin [![Build Status](https://travis-ci.org/xerial/sbt-pack.svg?branch=master)](https://travis-ci.org/xerial/sbt-pack) [![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.xerial.sbt/sbt-pack/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.xerial.sbt/sbt-pack)
+sbt-pack plugin [![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.xerial.sbt/sbt-pack/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.xerial.sbt/sbt-pack)
 ========
 
 A sbt plugin for creating distributable Scala packages that include dependent jars and launch scripts.
