@@ -87,23 +87,29 @@ trait PackArchive {
     packArchiveTbzArtifact := Artifact(packArchivePrefix.value, "arch", "tar.bz2"),
     packArchiveTxzArtifact := Artifact(packArchivePrefix.value, "arch", "tar.xz"),
     packArchiveZipArtifact := Artifact(packArchivePrefix.value, "arch", "zip"),
-    packArchiveTgz := createArchive(
-      "tar.gz",
-      (fos) => createTarArchiveOutputStream(new GzipCompressorOutputStream(fos)),
-      createTarEntry
-    ).value,
-    packArchiveTbz := createArchive(
-      "tar.bz2",
-      (fos) => createTarArchiveOutputStream(new BZip2CompressorOutputStream(fos)),
-      createTarEntry
-    ).value,
-    packArchiveTxz := createArchive(
-      "tar.xz",
-      (fos) => createTarArchiveOutputStream(new XZCompressorOutputStream(fos)),
-      createTarEntry
-    ).value,
-    packArchiveZip := createArchive("zip", new ZipArchiveOutputStream(_), createZipEntry).value,
-    packArchive    := Seq(packArchiveTgz.value, packArchiveZip.value)
+    Def.derive(
+      packArchiveTgz := createArchive(
+        "tar.gz",
+        (fos) => createTarArchiveOutputStream(new GzipCompressorOutputStream(fos)),
+        createTarEntry
+      ).value
+    ),
+    Def.derive(
+      packArchiveTbz := createArchive(
+        "tar.bz2",
+        (fos) => createTarArchiveOutputStream(new BZip2CompressorOutputStream(fos)),
+        createTarEntry
+      ).value
+    ),
+    Def.derive(
+      packArchiveTxz := createArchive(
+        "tar.xz",
+        (fos) => createTarArchiveOutputStream(new XZCompressorOutputStream(fos)),
+        createTarEntry
+      ).value
+    ),
+    Def.derive(packArchiveZip := createArchive("zip", new ZipArchiveOutputStream(_), createZipEntry).value),
+    Def.derive(packArchive    := Seq(packArchiveTgz.value, packArchiveZip.value))
   )
 
   def publishPackArchiveTgz: SettingsDefinition = Seq(
