@@ -112,25 +112,17 @@ trait PackArchive {
     Def.derive(packArchive    := Seq(packArchiveTgz.value, packArchiveZip.value))
   )
 
-  def publishPackArchiveTgz: SettingsDefinition = Seq(
-    artifacts += packArchiveTgzArtifact.value,
-    packagedArtifacts += packArchiveTgzArtifact.value -> packArchiveTgz.value
-  )
+  def publishPackArchiveTgz: SettingsDefinition =
+    addArtifact(Def.setting(packArchiveTgzArtifact.value), Runtime / packArchiveTgz)
 
-  def publishPackArchiveTbz: SettingsDefinition = Seq(
-    artifacts += packArchiveTbzArtifact.value,
-    packagedArtifacts += packArchiveTbzArtifact.value -> packArchiveTbz.value
-  )
+  def publishPackArchiveTbz: SettingsDefinition =
+    addArtifact(Def.setting(packArchiveTbzArtifact.value), Runtime / packArchiveTbz)
 
-  def publishPackArchiveTxz: SettingsDefinition = Seq(
-    artifacts += packArchiveTxzArtifact.value,
-    packagedArtifacts += packArchiveTxzArtifact.value -> packArchiveTxz.value
-  )
+  def publishPackArchiveTxz: SettingsDefinition =
+    addArtifact(Def.setting(packArchiveTxzArtifact.value), Runtime / packArchiveTxz)
 
-  def publishPackArchiveZip: SettingsDefinition = Seq(
-    artifacts += packArchiveZipArtifact.value,
-    packagedArtifacts += packArchiveZipArtifact.value -> packArchiveZip.value
-  )
+  def publishPackArchiveZip: SettingsDefinition =
+    addArtifact(Def.setting(packArchiveZipArtifact.value), Runtime / packArchiveZip)
 
   def publishPackArchives: SettingsDefinition =
     publishPackArchiveTgz ++ publishPackArchiveZip
