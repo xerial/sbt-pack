@@ -1,5 +1,7 @@
 ### Release Notes
 
+Note: See https://github.com/xerial/sbt-pack/releases for future relase notes
+
 ## 0.16
   - Remove unnecessary dependencies to slf4j
   - Upgrade various dependency versions
