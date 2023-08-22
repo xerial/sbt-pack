@@ -212,8 +212,8 @@ packMain := Map("myapp"->"org.yourdomain.MyApp")
 
 **Dockerfile**
 ```
-# Using an Alpine Linux based JDK image
-FROM anapsix/alpine-java:8u131b11_jdk
+# Using JDK17 from Amazon Corretto
+FROM FROM amazoncorretto:17
 
 COPY target/pack /srv/myapp
 
