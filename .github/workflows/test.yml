@@ -22,14 +22,14 @@ jobs:
     name: Code format
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: scalafmt test
         run: ./sbt scalafmtCheckAll
   test_sbt_plugin:
     name: plugin test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: olafurpg/setup-scala@v14
         with:
           java-version: adopt@1.11
