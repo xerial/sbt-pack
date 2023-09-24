@@ -1,6 +1,6 @@
 enablePlugins(PackPlugin)
 name := "min-project"
 
-scalaVersion := "2.12.18"
+scalaVersion := "2.13.12"
 // custom settings here
 crossPaths := false

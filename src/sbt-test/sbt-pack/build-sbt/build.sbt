@@ -1,5 +1,5 @@
 enablePlugins(PackPlugin)
 
-scalaVersion := "2.12.18"
+scalaVersion := "2.13.12"
 
 packExtraClasspath := Map("hello" -> Seq("${PROG_HOME}/extra"))
