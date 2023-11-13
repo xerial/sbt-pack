@@ -35,7 +35,7 @@ scriptedLaunchOpts ++= {
 testFrameworks += new TestFramework("wvlet.airspec.Framework")
 
 libraryDependencies ++= Seq(
-  "org.wvlet.airframe" %% "airspec"          % "23.11.2" % Test,
+  "org.wvlet.airframe" %% "airspec"          % "23.11.3" % Test,
   "org.apache.commons"  % "commons-compress" % "1.24.0",
   "org.tukaani"         % "xz"               % "1.9"
 )
