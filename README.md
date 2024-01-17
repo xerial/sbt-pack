@@ -213,7 +213,7 @@ packMain := Map("myapp"->"org.yourdomain.MyApp")
 **Dockerfile**
 ```
 # Using JDK17 from Amazon Corretto
-FROM FROM amazoncorretto:17
+FROM amazoncorretto:17
 
 COPY target/pack /srv/myapp
 
