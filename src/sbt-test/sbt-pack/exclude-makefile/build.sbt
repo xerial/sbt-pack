@@ -1,5 +1,5 @@
 enablePlugins(PackPlugin)
-scalaVersion := "2.12.18"
+scalaVersion := "2.12.19"
 crossPaths   := false
 name         := "exclude-makefile"
 version      := "0.1"
