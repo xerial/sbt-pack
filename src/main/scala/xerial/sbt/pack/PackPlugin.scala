@@ -144,14 +144,14 @@ object PackPlugin extends AutoPlugin with PackArchive {
     packGenerateMakefile       := true,
     packMainDiscovered := Def.taskDyn {
       val mainClasses =
-        getFromSelectedProjects(thisProjectRef.value, discoveredMainClasses in Compile, state.value, packExclude.value)
+        getFromSelectedProjects(thisProjectRef.value, Compile / discoveredMainClasses, state.value, packExclude.value)
       Def.task {
         mainClasses.value.flatMap(_._1.map(mainClass => hyphenize(mainClass.split('.').last) -> mainClass).toMap).toMap
       }
     }.value,
     packAllUnmanagedJars := Def.taskDyn {
       val allUnmanagedJars =
-        getFromSelectedProjects(thisProjectRef.value, unmanagedJars in Runtime, state.value, packExclude.value)
+        getFromSelectedProjects(thisProjectRef.value, Runtime / unmanagedJars, state.value, packExclude.value)
       Def.task { allUnmanagedJars.value }
     }.value,
     Def.derive(
@@ -513,7 +513,7 @@ object PackPlugin extends AutoPlugin with PackArchive {
       (currentProject +: (children flatMap transitiveDependencies)) filterNot (isExcluded)
     }
     val projects: Seq[ProjectRef] = transitiveDependencies(contextProject).distinct
-    projects.map(p => (Def.task { ((targetTask in p).value, p) }) evaluate structure.data).join
+    projects.map(p => (Def.task { ((p / targetTask).value, p) }) evaluate structure.data).join
   }
 
   private val humanReadableTimestampFormatter = new DateTimeFormatterBuilder()
