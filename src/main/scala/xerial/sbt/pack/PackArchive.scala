@@ -1,25 +1,24 @@
 package xerial.sbt.pack
 
-import java.io._
-
-import org.apache.commons.compress.archivers._
-import org.apache.commons.compress.archivers.tar._
-import org.apache.commons.compress.archivers.zip._
+import java.io.*
+import org.apache.commons.compress.archivers.*
+import org.apache.commons.compress.archivers.tar.*
+import org.apache.commons.compress.archivers.zip.*
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorOutputStream
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream
 import org.apache.commons.compress.compressors.xz.XZCompressorOutputStream
-import org.apache.commons.compress.utils.IOUtils
-import sbt.Keys._
-import sbt._
+import org.apache.commons.io.IOUtils
+import sbt.Keys.*
+import sbt.*
 
 trait PackArchive {
 
   import PackPlugin.autoImport._
 
-  private def createArchive(
+  private def createArchive[EntryType <: ArchiveEntry](
       archiveSuffix: String,
-      createOutputStream: (OutputStream) => ArchiveOutputStream,
-      createEntry: (File, String, File) => ArchiveEntry
+      createOutputStream: (OutputStream) => ArchiveOutputStream[EntryType],
+      createEntry: (File, String, File) => EntryType
   ) = Def.task {
     val out                    = streams.value
     val targetDir: File        = packTargetDir.value
@@ -56,21 +55,22 @@ trait PackArchive {
     targetDir / archiveName
   }
 
-  private def createTarEntry(file: File, fileName: String, binDir: File) = {
+  private def createTarEntry(file: File, fileName: String, binDir: File): TarArchiveEntry = {
     val archiveEntry = new TarArchiveEntry(file, fileName)
-    if (file.getAbsolutePath startsWith binDir.getAbsolutePath)
+    if (file.getAbsolutePath startsWith binDir.getAbsolutePath) {
       archiveEntry.setMode(Integer.parseInt("0755", 8))
+    }
     archiveEntry
   }
 
-  private def createTarArchiveOutputStream(os: OutputStream) = {
+  private def createTarArchiveOutputStream(os: OutputStream): TarArchiveOutputStream = {
     val tos = new TarArchiveOutputStream(os)
     tos.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX)
     tos.setBigNumberMode(TarArchiveOutputStream.BIGNUMBER_POSIX)
     tos
   }
 
-  private def createZipEntry(file: File, fileName: String, binDir: File) = {
+  private def createZipEntry(file: File, fileName: String, binDir: File): ZipArchiveEntry = {
     val archiveEntry = new ZipArchiveEntry(file, fileName)
     if (file.getAbsolutePath.startsWith(binDir.getAbsolutePath)) {
       archiveEntry.setUnixMode(Integer.parseInt("0755", 8))
@@ -88,28 +88,30 @@ trait PackArchive {
     packArchiveTxzArtifact := Artifact(packArchivePrefix.value, "arch", "tar.xz"),
     packArchiveZipArtifact := Artifact(packArchivePrefix.value, "arch", "zip"),
     Def.derive(
-      packArchiveTgz := createArchive(
+      packArchiveTgz := createArchive[TarArchiveEntry](
         "tar.gz",
         (fos) => createTarArchiveOutputStream(new GzipCompressorOutputStream(fos)),
         createTarEntry
       ).value
     ),
     Def.derive(
-      packArchiveTbz := createArchive(
+      packArchiveTbz := createArchive[TarArchiveEntry](
         "tar.bz2",
         (fos) => createTarArchiveOutputStream(new BZip2CompressorOutputStream(fos)),
         createTarEntry
       ).value
     ),
     Def.derive(
-      packArchiveTxz := createArchive(
+      packArchiveTxz := createArchive[TarArchiveEntry](
         "tar.xz",
         (fos) => createTarArchiveOutputStream(new XZCompressorOutputStream(fos)),
         createTarEntry
       ).value
     ),
-    Def.derive(packArchiveZip := createArchive("zip", new ZipArchiveOutputStream(_), createZipEntry).value),
-    Def.derive(packArchive    := Seq(packArchiveTgz.value, packArchiveZip.value))
+    Def.derive(
+      packArchiveZip := createArchive[ZipArchiveEntry]("zip", new ZipArchiveOutputStream(_), createZipEntry).value
+    ),
+    Def.derive(packArchive := Seq(packArchiveTgz.value, packArchiveZip.value))
   )
 
   def publishPackArchiveTgz: SettingsDefinition =
