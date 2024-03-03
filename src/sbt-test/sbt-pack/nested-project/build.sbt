@@ -2,7 +2,7 @@ name := "nested"
 
 ThisBuild / version := "0.1"
 
-ThisBuild / scalaVersion := "2.12.19"
+ThisBuild / scalaVersion := "2.13.13"
 
 enablePlugins(PackPlugin)
 
