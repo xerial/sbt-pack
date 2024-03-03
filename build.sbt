@@ -35,7 +35,7 @@ scriptedLaunchOpts ++= {
 testFrameworks += new TestFramework("wvlet.airspec.Framework")
 
 libraryDependencies ++= Seq(
-  "org.wvlet.airframe" %% "airspec"          % "24.2.3" % Test,
+  "org.wvlet.airframe" %% "airspec"          % "24.3.0" % Test,
   "org.apache.commons"  % "commons-compress" % "1.26.0",
   // commons-codec is necessary for commons-compress
   "commons-codec" % "commons-codec" % "1.16.1",
