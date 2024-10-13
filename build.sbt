@@ -3,6 +3,17 @@ Global / onChangedBuildSource := ReloadOnSourceChanges
 enablePlugins(SbtTwirl)
 enablePlugins(SbtPlugin)
 
+crossScalaVersions += "3.3.4"
+
+pluginCrossBuild / sbtVersion := {
+  scalaBinaryVersion.value match {
+    case "2.12" =>
+      (pluginCrossBuild / sbtVersion).value
+    case _ =>
+      "2.0.0-M2"
+  }
+}
+
 organization         := "org.xerial.sbt"
 organizationName     := "Xerial project"
 name                 := "sbt-pack"
@@ -15,8 +26,6 @@ Test / publishArtifact := false
 pomIncludeRepository := { _ =>
   false
 }
-
-ThisBuild / scalaVersion := "2.12.20"
 
 parallelExecution := true
 crossPaths        := false
