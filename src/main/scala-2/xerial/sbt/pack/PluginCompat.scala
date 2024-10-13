@@ -6,7 +6,7 @@ import xsbti.FileConverter
 
 private[pack] object PluginCompat {
   type FileRef = java.io.File
-  type Out = java.io.File
+  type Out     = java.io.File
 
   implicit def toFile(a: FileRef): Out = a
 
