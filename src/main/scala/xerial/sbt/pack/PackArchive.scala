@@ -32,7 +32,7 @@ trait PackArchive {
     val excludeFiles = packArchiveExcludes.value.toSet
     def addFilesToArchive(dir: File): Unit =
       Option(dir.listFiles)
-        .getOrElse(Array.empty)
+        .getOrElse(Array.empty[File])
         .filterNot(f => excludeFiles.contains(rpath(distDir, f)))
         .foreach { file =>
           aos.putArchiveEntry(createEntry(file, archiveBaseDir ++ rpath(distDir, file, "/"), binDir))
