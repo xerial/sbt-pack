@@ -5,6 +5,8 @@ enablePlugins(SbtPlugin)
 
 crossScalaVersions += "3.3.4"
 
+ThisBuild / scalaVersion := "3.3.4"
+
 pluginCrossBuild / sbtVersion := {
   scalaBinaryVersion.value match {
     case "2.12" =>
@@ -28,7 +30,7 @@ pomIncludeRepository := { _ =>
 }
 
 parallelExecution := true
-crossPaths        := false
+crossPaths        := true
 scalacOptions ++= Seq("-encoding", "UTF-8", "-deprecation", "-unchecked")
 
 scriptedBufferLog := false
