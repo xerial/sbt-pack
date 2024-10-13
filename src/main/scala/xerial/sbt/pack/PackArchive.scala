@@ -10,6 +10,8 @@ import org.apache.commons.compress.compressors.xz.XZCompressorOutputStream
 import org.apache.commons.io.IOUtils
 import sbt.Keys.*
 import sbt.*
+import PluginCompat.*
+import PluginCompat.toFile
 
 trait PackArchive {
 
@@ -115,16 +117,16 @@ trait PackArchive {
   )
 
   def publishPackArchiveTgz: SettingsDefinition =
-    addArtifact(Def.setting(packArchiveTgzArtifact.value), Runtime / packArchiveTgz)
+    addArtifact(Def.setting(packArchiveTgzArtifact.value), packArchiveTgz)
 
   def publishPackArchiveTbz: SettingsDefinition =
-    addArtifact(Def.setting(packArchiveTbzArtifact.value), Runtime / packArchiveTbz)
+    addArtifact(Def.setting(packArchiveTbzArtifact.value), packArchiveTbz)
 
   def publishPackArchiveTxz: SettingsDefinition =
-    addArtifact(Def.setting(packArchiveTxzArtifact.value), Runtime / packArchiveTxz)
+    addArtifact(Def.setting(packArchiveTxzArtifact.value), packArchiveTxz)
 
   def publishPackArchiveZip: SettingsDefinition =
-    addArtifact(Def.setting(packArchiveZipArtifact.value), Runtime / packArchiveZip)
+    addArtifact(Def.setting(packArchiveZipArtifact.value), packArchiveZip)
 
   def publishPackArchives: SettingsDefinition =
     publishPackArchiveTgz ++ publishPackArchiveZip

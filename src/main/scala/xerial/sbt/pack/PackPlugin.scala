@@ -104,10 +104,10 @@ object PackPlugin extends AutoPlugin with PackArchive {
     val packArchiveTbzArtifact = settingKey[Artifact]("tar.bz2 archive artifact")
     val packArchiveTxzArtifact = settingKey[Artifact]("tar.xz archive artifact")
     val packArchiveZipArtifact = settingKey[Artifact]("zip archive artifact")
-    val packArchiveTgz         = taskKey[File]("create a tar.gz archive of the distributable package")
-    val packArchiveTbz         = taskKey[File]("create a tar.bz2 archive of the distributable package")
-    val packArchiveTxz         = taskKey[File]("create a tar.xz archive of the distributable package")
-    val packArchiveZip         = taskKey[File]("create a zip archive of the distributable package")
+    val packArchiveTgz         = taskKey[FileRef]("create a tar.gz archive of the distributable package")
+    val packArchiveTbz         = taskKey[FileRef]("create a tar.bz2 archive of the distributable package")
+    val packArchiveTxz         = taskKey[FileRef]("create a tar.xz archive of the distributable package")
+    val packArchiveZip         = taskKey[FileRef]("create a zip archive of the distributable package")
     val packArchive            = taskKey[Seq[File]]("create a tar.gz and a zip archive of the distributable package")
     val packEnvVars            = taskKey[Map[String, Map[String, String]]]("environment variables")
   }
@@ -152,7 +152,8 @@ object PackPlugin extends AutoPlugin with PackArchive {
           packExclude.value
         )
       Def.task {
-        mainClasses.value.flatMap(_._1.map(mainClass => hyphenize(mainClass.split('.').last) -> mainClass).toMap).toMap
+        mainClasses.value
+          .flatMap(_._1.map(mainClass => hyphenize(mainClass.split('.').last) -> mainClass).toMap).toMap
       }
     }.value,
     packAllUnmanagedJars := Def.taskDyn {
@@ -199,7 +200,7 @@ object PackPlugin extends AutoPlugin with PackArchive {
             c                <- update.value.filter(df).configurations
             m                <- c.modules if !m.evicted
             (artifact, file) <- m.artifacts
-            if !packExcludeArtifactTypes.value.contains(artifact.`type`) && !isExcludeJar(file.name)
+            if !packExcludeArtifactTypes.value.contains(artifact.`type`) && !isExcludeJar(file.getName())
           } yield {
             val mid = m.module
             ModuleEntry(
