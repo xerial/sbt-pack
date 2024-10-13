@@ -13,6 +13,7 @@ private[pack] object PluginCompat:
   given conv: FileConverter = PlainVirtualFileConverter.converter
 
   implicit def toFile(a: HashedVirtualFileRef): File = conv.toPath(a).toFile
+  implicit def toFileRef(a: File): FileRef           = conv.toVirtualFile(a.toPath)
 
   def toNioPath(a: Attributed[HashedVirtualFileRef])(using conv: FileConverter): NioPath =
     conv.toPath(a.data)
