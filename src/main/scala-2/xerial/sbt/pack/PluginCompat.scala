@@ -1,8 +1,14 @@
 package xerial.sbt.pack
 
+import java.nio.file.{Path => NioPath}
+import sbt.*
+import xsbti.FileConverter
+
 private[pack] object PluginCompat {
   type FileRef = java.io.File
   type Out = java.io.File
+
+  implicit def toFile(a: FileRef): Out = a
 
   def toNioPath(a: Attributed[File])(implicit conv: FileConverter): NioPath =
     a.data.toPath()

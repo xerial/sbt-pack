@@ -257,7 +257,7 @@ object PackPlugin extends AutoPlugin with PackArchive {
           }
         }
         val libs = packLibJars.value.map(_._1)
-        libs.foreach(l => IO.copyFile(l, copyDepTargetDir / l.name()))
+        libs.foreach(l => IO.copyFile(l, copyDepTargetDir / l.getName()))
 
         log info s"Copied ${distinctDpJars.size + libs.size} jars to ${copyDepTargetDir}"
       }
@@ -280,9 +280,9 @@ object PackPlugin extends AutoPlugin with PackArchive {
       // Copy project jars
       out.log.info(logPrefix + "Copying libraries to " + rpath(base, libDir))
       val libs: Seq[FileRef] = packLibJars.value.map(_._1)
-      out.log.info(logPrefix + "project jars:\n" + libs.map(path => rpath(base, io.RichFile(path))).mkString("\n"))
+      out.log.info(logPrefix + "project jars:\n" + libs.map(path => rpath(base, new io.RichFile(path))).mkString("\n"))
       val projectJars = libs.map(l => {
-        val dest = libDir / l.name()
+        val dest = libDir / l.getName()
         IO.copyFile(l, dest)
         dest
       })
@@ -304,7 +304,7 @@ object PackPlugin extends AutoPlugin with PackArchive {
       out.log.info(logPrefix + "Copying unmanaged dependencies:")
       val unmanagedDepsJars = for ((m, projectRef) <- packAllUnmanagedJars.value; um <- m; f = um.data) yield {
         out.log.info(f.getPath)
-        val dest = libDir / f.name()
+        val dest = libDir / f.getName()
         sbt.IO.copyFile(f, dest, true)
         dest
       }
@@ -375,10 +375,10 @@ object PackPlugin extends AutoPlugin with PackArchive {
         def extraClasspath(sep: String): String =
           packExtraClasspath.value.get(name).map(_.mkString("", sep, sep)).getOrElse("")
         def expandedClasspath(sep: String): String = {
-          val projJars = libs.map(l => "${PROG_HOME}/lib/" + l.name())
+          val projJars = libs.map(l => "${PROG_HOME}/lib/" + l.getName())
           val depJars  = distinctDpJars.map(m => "${PROG_HOME}/lib/" + resolveJarName(m, jarNameConvention))
           val unmanagedJars = for ((m, projectRef) <- packAllUnmanagedJars.value; um <- m; f = um.data) yield {
-            "${PROG_HOME}/lib/" + f.name()
+            "${PROG_HOME}/lib/" + f.getName()
           }
           (projJars ++ depJars ++ unmanagedJars).mkString("", sep, sep)
         }

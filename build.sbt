@@ -3,9 +3,11 @@ Global / onChangedBuildSource := ReloadOnSourceChanges
 enablePlugins(SbtTwirl)
 enablePlugins(SbtPlugin)
 
-crossScalaVersions += "3.3.4"
+val SCALA_3 = "3.3.4"
+val SCALA_2 = "2.12.20"
+crossScalaVersions := List(SCALA_3, SCALA_2)
 
-ThisBuild / scalaVersion := "3.3.4"
+ThisBuild / scalaVersion := SCALA_3
 
 pluginCrossBuild / sbtVersion := {
   scalaBinaryVersion.value match {
