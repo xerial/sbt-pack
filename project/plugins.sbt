@@ -5,6 +5,6 @@ addSbtPlugin("org.xerial.sbt"          % "sbt-sonatype" % "3.12.2")
 addSbtPlugin("org.scalameta"           % "sbt-scalafmt" % "2.3.4")
 addSbtPlugin("org.playframework.twirl" % "sbt-twirl"    % "2.0.7")
 addSbtPlugin("com.github.sbt"          % "sbt-dynver"   % "5.1.0")
-addSbtPlugin("org.scalameta"           % "sbt-scalafmt" % "2.5.3")
+addSbtPlugin("org.scalameta"           % "sbt-scalafmt" % "2.5.4")
 
 libraryDependencies += "org.scala-sbt" %% "scripted-plugin" % sbtVersion.value
