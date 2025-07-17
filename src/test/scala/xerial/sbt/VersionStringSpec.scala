@@ -6,7 +6,7 @@ import xerial.sbt.pack.{DefaultVersionStringOrdering, VersionString}
 import scala.math.Ordered.orderingToOrdered
 
 class VersionStringSpec extends AirSpec {
-  implicit val versionStringOrdering = DefaultVersionStringOrdering
+  implicit val versionStringOrdering: Ordering[VersionString] = DefaultVersionStringOrdering
 
   test("VersionString") {
     test("accept any string") {
