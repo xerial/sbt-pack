@@ -117,16 +117,16 @@ trait PackArchive {
   )
 
   def publishPackArchiveTgz: SettingsDefinition =
-    addArtifact(Def.setting(packArchiveTgzArtifact.value), packArchiveTgz)
+    addArtifact(Def.setting(packArchiveTgzArtifact.value), Runtime / packArchiveTgz)
 
   def publishPackArchiveTbz: SettingsDefinition =
-    addArtifact(Def.setting(packArchiveTbzArtifact.value), packArchiveTbz)
+    addArtifact(Def.setting(packArchiveTbzArtifact.value), Runtime / packArchiveTbz)
 
   def publishPackArchiveTxz: SettingsDefinition =
-    addArtifact(Def.setting(packArchiveTxzArtifact.value), packArchiveTxz)
+    addArtifact(Def.setting(packArchiveTxzArtifact.value), Runtime / packArchiveTxz)
 
   def publishPackArchiveZip: SettingsDefinition =
-    addArtifact(Def.setting(packArchiveZipArtifact.value), packArchiveZip)
+    addArtifact(Def.setting(packArchiveZipArtifact.value), Runtime / packArchiveZip)
 
   def publishPackArchives: SettingsDefinition =
     publishPackArchiveTgz ++ publishPackArchiveZip
