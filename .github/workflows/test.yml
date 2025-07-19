@@ -32,17 +32,14 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            distribution: zulu
-            java: 8
-          - os: ubuntu-latest
-            distribution: temurin
-            java: 11
-          - os: ubuntu-latest
             distribution: temurin
             java: 17
           - os: ubuntu-latest
             distribution: temurin
             java: 21
+          - os: ubuntu-latest
+            distribution: temurin
+            java: 24
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
