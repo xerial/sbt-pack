@@ -26,7 +26,7 @@ lazy val module2 =
     )
     .enablePlugins(PackPlugin)
 
-lazy val client =
+lazy val clientApp =
   project
     .settings(commonSettings)
     .dependsOn(module1, module2 % "test->test")
