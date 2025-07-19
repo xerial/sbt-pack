@@ -1,5 +1,4 @@
 // publish tar.gz archive to the repository (since sbt-pack-0.3.6)
-import xerial.sbt.pack.PackPlugin
 
 val commonSettings = Defaults.coreDefaultSettings ++
   Seq(
@@ -14,7 +13,7 @@ lazy val root =
     base = file(".")
   ).enablePlugins(PackPlugin)
     .settings(commonSettings)
-    .settings(PackPlugin.publishPackArchives)
+    .settings(publishPackArchives)
     .aggregate(module1, module2) // dependency of module2 should not be included
     .dependsOn(module1)
 
@@ -23,7 +22,7 @@ lazy val module1 = Project(
   base = file("module1")
 ).enablePlugins(PackPlugin)
   .settings(commonSettings)
-  .settings(PackPlugin.publishPackArchives)
+  .settings(publishPackArchives)
   .settings(
     libraryDependencies += "org.xerial" % "xerial-core" % "3.3.6"
   )
@@ -33,7 +32,7 @@ lazy val module2 = Project(
   base = file("module2")
 ).enablePlugins(PackPlugin)
   .settings(commonSettings)
-  .settings(PackPlugin.publishPackArchives)
+  .settings(publishPackArchives)
   .settings(
     libraryDependencies += "org.xerial.snappy" % "snappy-java" % "1.1.1.6"
   )
@@ -44,7 +43,7 @@ lazy val module3 = Project(
   base = file("module3")
 ).enablePlugins(PackPlugin)
   .settings(commonSettings)
-  .settings(PackPlugin.publishPackArchives)
+  .settings(publishPackArchives)
   .settings(
     libraryDependencies += "org.xerial.snappy" % "snappy-java" % "1.1.1.6",
     packArchiveStem                           := ""

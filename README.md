@@ -104,8 +104,7 @@ packResourceDir += (baseDirectory.value / "web" -> "web-content")
 packEnvVars := Map("hello" -> Map("key1" -> "value1", "key2" -> "value2"))
 
 // To publish tar.gz, zip archives to the repository, add the following lines:
-import xerial.sbt.pack.PackPlugin
-PackPlugin.publishPackArchives
+publishPackArchives
 
 // Publish only tar.gz archive. To publish another type of archive, use publishPackArchive(xxx) instead
 //publishPackArchiveTgz

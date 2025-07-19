@@ -110,6 +110,9 @@ object PackPlugin extends AutoPlugin with PackArchive {
     val packArchiveZip         = taskKey[FileRef]("create a zip archive of the distributable package")
     val packArchive            = taskKey[Seq[File]]("create a tar.gz and a zip archive of the distributable package")
     val packEnvVars            = taskKey[Map[String, Map[String, String]]]("environment variables")
+    
+    // Make publishPackArchives available in autoImport for easier access
+    lazy val publishPackArchives: Seq[Def.Setting[_]] = PackPlugin.publishPackArchives
   }
 
   import complete.DefaultParsers._
