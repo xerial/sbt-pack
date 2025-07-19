@@ -1,3 +1,5 @@
+import xerial.sbt.pack.PackPlugin
+
 ThisBuild / scalaVersion := "2.12.20"
 val commonSettings = Defaults.coreDefaultSettings ++ Seq(
   version    := "0.1",

@@ -1,3 +1,5 @@
+import xerial.sbt.pack.PackPlugin
+
 lazy val root = Project(
   id = "pack-resources",
   base = file(".")

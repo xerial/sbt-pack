@@ -1,3 +1,5 @@
+import xerial.sbt.pack.PackPlugin
+
 // publish tar.gz archive to the repository (since sbt-pack-0.3.6)
 
 val commonSettings = Defaults.coreDefaultSettings ++
