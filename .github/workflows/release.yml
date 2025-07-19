@@ -1,0 +1,35 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - v*
+  workflow_dispatch:
+
+jobs:
+  publish_jvm:
+    name: Publish
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 10000
+      - run: git fetch --tags -f
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '11'
+      - name: Setup GPG
+        env:
+          PGP_SECRET: ${{ secrets.PGP_SECRET }}
+        run: echo $PGP_SECRET | base64 --decode | gpg --import --batch --yes
+      - name: Build bundle
+        env:
+          PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
+        run: |
+          ./sbt publishSigned
+      - name: Release to Sonatype
+        env:
+          SONATYPE_USERNAME: '${{ secrets.SONATYPE_USERNAME }}'
+          SONATYPE_PASSWORD: '${{ secrets.SONATYPE_PASSWORD }}'
+        run: ./sbt sonaRelease
