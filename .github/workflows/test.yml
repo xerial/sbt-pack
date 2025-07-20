@@ -25,8 +25,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: scalafmt test
         run: ./sbt "+ scalafmtCheckAll"
-  test_sbt_plugin:
-    name: plugin test
+  test_sbt1_plugin:
+    name: plugin test (sbt 1.x)
     strategy:
       fail-fast: false
       matrix:
@@ -47,5 +47,30 @@ jobs:
         with:
           distribution: "${{ matrix.distribution }}"
           java-version: "${{ matrix.java }}"
-      - name: scripted tests
-        run: ./sbt "+ test" "+ scripted"
+      - name: scripted tests (sbt 1.x)
+        run: ./sbt "++ 2.12.20 test" "++ 2.12.20 scripted"
+  
+  test_sbt2_plugin:
+    name: plugin test (sbt 2.x)
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            distribution: temurin
+            java: 17
+          - os: ubuntu-latest
+            distribution: temurin
+            java: 21
+          - os: ubuntu-latest
+            distribution: temurin
+            java: 24
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: "${{ matrix.distribution }}"
+          java-version: "${{ matrix.java }}"
+      - name: scripted tests (sbt 2.x)
+        run: ./sbt "++ 3.7.1 test" "++ 3.7.1 scripted"
