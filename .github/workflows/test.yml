@@ -45,7 +45,7 @@ jobs:
           distribution: "${{ matrix.distribution }}"
           java-version: "${{ matrix.java }}"
       - name: scripted tests (sbt 1.x)
-        run: ./sbt "++ 2.12.20 test" "++ 2.12.20 scripted"
+        run: ./sbt "++ 2.12 test" "++ 2.12 scripted"
 
   test_sbt2_plugin:
     name: plugin test (sbt 2.x)
