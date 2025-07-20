@@ -46,7 +46,7 @@ jobs:
           java-version: "${{ matrix.java }}"
       - name: scripted tests (sbt 1.x)
         run: ./sbt "++ 2.12.20 test" "++ 2.12.20 scripted"
-  
+
   test_sbt2_plugin:
     name: plugin test (sbt 2.x)
     strategy:
@@ -67,4 +67,4 @@ jobs:
           distribution: "${{ matrix.distribution }}"
           java-version: "${{ matrix.java }}"
       - name: scripted tests (sbt 2.x)
-        run: ./sbt "++ 3.7.1 test" "++ 3.7.1 scripted"
+        run: ./sbt "++ 3 test" "++ 3 scripted"
