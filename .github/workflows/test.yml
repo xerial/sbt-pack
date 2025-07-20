@@ -33,9 +33,6 @@ jobs:
         include:
           - os: ubuntu-latest
             distribution: temurin
-            java: 17
-          - os: ubuntu-latest
-            distribution: temurin
             java: 21
           - os: ubuntu-latest
             distribution: temurin
@@ -56,9 +53,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
-            distribution: temurin
-            java: 17
           - os: ubuntu-latest
             distribution: temurin
             java: 21
