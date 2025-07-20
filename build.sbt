@@ -52,3 +52,23 @@ libraryDependencies ++= Seq(
   "org.apache.commons"  % "commons-compress" % "1.27.1",
   "org.tukaani"         % "xz"               % "1.10"
 )
+
+// Publishing settings
+homepage := Some(url("https://github.com/xerial/sbt-pack"))
+scmInfo := Some(
+  ScmInfo(
+    url("https://github.com/xerial/sbt-pack"),
+    "scm:git@github.com:xerial/sbt-pack.git"
+  )
+)
+developers := List(
+  Developer(id = "leo", name = "Taro L. Saito", email = "leo@xerial.org", url = url("http://xerial.org/leo"))
+)
+licenses := Seq("APL2" -> url("http://www.apache.org/licenses/LICENSE-2.0.txt"))
+
+// Sonatype publishing
+publishTo := {
+  val centralSnapshots = "https://central.sonatype.com/repository/maven-snapshots/"
+  if (isSnapshot.value) Some("central-snapshots" at centralSnapshots)
+  else localStaging.value
+}
