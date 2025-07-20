@@ -1,5 +1,3 @@
-import xerial.sbt.pack.PackPlugin
-
 enablePlugins(PackPlugin)
 version      := "0.1"
 scalaVersion := "2.12.20"

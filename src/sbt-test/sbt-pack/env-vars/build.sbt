@@ -1,5 +1,3 @@
-import xerial.sbt.pack.PackPlugin
-
 enablePlugins(PackPlugin)
 name := "env-vars"
 

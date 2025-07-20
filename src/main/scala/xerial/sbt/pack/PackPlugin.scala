@@ -20,6 +20,7 @@ import scala.util.Try
 import scala.util.matching.Regex
 import PluginCompat.*
 import PluginCompat.toFile
+import sbt.{given, _}
 
 /** Plugin for packaging projects
   *

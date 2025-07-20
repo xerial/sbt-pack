@@ -1,5 +1,3 @@
-import xerial.sbt.pack.PackPlugin
-
 lazy val root = Project(
   id = "command-launcher",
   base = file(".")

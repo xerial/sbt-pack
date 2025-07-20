@@ -1,5 +1,3 @@
-import xerial.sbt.pack.PackPlugin
-
 name := "nested"
 
 ThisBuild / version := "0.1"
