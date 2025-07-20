@@ -2,7 +2,7 @@
 
 val commonSettings = Defaults.coreDefaultSettings ++
   Seq(
-    scalaVersion := "2.12.20",
+    scalaVersion := "2.13.16",
     version      := "0.1",
     crossPaths   := false
   )
