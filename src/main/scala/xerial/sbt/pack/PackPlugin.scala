@@ -10,15 +10,17 @@ package xerial.sbt.pack
 import java.io.{BufferedWriter, FileWriter}
 import java.nio.file.Files
 import java.time.format.{DateTimeFormatterBuilder, SignStyle}
-import java.time.temporal.ChronoField._
+import java.time.temporal.ChronoField.*
 import java.time.{Instant, ZoneId, ZonedDateTime}
 import java.util.{Date, Locale}
-
-import sbt.Keys._
-import sbt._
+import sbt.Keys.*
+import sbt.{io, *}
 
 import scala.util.Try
 import scala.util.matching.Regex
+import PluginCompat.*
+import PluginCompat.toFile
+import sbt.{given, _}
 
 /** Plugin for packaging projects
   *
@@ -26,7 +28,6 @@ import scala.util.matching.Regex
   *   Taro L. Saito
   */
 object PackPlugin extends AutoPlugin with PackArchive {
-
   override def trigger = noTrigger
 
   case class ModuleEntry(
@@ -66,7 +67,7 @@ object PackPlugin extends AutoPlugin with PackArchive {
     val packExcludeJars = settingKey[Seq[String]]("specify jar file name patterns to exclude when packaging")
     val packExcludeArtifactTypes =
       settingKey[Seq[String]]("specify artifact types (e.g. javadoc) to exclude when packaging")
-    val packLibJars                = taskKey[Seq[(File, ProjectRef)]]("pack-lib-jars")
+    val packLibJars                = taskKey[Seq[(FileRef, ProjectRef)]]("pack-lib-jars")
     val packGenerateWindowsBatFile = settingKey[Boolean]("Generate BAT file launch scripts for Windows")
     val packGenerateMakefile       = settingKey[Boolean]("Generate Makefile")
 
@@ -104,12 +105,15 @@ object PackPlugin extends AutoPlugin with PackArchive {
     val packArchiveTbzArtifact = settingKey[Artifact]("tar.bz2 archive artifact")
     val packArchiveTxzArtifact = settingKey[Artifact]("tar.xz archive artifact")
     val packArchiveZipArtifact = settingKey[Artifact]("zip archive artifact")
-    val packArchiveTgz         = taskKey[File]("create a tar.gz archive of the distributable package")
-    val packArchiveTbz         = taskKey[File]("create a tar.bz2 archive of the distributable package")
-    val packArchiveTxz         = taskKey[File]("create a tar.xz archive of the distributable package")
-    val packArchiveZip         = taskKey[File]("create a zip archive of the distributable package")
+    val packArchiveTgz         = taskKey[FileRef]("create a tar.gz archive of the distributable package")
+    val packArchiveTbz         = taskKey[FileRef]("create a tar.bz2 archive of the distributable package")
+    val packArchiveTxz         = taskKey[FileRef]("create a tar.xz archive of the distributable package")
+    val packArchiveZip         = taskKey[FileRef]("create a zip archive of the distributable package")
     val packArchive            = taskKey[Seq[File]]("create a tar.gz and a zip archive of the distributable package")
     val packEnvVars            = taskKey[Map[String, Map[String, String]]]("environment variables")
+
+    // Make publishPackArchives available in autoImport for easier access
+    lazy val publishPackArchives: Seq[Def.Setting[?]] = PackPlugin.publishPackArchives
   }
 
   import complete.DefaultParsers._
@@ -121,7 +125,7 @@ object PackPlugin extends AutoPlugin with PackArchive {
 
   import autoImport._
 
-  lazy val packSettings = Seq[Def.Setting[_]](
+  lazy val packSettings = Seq[Def.Setting[?]](
     packTargetDir := target.value,
     packDir       := "pack",
     // packBashTemplate := "/xerial/sbt/template/launch.mustache",
@@ -144,23 +148,31 @@ object PackPlugin extends AutoPlugin with PackArchive {
     packGenerateMakefile       := true,
     packMainDiscovered := Def.taskDyn {
       val mainClasses =
-        getFromSelectedProjects(thisProjectRef.value, Compile / discoveredMainClasses, state.value, packExclude.value)
+        getFromSelectedProjects(
+          thisProjectRef.value,
+          Runtime,
+          discoveredMainClasses,
+          state.value,
+          packExclude.value
+        )
       Def.task {
-        mainClasses.value.flatMap(_._1.map(mainClass => hyphenize(mainClass.split('.').last) -> mainClass).toMap).toMap
+        mainClasses.value
+          .flatMap(_._1.map(mainClass => hyphenize(mainClass.split('.').last) -> mainClass).toMap).toMap
       }
     }.value,
     packAllUnmanagedJars := Def.taskDyn {
       val allUnmanagedJars =
-        getFromSelectedProjects(thisProjectRef.value, Runtime / unmanagedJars, state.value, packExclude.value)
+        getFromSelectedProjects(thisProjectRef.value, Runtime, unmanagedJars, state.value, packExclude.value)
       Def.task { allUnmanagedJars.value }
     }.value,
     Def.derive(
       packLibJars := Def.taskDyn {
-        def libJarsFromConfiguration(c: Configuration): Seq[Task[Seq[(File, ProjectRef)]]] =
+        def libJarsFromConfiguration(c: Configuration): Seq[Task[Seq[(FileRef, ProjectRef)]]] =
           Seq(
-            getFromSelectedProjects(
+            getFromSelectedProjects[FileRef](
               thisProjectRef.value,
-              c / packageBin,
+              c,
+              packageBin,
               state.value,
               packExcludeLibJars.value
             )
@@ -192,7 +204,7 @@ object PackPlugin extends AutoPlugin with PackArchive {
             c                <- update.value.filter(df).configurations
             m                <- c.modules if !m.evicted
             (artifact, file) <- m.artifacts
-            if !packExcludeArtifactTypes.value.contains(artifact.`type`) && !isExcludeJar(file.name)
+            if !packExcludeArtifactTypes.value.contains(artifact.`type`) && !isExcludeJar(file.getName())
           } yield {
             val mid = m.module
             ModuleEntry(
@@ -234,25 +246,25 @@ object PackPlugin extends AutoPlugin with PackArchive {
         val log = streams.value.log
 
         val distinctDpJars   = packModuleEntries.value.map(_.file)
-        val unmanaged        = packAllUnmanagedJars.value.flatMap { _._1 }.map { _.data }
+        val unmanaged        = packAllUnmanagedJars.value.flatMap(_._1).map(x => toFile(x.data))
         val copyDepTargetDir = packCopyDependenciesTarget.value
         val useSymlink       = packCopyDependenciesUseSymbolicLinks.value
 
         copyDepTargetDir.mkdirs()
-        IO.delete((copyDepTargetDir * "*.jar").get)
-        (distinctDpJars ++ unmanaged) foreach { d ⇒
-          log debug s"Copying ${d.getName}"
-          val dest = copyDepTargetDir / d.getName
+        IO.delete((copyDepTargetDir * "*.jar").get())
+        (distinctDpJars ++ unmanaged).foreach { d =>
+          log.debug(s"Copying ${d.getName()}")
+          val dest = copyDepTargetDir / d.getName()
           if (useSymlink) {
-            Files.createSymbolicLink(dest.toPath, d.toPath)
+            Files.createSymbolicLink(dest.toPath, d.toPath())
           } else {
             IO.copyFile(d, dest)
           }
         }
         val libs = packLibJars.value.map(_._1)
-        libs.foreach(l ⇒ IO.copyFile(l, copyDepTargetDir / l.getName))
+        libs.foreach(l => IO.copyFile(l, copyDepTargetDir / l.getName()))
 
-        log info s"Copied ${distinctDpJars.size + libs.size} jars to ${copyDepTargetDir}"
+        log.info(s"Copied ${distinctDpJars.size + libs.size} jars to ${copyDepTargetDir}")
       }
     ),
     packEnvVars := Map.empty,
@@ -272,10 +284,10 @@ object PackPlugin extends AutoPlugin with PackArchive {
 
       // Copy project jars
       out.log.info(logPrefix + "Copying libraries to " + rpath(base, libDir))
-      val libs: Seq[File] = packLibJars.value.map(_._1)
-      out.log.info(logPrefix + "project jars:\n" + libs.map(path => rpath(base, path)).mkString("\n"))
+      val libs: Seq[FileRef] = packLibJars.value.map(_._1)
+      out.log.info(logPrefix + "project jars:\n" + libs.map(path => rpath(base, new io.RichFile(path))).mkString("\n"))
       val projectJars = libs.map(l => {
-        val dest = libDir / l.getName
+        val dest = libDir / l.getName()
         IO.copyFile(l, dest)
         dest
       })
@@ -297,13 +309,13 @@ object PackPlugin extends AutoPlugin with PackArchive {
       out.log.info(logPrefix + "Copying unmanaged dependencies:")
       val unmanagedDepsJars = for ((m, projectRef) <- packAllUnmanagedJars.value; um <- m; f = um.data) yield {
         out.log.info(f.getPath)
-        val dest = libDir / f.getName
-        IO.copyFile(f, dest, true)
+        val dest = libDir / f.getName()
+        sbt.IO.copyFile(f, dest, true)
         dest
       }
 
       // Copy explicitly added dependencies
-      val mapped: Seq[(File, String)] = mappings.value
+      val mapped: Seq[(FileRef, String)] = mappings.value
       out.log.info(logPrefix + "Copying explicit dependencies:")
       val explicitDepsJars = for ((file, path) <- mapped) yield {
         out.log.info(file.getPath)
@@ -331,7 +343,7 @@ object PackPlugin extends AutoPlugin with PackArchive {
       out.log.info(logPrefix + "Create a bin folder: " + rpath(base, binDir))
       binDir.mkdirs()
 
-      def write(path: String, content: String) {
+      def write(path: String, content: String): Unit = {
         val p = distDir / path
         out.log.info(logPrefix + "Generating %s".format(rpath(base, p)))
         IO.write(p, content)
@@ -368,10 +380,10 @@ object PackPlugin extends AutoPlugin with PackArchive {
         def extraClasspath(sep: String): String =
           packExtraClasspath.value.get(name).map(_.mkString("", sep, sep)).getOrElse("")
         def expandedClasspath(sep: String): String = {
-          val projJars = libs.map(l => "${PROG_HOME}/lib/" + l.getName)
+          val projJars = libs.map(l => "${PROG_HOME}/lib/" + l.getName())
           val depJars  = distinctDpJars.map(m => "${PROG_HOME}/lib/" + resolveJarName(m, jarNameConvention))
           val unmanagedJars = for ((m, projectRef) <- packAllUnmanagedJars.value; um <- m; f = um.data) yield {
-            "${PROG_HOME}/lib/" + f.getName
+            "${PROG_HOME}/lib/" + f.getName()
           }
           (projJars ++ depJars ++ unmanagedJars).mkString("", sep, sep)
         }
@@ -485,13 +497,15 @@ object PackPlugin extends AutoPlugin with PackArchive {
 
   private def getFromAllProjects[T](
       contextProject: ProjectRef,
+      config: Configuration,
       targetTask: TaskKey[T],
       state: State
   ): Task[Seq[(T, ProjectRef)]] =
-    getFromSelectedProjects(contextProject, targetTask, state, Seq.empty)
+    getFromSelectedProjects(contextProject, config, targetTask, state, Seq.empty)
 
   private def getFromSelectedProjects[T](
       contextProject: ProjectRef,
+      config: Configuration,
       targetTask: TaskKey[T],
       state: State,
       exclude: Seq[String]
@@ -513,7 +527,7 @@ object PackPlugin extends AutoPlugin with PackArchive {
       (currentProject +: (children flatMap transitiveDependencies)) filterNot (isExcluded)
     }
     val projects: Seq[ProjectRef] = transitiveDependencies(contextProject).distinct
-    projects.map(p => (Def.task { ((p / targetTask).value, p) }) evaluate structure.data).join
+    projects.map(p => (Def.task { ((p / config / targetTask).value, p) }).evaluate(structure.data)).join
   }
 
   private val humanReadableTimestampFormatter = new DateTimeFormatterBuilder()

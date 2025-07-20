@@ -1,7 +1,7 @@
-ThisBuild / scalaVersion := "2.12.20"
+ThisBuild / scalaVersion := "2.13.16"
 
 val commonSettings = Seq(
-  scalaVersion := "2.12.20",
+  scalaVersion := "2.13.16",
   version      := "0.1",
   crossPaths   := false
 )
@@ -26,7 +26,7 @@ lazy val module2 =
     )
     .enablePlugins(PackPlugin)
 
-lazy val client =
+lazy val clientApp =
   project
     .settings(commonSettings)
     .dependsOn(module1, module2 % "test->test")

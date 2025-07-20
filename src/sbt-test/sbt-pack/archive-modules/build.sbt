@@ -1,9 +1,8 @@
-import xerial.sbt.pack.PackPlugin._
 // publish tar.gz archive to the repository (since sbt-pack-0.3.6)
 
 val commonSettings = Defaults.coreDefaultSettings ++
   Seq(
-    scalaVersion := "2.12.20",
+    scalaVersion := "2.13.16",
     version      := "0.1",
     crossPaths   := false
   )

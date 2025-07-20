@@ -10,6 +10,8 @@ import org.apache.commons.compress.compressors.xz.XZCompressorOutputStream
 import org.apache.commons.io.IOUtils
 import sbt.Keys.*
 import sbt.*
+import PluginCompat.*
+import PluginCompat.toFile
 
 trait PackArchive {
 
@@ -32,7 +34,7 @@ trait PackArchive {
     val excludeFiles = packArchiveExcludes.value.toSet
     def addFilesToArchive(dir: File): Unit =
       Option(dir.listFiles)
-        .getOrElse(Array.empty)
+        .getOrElse(Array.empty[File])
         .filterNot(f => excludeFiles.contains(rpath(distDir, f)))
         .foreach { file =>
           aos.putArchiveEntry(createEntry(file, archiveBaseDir ++ rpath(distDir, file, "/"), binDir))
@@ -57,7 +59,7 @@ trait PackArchive {
 
   private def createTarEntry(file: File, fileName: String, binDir: File): TarArchiveEntry = {
     val archiveEntry = new TarArchiveEntry(file, fileName)
-    if (file.getAbsolutePath startsWith binDir.getAbsolutePath) {
+    if (file.getAbsolutePath.startsWith(binDir.getAbsolutePath)) {
       archiveEntry.setMode(Integer.parseInt("0755", 8))
     }
     archiveEntry
@@ -78,7 +80,7 @@ trait PackArchive {
     archiveEntry
   }
 
-  lazy val packArchiveSettings = Seq[Def.Setting[_]](
+  lazy val packArchiveSettings = Seq[Def.Setting[?]](
     packArchivePrefix      := name.value,
     packArchiveName        := s"${packArchivePrefix.value}-${version.value}",
     packArchiveStem        := s"${packArchiveName.value}",

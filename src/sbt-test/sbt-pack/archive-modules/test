@@ -26,6 +26,6 @@ $ exec tar tvfz module1/target/module1-0.1.tar.gz
 $ exists target/my-archive.tar.gz
 $ exec tar tvfz target/my-archive.tar.gz
 
-> module3/packArchiveTgz
+> module3 / packArchiveTgz
 $ exists module3/target/module3-0.1.tar.gz
 $ exec tar tvfz module3/target/module3-0.1.tar.gz

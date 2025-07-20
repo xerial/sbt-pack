@@ -3,6 +3,19 @@ Global / onChangedBuildSource := ReloadOnSourceChanges
 enablePlugins(SbtTwirl)
 enablePlugins(SbtPlugin)
 
+val SCALA_3 = "3.7.1"
+val SCALA_2 = "2.12.20"
+ThisBuild / crossScalaVersions := List(SCALA_3, SCALA_2)
+
+pluginCrossBuild / sbtVersion := {
+  scalaBinaryVersion.value match {
+    case "2.12" =>
+      (pluginCrossBuild / sbtVersion).value
+    case _ =>
+      "2.0.0-M4"
+  }
+}
+
 organization         := "org.xerial.sbt"
 organizationName     := "Xerial project"
 name                 := "sbt-pack"
@@ -16,10 +29,8 @@ pomIncludeRepository := { _ =>
   false
 }
 
-ThisBuild / scalaVersion := "2.12.20"
-
 parallelExecution := true
-crossPaths        := false
+crossPaths        := true
 scalacOptions ++= Seq("-encoding", "UTF-8", "-deprecation", "-unchecked")
 
 scriptedBufferLog := false
