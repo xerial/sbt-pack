@@ -59,7 +59,7 @@ trait PackArchive {
 
   private def createTarEntry(file: File, fileName: String, binDir: File): TarArchiveEntry = {
     val archiveEntry = new TarArchiveEntry(file, fileName)
-    if (file.getAbsolutePath startsWith binDir.getAbsolutePath) {
+    if (file.getAbsolutePath.startsWith(binDir.getAbsolutePath)) {
       archiveEntry.setMode(Integer.parseInt("0755", 8))
     }
     archiveEntry
@@ -80,7 +80,7 @@ trait PackArchive {
     archiveEntry
   }
 
-  lazy val packArchiveSettings = Seq[Def.Setting[_]](
+  lazy val packArchiveSettings = Seq[Def.Setting[?]](
     packArchivePrefix      := name.value,
     packArchiveName        := s"${packArchivePrefix.value}-${version.value}",
     packArchiveStem        := s"${packArchiveName.value}",

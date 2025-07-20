@@ -112,7 +112,7 @@ object PackPlugin extends AutoPlugin with PackArchive {
     val packEnvVars            = taskKey[Map[String, Map[String, String]]]("environment variables")
 
     // Make publishPackArchives available in autoImport for easier access
-    lazy val publishPackArchives: Seq[Def.Setting[_]] = PackPlugin.publishPackArchives
+    lazy val publishPackArchives: Seq[Def.Setting[?]] = PackPlugin.publishPackArchives
   }
 
   import complete.DefaultParsers._
@@ -124,7 +124,7 @@ object PackPlugin extends AutoPlugin with PackArchive {
 
   import autoImport._
 
-  lazy val packSettings = Seq[Def.Setting[_]](
+  lazy val packSettings = Seq[Def.Setting[?]](
     packTargetDir := target.value,
     packDir       := "pack",
     // packBashTemplate := "/xerial/sbt/template/launch.mustache",
@@ -252,7 +252,7 @@ object PackPlugin extends AutoPlugin with PackArchive {
         copyDepTargetDir.mkdirs()
         IO.delete((copyDepTargetDir * "*.jar").get())
         (distinctDpJars ++ unmanaged).foreach { d =>
-          log debug s"Copying ${d.getName()}"
+          log.debug(s"Copying ${d.getName()}")
           val dest = copyDepTargetDir / d.getName()
           if (useSymlink) {
             Files.createSymbolicLink(dest.toPath, d.toPath())
@@ -263,7 +263,7 @@ object PackPlugin extends AutoPlugin with PackArchive {
         val libs = packLibJars.value.map(_._1)
         libs.foreach(l => IO.copyFile(l, copyDepTargetDir / l.getName()))
 
-        log info s"Copied ${distinctDpJars.size + libs.size} jars to ${copyDepTargetDir}"
+        log.info(s"Copied ${distinctDpJars.size + libs.size} jars to ${copyDepTargetDir}")
       }
     ),
     packEnvVars := Map.empty,
@@ -526,7 +526,7 @@ object PackPlugin extends AutoPlugin with PackArchive {
       (currentProject +: (children flatMap transitiveDependencies)) filterNot (isExcluded)
     }
     val projects: Seq[ProjectRef] = transitiveDependencies(contextProject).distinct
-    projects.map(p => (Def.task { ((p / config / targetTask).value, p) }) evaluate structure.data).join
+    projects.map(p => (Def.task { ((p / config / targetTask).value, p) }).evaluate(structure.data)).join
   }
 
   private val humanReadableTimestampFormatter = new DateTimeFormatterBuilder()
