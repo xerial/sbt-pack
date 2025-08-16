@@ -47,24 +47,24 @@ jobs:
       - name: scripted tests (sbt 1.x)
         run: ./sbt "++ 2.12 test" "++ 2.12 scripted"
 
-  # test_sbt2_plugin:
-  #   name: plugin test (sbt 2.x)
-  #   strategy:
-  #     fail-fast: false
-  #     matrix:
-  #       include:
-  #         - os: ubuntu-latest
-  #           distribution: temurin
-  #           java: 21
-  #         - os: ubuntu-latest
-  #           distribution: temurin
-  #           java: 24
-  #   runs-on: ${{ matrix.os }}
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: actions/setup-java@v4
-  #       with:
-  #         distribution: "${{ matrix.distribution }}"
-  #         java-version: "${{ matrix.java }}"
-  #     - name: scripted tests (sbt 2.x)
-  #       run: ./sbt "++ 3 test" "++ 3 scripted"
+  test_sbt2_plugin:
+    name: plugin test (sbt 2.x)
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            distribution: temurin
+            java: 21
+          - os: ubuntu-latest
+            distribution: temurin
+            java: 24
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: "${{ matrix.distribution }}"
+          java-version: "${{ matrix.java }}"
+      - name: scripted tests (sbt 2.x)
+        run: ./sbt "++ 3 test" "++ 3 scripted"

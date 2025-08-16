@@ -4,6 +4,9 @@ import java.nio.file.Path as NioPath
 import sbt.*
 import sbt.internal.inc.PlainVirtualFileConverter
 import xsbti.{FileConverter, HashedVirtualFileRef, VirtualFile}
+import sjsonnew.JsonFormat
+import sbt.util.CacheImplicits.hashedVirtualFileRefIsoString
+import sbt.internal.util.codec.JsonProtocol.given
 
 // See https://www.eed3si9n.com/sbt-assembly-2.3.0
 private[pack] object PluginCompat:
@@ -11,6 +14,9 @@ private[pack] object PluginCompat:
   type Out     = VirtualFile
 
   given conv: FileConverter = PlainVirtualFileConverter.converter
+  
+  // Provide JsonFormat for FileRef (required for sbt 2.x)
+  given fileRefFormat: JsonFormat[FileRef] = summon[JsonFormat[HashedVirtualFileRef]]
 
   implicit def toFile(a: HashedVirtualFileRef): File = conv.toPath(a).toFile
   implicit def toFileRef(a: File): FileRef           = conv.toVirtualFile(a.toPath)

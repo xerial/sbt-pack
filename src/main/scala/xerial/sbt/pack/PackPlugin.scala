@@ -165,28 +165,25 @@ object PackPlugin extends AutoPlugin with PackArchive {
         getFromSelectedProjects(thisProjectRef.value, Runtime, unmanagedJars, state.value, packExclude.value)
       Def.task { allUnmanagedJars.value }
     }.value,
-    Def.derive(
-      packLibJars := Def.taskDyn {
-        def libJarsFromConfiguration(c: Configuration): Seq[Task[Seq[(FileRef, ProjectRef)]]] =
-          Seq(
-            getFromSelectedProjects[FileRef](
-              thisProjectRef.value,
-              c,
-              packageBin,
-              state.value,
-              packExcludeLibJars.value
-            )
-          ) ++ c.extendsConfigs.flatMap(libJarsFromConfiguration)
+    packLibJars := Def.taskDyn {
+      def libJarsFromConfiguration(c: Configuration): Seq[Task[Seq[(FileRef, ProjectRef)]]] =
+        Seq(
+          getFromSelectedProjects[FileRef](
+            thisProjectRef.value,
+            c,
+            packageBin,
+            state.value,
+            packExcludeLibJars.value
+          )
+        ) ++ c.extendsConfigs.flatMap(libJarsFromConfiguration)
 
-        val libJars = libJarsFromConfiguration(configuration.value).join
-        Def.task {
-          libJars.value.flatten.distinct
-        }
-      }.value
-    ),
+      val libJars = libJarsFromConfiguration(configuration.value).join
+      Def.task {
+        libJars.value.flatten.distinct
+      }
+    }.value,
     mappings := Seq.empty,
-    Def.derive(
-      packModuleEntries := {
+    packModuleEntries := {
         val out                          = streams.value
         val jarExcludeFilter: Seq[Regex] = packExcludeJars.value.map(_.r)
         def isExcludeJar(name: String): Boolean = {
@@ -237,12 +234,10 @@ object PackPlugin extends AutoPlugin with PackArchive {
               }
           }
         distinctDpJars.toSeq.distinct.sortBy(_.noVersionModuleName)
-      }
-    ),
+    },
     packCopyDependenciesUseSymbolicLinks := true,
     packCopyDependenciesTarget           := target.value / "lib",
-    Def.derive(
-      packCopyDependencies := {
+    packCopyDependencies := {
         val log = streams.value.log
 
         val distinctDpJars   = packModuleEntries.value.map(_.file)
@@ -265,10 +260,9 @@ object PackPlugin extends AutoPlugin with PackArchive {
         libs.foreach(l => IO.copyFile(l, copyDepTargetDir / l.getName()))
 
         log.info(s"Copied ${distinctDpJars.size + libs.size} jars to ${copyDepTargetDir}")
-      }
-    ),
+    },
     packEnvVars := Map.empty,
-    Def.derive(pack := {
+    pack := {
       val out        = streams.value
       val logPrefix  = "[" + name.value + "] "
       val base: File = new File(".") // Using the working directory as base for readability
@@ -481,8 +475,8 @@ object PackPlugin extends AutoPlugin with PackArchive {
 
       out.log.info(logPrefix + "done.")
       distDir
-    }),
-    Def.derive(packInstall := {
+    },
+    packInstall := {
       val arg: Option[String] = targetFolderParser.parsed
       val packDir             = pack.value
       val cmd = arg match {
@@ -492,7 +486,7 @@ object PackPlugin extends AutoPlugin with PackArchive {
           s"make install"
       }
       sys.process.Process(cmd, Some(packDir)).!
-    })
+    }
   )
 
   private def getFromAllProjects[T](
