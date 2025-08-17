@@ -246,7 +246,7 @@ object PackPlugin extends AutoPlugin with PackArchive {
     packCopyDependenciesTarget           := target.value / "lib",
     Def.derive(
       packCopyDependencies := {
-        val log = streams.value.log
+        val log   = streams.value.log
         val level = (configuration / logLevel).value
 
         val distinctDpJars   = packModuleEntries.value.map(_.file)
@@ -299,7 +299,9 @@ object PackPlugin extends AutoPlugin with PackArchive {
       }
       val libs: Seq[FileRef] = packLibJars.value.map(_._1)
       if (level <= Level.Info) {
-        out.log.info(logPrefix + "project jars:\n" + libs.map(path => rpath(base, new io.RichFile(path))).mkString("\n"))
+        out.log.info(
+          logPrefix + "project jars:\n" + libs.map(path => rpath(base, new io.RichFile(path))).mkString("\n")
+        )
       }
       val projectJars = libs.map(l => {
         val dest = libDir / l.getName()
