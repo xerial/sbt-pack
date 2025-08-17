@@ -18,4 +18,10 @@ private[pack] object PluginCompat {
     cp.map(_.data.toPath()).toVector
   def toFiles(cp: Seq[Attributed[File]])(implicit conv: FileConverter): Vector[File] =
     cp.map(_.data).toVector
+
+  // Compatibility wrapper for sbt 1.x (no-op, just returns the value)
+  def uncached[T](value: => T): T = value
+
+  // Dummy for sbt 1.x (not needed but imported in common code)
+  val fileRefJsonFormat = ()
 }

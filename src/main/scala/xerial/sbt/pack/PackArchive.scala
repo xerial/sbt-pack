@@ -12,6 +12,7 @@ import sbt.Keys.*
 import sbt.*
 import PluginCompat.*
 import PluginCompat.toFile
+import PluginCompat.fileRefJsonFormat
 
 trait PackArchive {
 
@@ -89,31 +90,23 @@ trait PackArchive {
     packArchiveTbzArtifact := Artifact(packArchivePrefix.value, "arch", "tar.bz2"),
     packArchiveTxzArtifact := Artifact(packArchivePrefix.value, "arch", "tar.xz"),
     packArchiveZipArtifact := Artifact(packArchivePrefix.value, "arch", "zip"),
-    Def.derive(
-      packArchiveTgz := createArchive[TarArchiveEntry](
-        "tar.gz",
-        (fos) => createTarArchiveOutputStream(new GzipCompressorOutputStream(fos)),
-        createTarEntry
-      ).value
-    ),
-    Def.derive(
-      packArchiveTbz := createArchive[TarArchiveEntry](
-        "tar.bz2",
-        (fos) => createTarArchiveOutputStream(new BZip2CompressorOutputStream(fos)),
-        createTarEntry
-      ).value
-    ),
-    Def.derive(
-      packArchiveTxz := createArchive[TarArchiveEntry](
-        "tar.xz",
-        (fos) => createTarArchiveOutputStream(new XZCompressorOutputStream(fos)),
-        createTarEntry
-      ).value
-    ),
-    Def.derive(
-      packArchiveZip := createArchive[ZipArchiveEntry]("zip", new ZipArchiveOutputStream(_), createZipEntry).value
-    ),
-    Def.derive(packArchive := Seq(packArchiveTgz.value, packArchiveZip.value))
+    packArchiveTgz := createArchive[TarArchiveEntry](
+      "tar.gz",
+      (fos) => createTarArchiveOutputStream(new GzipCompressorOutputStream(fos)),
+      createTarEntry
+    ).value,
+    packArchiveTbz := createArchive[TarArchiveEntry](
+      "tar.bz2",
+      (fos) => createTarArchiveOutputStream(new BZip2CompressorOutputStream(fos)),
+      createTarEntry
+    ).value,
+    packArchiveTxz := createArchive[TarArchiveEntry](
+      "tar.xz",
+      (fos) => createTarArchiveOutputStream(new XZCompressorOutputStream(fos)),
+      createTarEntry
+    ).value,
+    packArchiveZip := createArchive[ZipArchiveEntry]("zip", new ZipArchiveOutputStream(_), createZipEntry).value,
+    packArchive    := Seq(packArchiveTgz.value, packArchiveZip.value)
   )
 
   def publishPackArchiveTgz: SettingsDefinition =
