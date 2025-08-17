@@ -30,6 +30,14 @@ import sbt.{given, _}
 object PackPlugin extends AutoPlugin with PackArchive {
   override def trigger = noTrigger
 
+  /** Helper class for logging with level checking */
+  private class LevelAwareLogger(logger: Logger, level: Level.Value) {
+    def info(message: => String): Unit  = if (level <= Level.Info) logger.info(message)
+    def debug(message: => String): Unit = if (level <= Level.Debug) logger.debug(message)
+    def warn(message: => String): Unit  = if (level <= Level.Warn) logger.warn(message)
+    def error(message: => String): Unit = if (level <= Level.Error) logger.error(message)
+  }
+
   case class ModuleEntry(
       org: String,
       name: String,
@@ -188,12 +196,13 @@ object PackPlugin extends AutoPlugin with PackArchive {
     Def.derive(
       packModuleEntries := {
         val out                          = streams.value
-        val level                        = (configuration / logLevel).value
+        val level                        = logLevel.value
+        val log                          = new LevelAwareLogger(out.log, level)
         val jarExcludeFilter: Seq[Regex] = packExcludeJars.value.map(_.r)
         def isExcludeJar(name: String): Boolean = {
           val toExclude = jarExcludeFilter.exists(pattern => pattern.findFirstIn(name).isDefined)
-          if (toExclude && level <= Level.Info) {
-            out.log.info(s"Exclude $name from the package")
+          if (toExclude) {
+            log.info(s"Exclude $name from the package")
           }
           toExclude
         }
@@ -228,10 +237,7 @@ object PackPlugin extends AutoPlugin with PackArchive {
               val latestRevision = revisions.last
               packDuplicateJarStrategy.value match {
                 case "latest" =>
-                  if (level <= Level.Debug) {
-                    out.log
-                      .debug(s"Version conflict on $key. Using ${latestRevision} (found ${revisions.mkString(", ")})")
-                  }
+                  log.debug(s"Version conflict on $key. Using ${latestRevision} (found ${revisions.mkString(", ")})")
                   entries.filter(_.revision == latestRevision)
                 case "exit" =>
                   sys.error(s"Version conflict on $key (found ${revisions.mkString(", ")})")
@@ -246,8 +252,8 @@ object PackPlugin extends AutoPlugin with PackArchive {
     packCopyDependenciesTarget           := target.value / "lib",
     Def.derive(
       packCopyDependencies := {
-        val log   = streams.value.log
-        val level = (configuration / logLevel).value
+        val level = logLevel.value
+        val log   = new LevelAwareLogger(streams.value.log, level)
 
         val distinctDpJars   = packModuleEntries.value.map(_.file)
         val unmanaged        = packAllUnmanagedJars.value.flatMap(_._1).map(x => toFile(x.data))
@@ -257,9 +263,7 @@ object PackPlugin extends AutoPlugin with PackArchive {
         copyDepTargetDir.mkdirs()
         IO.delete((copyDepTargetDir * "*.jar").get())
         (distinctDpJars ++ unmanaged).foreach { d =>
-          if (level <= Level.Debug) {
-            log.debug(s"Copying ${d.getName()}")
-          }
+          log.debug(s"Copying ${d.getName()}")
           val dest = copyDepTargetDir / d.getName()
           if (useSymlink) {
             Files.createSymbolicLink(dest.toPath, d.toPath())
@@ -270,22 +274,19 @@ object PackPlugin extends AutoPlugin with PackArchive {
         val libs = packLibJars.value.map(_._1)
         libs.foreach(l => IO.copyFile(l, copyDepTargetDir / l.getName()))
 
-        if (level <= Level.Info) {
-          log.info(s"Copied ${distinctDpJars.size + libs.size} jars to ${copyDepTargetDir}")
-        }
+        log.info(s"Copied ${distinctDpJars.size + libs.size} jars to ${copyDepTargetDir}")
       }
     ),
     packEnvVars := Map.empty,
     Def.derive(pack := {
       val out        = streams.value
-      val level      = (configuration / logLevel).value
+      val level      = logLevel.value
+      val log        = new LevelAwareLogger(out.log, level)
       val logPrefix  = "[" + name.value + "] "
       val base: File = new File(".") // Using the working directory as base for readability
 
       val distDir: File = packTargetDir.value / packDir.value
-      if (level <= Level.Info) {
-        out.log.info(logPrefix + "Creating a distributable package in " + rpath(base, distDir))
-      }
+      log.info(logPrefix + "Creating a distributable package in " + rpath(base, distDir))
       IO.delete(distDir)
       distDir.mkdirs()
 
@@ -294,15 +295,9 @@ object PackPlugin extends AutoPlugin with PackArchive {
       libDir.mkdirs()
 
       // Copy project jars
-      if (level <= Level.Info) {
-        out.log.info(logPrefix + "Copying libraries to " + rpath(base, libDir))
-      }
+      log.info(logPrefix + "Copying libraries to " + rpath(base, libDir))
       val libs: Seq[FileRef] = packLibJars.value.map(_._1)
-      if (level <= Level.Info) {
-        out.log.info(
-          logPrefix + "project jars:\n" + libs.map(path => rpath(base, new io.RichFile(path))).mkString("\n")
-        )
-      }
+      log.info(logPrefix + "project jars:\n" + libs.map(path => rpath(base, new io.RichFile(path))).mkString("\n"))
       val projectJars = libs.map(l => {
         val dest = libDir / l.getName()
         IO.copyFile(l, dest)
@@ -312,28 +307,20 @@ object PackPlugin extends AutoPlugin with PackArchive {
       // Copy dependent jars
 
       val distinctDpJars = packModuleEntries.value
-      if (level <= Level.Info) {
-        out.log.info(logPrefix + "Copying project dependencies:")
-      }
+      log.info(logPrefix + "Copying project dependencies:")
       val jarNameConvention = packJarNameConvention.value
       val projectDepsJars = for (m <- distinctDpJars) yield {
         val targetFileName = resolveJarName(m, jarNameConvention)
         val dest           = libDir / targetFileName
-        if (level <= Level.Info) {
-          out.log.info(s"${m}")
-        }
+        log.info(s"${m}")
         IO.copyFile(m.file, dest, true)
         dest
       }
 
       // Copy unmanaged jars in ${baseDir}/lib folder
-      if (level <= Level.Info) {
-        out.log.info(logPrefix + "Copying unmanaged dependencies:")
-      }
+      log.info(logPrefix + "Copying unmanaged dependencies:")
       val unmanagedDepsJars = for ((m, projectRef) <- packAllUnmanagedJars.value; um <- m; f = um.data) yield {
-        if (level <= Level.Info) {
-          out.log.info(f.getPath)
-        }
+        log.info(f.getPath)
         val dest = libDir / f.getName()
         sbt.IO.copyFile(f, dest, true)
         dest
@@ -341,13 +328,9 @@ object PackPlugin extends AutoPlugin with PackArchive {
 
       // Copy explicitly added dependencies
       val mapped: Seq[(FileRef, String)] = mappings.value
-      if (level <= Level.Info) {
-        out.log.info(logPrefix + "Copying explicit dependencies:")
-      }
+      log.info(logPrefix + "Copying explicit dependencies:")
       val explicitDepsJars = for ((file, path) <- mapped) yield {
-        if (level <= Level.Info) {
-          out.log.info(file.getPath)
-        }
+        log.info(file.getPath)
         val dest = distDir / path
         IO.copyFile(file, dest, true)
         dest
@@ -369,26 +352,20 @@ object PackPlugin extends AutoPlugin with PackArchive {
 
       // Create target/pack/bin folder
       val binDir = distDir / "bin"
-      if (level <= Level.Info) {
-        out.log.info(logPrefix + "Create a bin folder: " + rpath(base, binDir))
-      }
+      log.info(logPrefix + "Create a bin folder: " + rpath(base, binDir))
       binDir.mkdirs()
 
       def write(path: String, content: String): Unit = {
         val p = distDir / path
-        if (level <= Level.Info) {
-          out.log.info(logPrefix + "Generating %s".format(rpath(base, p)))
-        }
+        log.info(logPrefix + "Generating %s".format(rpath(base, p)))
         IO.write(p, content)
       }
 
       // Create launch scripts
-      if (level <= Level.Info) {
-        out.log.info(logPrefix + "Generating launch scripts")
-      }
+      log.info(logPrefix + "Generating launch scripts")
       val mainTable: Map[String, String] = packMain.value
-      if (mainTable.isEmpty && level <= Level.Warn) {
-        out.log.warn(
+      if (mainTable.isEmpty) {
+        log.warn(
           logPrefix + "No mapping (program name) -> MainClass is defined. Please set packMain variable (Map[String, String]) in your sbt project settings."
         )
       }
@@ -399,9 +376,7 @@ object PackPlugin extends AutoPlugin with PackArchive {
       // Check the current Git revision
       val gitRevision: String = Try {
         if ((base / ".git").exists()) {
-          if (level <= Level.Info) {
-            out.log.info(logPrefix + "Checking the git revision of the current project")
-          }
+          log.info(logPrefix + "Checking the git revision of the current project")
           sys.process.Process("git rev-parse HEAD").!!
         } else {
           "unknown"
@@ -413,9 +388,7 @@ object PackPlugin extends AutoPlugin with PackArchive {
 
       // Render script via Scalate template
       for ((name, mainClass) <- mainTable) {
-        if (level <= Level.Info) {
-          out.log.info(logPrefix + "main class for %s: %s".format(name, mainClass))
-        }
+        log.info(logPrefix + "main class for %s: %s".format(name, mainClass))
         def extraClasspath(sep: String): String =
           packExtraClasspath.value.get(name).map(_.mkString("", sep, sep)).getOrElse("")
         def expandedClasspath(sep: String): String = {
@@ -480,9 +453,7 @@ object PackPlugin extends AutoPlugin with PackArchive {
       // Copy resources
       val otherResourceDirs = packResourceDir.value
       val binScriptsDir     = otherResourceDirs.map(_._1 / "bin").filter(_.exists)
-      if (level <= Level.Info) {
-        out.log.info(logPrefix + s"packed resource directories = ${otherResourceDirs.map(_._1).mkString(",")}")
-      }
+      log.info(logPrefix + s"packed resource directories = ${otherResourceDirs.map(_._1).mkString(",")}")
 
       def linkToScript(name: String) =
         "\t" + """ln -sf "../$(PROG)/current/bin/%s" "$(PREFIX)/bin/%s"""".format(name, name)
@@ -520,9 +491,7 @@ object PackPlugin extends AutoPlugin with PackArchive {
       // chmod +x the scripts in bin directory
       binDir.listFiles.foreach(_.setExecutable(true, false))
 
-      if (level <= Level.Info) {
-        out.log.info(logPrefix + "done.")
-      }
+      log.info(logPrefix + "done.")
       distDir
     }),
     Def.derive(packInstall := {
