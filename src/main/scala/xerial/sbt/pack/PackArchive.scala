@@ -106,7 +106,7 @@ trait PackArchive {
       createTarEntry
     ).value,
     packArchiveZip := createArchive[ZipArchiveEntry]("zip", new ZipArchiveOutputStream(_), createZipEntry).value,
-    packArchive := Seq(packArchiveTgz.value, packArchiveZip.value)
+    packArchive    := Seq(packArchiveTgz.value, packArchiveZip.value)
   )
 
   def publishPackArchiveTgz: SettingsDefinition =
