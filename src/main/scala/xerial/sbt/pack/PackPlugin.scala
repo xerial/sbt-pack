@@ -93,6 +93,8 @@ object PackPlugin extends AutoPlugin with PackArchive {
       taskKey[Boolean]("""use symbolic links instead of copying for <packCopyDependencies>.
         		|The use of symbolic links allows faster processing and save disk space.
       	  """.stripMargin)
+    val includedDependencyMappings =
+      settingKey[Seq[String]]("dependency mappings to include when packaging, default is Seq(\"compile->\")")
 
     val packArchivePrefix = settingKey[String]("prefix of (prefix)-(version).(format) archive file name")
     val packArchiveName   = settingKey[String]("archive file name. Default is (project-name)-(version)")
@@ -153,7 +155,8 @@ object PackPlugin extends AutoPlugin with PackArchive {
           Runtime,
           discoveredMainClasses,
           state.value,
-          packExclude.value
+          packExclude.value,
+          includedDependencyMappings.value
         )
       Def.task {
         mainClasses.value
@@ -162,7 +165,14 @@ object PackPlugin extends AutoPlugin with PackArchive {
     }.value,
     packAllUnmanagedJars := Def.taskDyn {
       val allUnmanagedJars =
-        getFromSelectedProjects(thisProjectRef.value, Runtime, unmanagedJars, state.value, packExclude.value)
+        getFromSelectedProjects(
+          thisProjectRef.value,
+          Runtime,
+          unmanagedJars,
+          state.value,
+          packExclude.value,
+          includedDependencyMappings.value
+        )
       Def.task { allUnmanagedJars.value }
     }.value,
     Def.derive(
@@ -174,7 +184,8 @@ object PackPlugin extends AutoPlugin with PackArchive {
               c,
               packageBin,
               state.value,
-              packExcludeLibJars.value
+              packExcludeLibJars.value,
+              includedDependencyMappings.value
             )
           ) ++ c.extendsConfigs.flatMap(libJarsFromConfiguration)
 
@@ -240,6 +251,7 @@ object PackPlugin extends AutoPlugin with PackArchive {
       }
     ),
     packCopyDependenciesUseSymbolicLinks := true,
+    includedDependencyMappings           := Seq("compile->"),
     packCopyDependenciesTarget           := target.value / "lib",
     Def.derive(
       packCopyDependencies := {
@@ -495,20 +507,13 @@ object PackPlugin extends AutoPlugin with PackArchive {
     })
   )
 
-  private def getFromAllProjects[T](
-      contextProject: ProjectRef,
-      config: Configuration,
-      targetTask: TaskKey[T],
-      state: State
-  ): Task[Seq[(T, ProjectRef)]] =
-    getFromSelectedProjects(contextProject, config, targetTask, state, Seq.empty)
-
   private def getFromSelectedProjects[T](
       contextProject: ProjectRef,
       config: Configuration,
       targetTask: TaskKey[T],
       state: State,
-      exclude: Seq[String]
+      exclude: Seq[String],
+      includedDependencyMappings: Seq[String]
   ): Task[Seq[(T, ProjectRef)]] = {
     val extracted = Project.extract(state)
     val structure = extracted.structure
@@ -516,13 +521,14 @@ object PackPlugin extends AutoPlugin with PackArchive {
     def transitiveDependencies(currentProject: ProjectRef): Seq[ProjectRef] = {
       def isExcluded(p: ProjectRef) = exclude.contains(p.project)
 
-      def isCompileConfig(cp: ClasspathDep[ProjectRef]) = cp.configuration.forall(_.contains("compile->"))
+      def isMatchingConfig(cp: ClasspathDep[ProjectRef]) =
+        cp.configuration.forall(c => includedDependencyMappings.exists(c.contains(_)))
 
       // Traverse all dependent projects
       val children = Project
         .getProject(currentProject, structure)
         .toSeq
-        .flatMap { _.dependencies.filter(isCompileConfig).map(_.project) }
+        .flatMap { _.dependencies.filter(isMatchingConfig).map(_.project) }
 
       (currentProject +: (children flatMap transitiveDependencies)) filterNot (isExcluded)
     }
