@@ -522,7 +522,7 @@ object PackPlugin extends AutoPlugin with PackArchive {
       def isExcluded(p: ProjectRef) = exclude.contains(p.project)
 
       def isMatchingConfig(cp: ClasspathDep[ProjectRef]) =
-        cp.configuration.forall(c => includedDependencyMappings.exists(c.contains(_)))
+        includedDependencyMappings.nonEmpty && cp.configuration.forall(c => includedDependencyMappings.exists(c.contains(_)))
 
       // Traverse all dependent projects
       val children = Project
