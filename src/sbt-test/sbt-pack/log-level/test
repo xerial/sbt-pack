@@ -1,0 +1,18 @@
+# Test that log level settings are respected
+
+# Test with default log level (should show info messages)
+> Compile / pack
+
+# Test with Warn log level (should NOT show info messages)
+> set Compile / pack / logLevel := Level.Warn
+> clean
+> Compile / pack
+
+# Test packCopyDependencies with Warn log level
+> set Compile / packCopyDependencies / logLevel := Level.Warn
+> clean
+> Compile / packCopyDependencies
+
+# Verify the pack was successful even with Warn log level
+$ exists target/pack/bin/hello
+$ exists target/pack/lib
