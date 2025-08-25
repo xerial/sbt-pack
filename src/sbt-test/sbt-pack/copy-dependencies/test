@@ -61,3 +61,15 @@ $exists module4/target/WEB-INF/lib/commons-digester-2.1.jar
 $exists module4/target/WEB-INF/lib/commons-logging-1.1.1.jar
 $exists module4/target/WEB-INF/lib/slf4j-api-1.7.6.jar
 -$exists module4/target/WEB-INF/lib/snappy-java-1.1.1.6.jar
+
+>set module4 / includedDependencyMappings := Seq("compile->", "test->")
+>module4 / packCopyDependencies
+#$exec ls module4/target/WEB-INF/lib
+-$exists module4/target/WEB-INF/lib/module2-0.1.jar
+$exists module4/target/WEB-INF/lib/module3-0.1.jar
+$exists module4/target/WEB-INF/lib/module4-0.1.jar
+$exists module4/target/WEB-INF/lib/commons-collections-3.2.1.jar
+$exists module4/target/WEB-INF/lib/commons-digester-2.1.jar
+$exists module4/target/WEB-INF/lib/commons-logging-1.1.1.jar
+$exists module4/target/WEB-INF/lib/slf4j-api-1.7.6.jar
+-$exists module4/target/WEB-INF/lib/snappy-java-1.1.1.6.jar
