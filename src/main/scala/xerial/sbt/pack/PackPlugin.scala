@@ -437,8 +437,10 @@ object PackPlugin extends AutoPlugin with PackArchive {
             PROG_VERSION = progVersion,
             PROG_REVISION = gitRevision,
             MAIN_CLASS = mainClass,
-            JVM_OPTS = replaceProgHome(scriptOpts.JVM_OPTS),
-            JVM_VERSION_OPTS = scriptOpts.JVM_VERSION_OPTS.map { case (v, opts) => v -> replaceProgHome(opts) },
+            JVM_OPTS = replaceProgHome(scriptOpts.JVM_OPTS).replace("\"", ""), // Remove quotes for Windows batch script
+            JVM_VERSION_OPTS = scriptOpts.JVM_VERSION_OPTS.map { case (v, opts) =>
+              v -> replaceProgHome(opts).replace("\"", "") // Remove quotes for Windows batch script
+            },
             EXTRA_CLASSPATH = replaceProgHome(extraPath),
             MAC_ICON_FILE = replaceProgHome(macIconFile)
           )
