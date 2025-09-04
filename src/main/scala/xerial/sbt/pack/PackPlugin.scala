@@ -77,6 +77,7 @@ object PackPlugin extends AutoPlugin with PackArchive {
     val packAllUnmanagedJars = taskKey[Seq[(Classpath, ProjectRef)]]("all unmanaged jar files")
     val packModuleEntries    = taskKey[Seq[ModuleEntry]]("modules that will be packed")
     val packJvmOpts          = settingKey[Map[String, Seq[String]]]("pack-jvm-opts")
+    val packJvmVersionSpecificOpts = settingKey[Map[String, Map[Int, Seq[String]]]]("Java version specific JVM options. Map[progName, Map[javaVersion, Seq[options]]]")
     val packExtraClasspath   = settingKey[Map[String, Seq[String]]]("pack-extra-classpath")
     val packExpandedClasspath =
       settingKey[Boolean]("Expands the wildcard classpath in launch scripts to point at specific libraries")
@@ -140,6 +141,7 @@ object PackPlugin extends AutoPlugin with PackArchive {
     packMacIconFile            := "icon-mac.png",
     packResourceDir            := Map(baseDirectory.value / "src/pack" -> ""),
     packJvmOpts                := Map.empty,
+    packJvmVersionSpecificOpts := Map.empty,
     packExtraClasspath         := Map.empty,
     packExpandedClasspath      := false,
     packJarNameConvention      := "default",
@@ -393,12 +395,16 @@ object PackPlugin extends AutoPlugin with PackArchive {
           None
         }
 
+        val versionSpecificOpts = packJvmVersionSpecificOpts.value.getOrElse(name, Map.empty)
+          .map { case (version, opts) => version -> opts.map("\"%s\"".format(_)).mkString(" ") }
+        
         val scriptOpts = LaunchScript.Opts(
           PROG_NAME = name,
           PROG_VERSION = progVersion,
           PROG_REVISION = gitRevision,
           MAIN_CLASS = mainClass,
           JVM_OPTS = packJvmOpts.value.getOrElse(name, Nil).map("\"%s\"".format(_)).mkString(" "),
+          JVM_VERSION_OPTS = versionSpecificOpts,
           EXTRA_CLASSPATH = extraClasspath(pathSeparator),
           MAC_ICON_FILE = macIconFile,
           ENV_VARS =
@@ -429,6 +435,7 @@ object PackPlugin extends AutoPlugin with PackArchive {
             PROG_REVISION = gitRevision,
             MAIN_CLASS = mainClass,
             JVM_OPTS = replaceProgHome(scriptOpts.JVM_OPTS),
+            JVM_VERSION_OPTS = scriptOpts.JVM_VERSION_OPTS.map { case (v, opts) => v -> replaceProgHome(opts) },
             EXTRA_CLASSPATH = replaceProgHome(extraPath),
             MAC_ICON_FILE = replaceProgHome(macIconFile)
           )

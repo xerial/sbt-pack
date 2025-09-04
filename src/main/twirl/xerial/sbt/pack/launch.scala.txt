@@ -104,6 +104,29 @@ if [ -z "$JAVA_HOME" ] ; then
   echo "Warning: JAVA_HOME environment variable is not set." 1>&2
 fi
 
+# Detect Java version for version-specific options
+getJavaVersion() {
+  local java_cmd="$1"
+  local str=$("$java_cmd" -version 2>&1 | grep -E -e '(java|openjdk) version' | awk '{ print $3 }' | tr -d '"')
+  
+  # java -version on java8 says 1.8.x
+  # but on 9 and 10 it's 9.x.y and 10.x.y.
+  if [[ "$str" =~ ^1\.([0-9]+)(\..*)? ]]; then
+    echo "${BASH_REMATCH[1]}"
+  elif [[ "$str" =~ ^([0-9]+)(\..*)? ]]; then
+    echo "${BASH_REMATCH[1]}"
+  fi
+}
+
+JAVA_VERSION=$(getJavaVersion "$JAVACMD")
+
+# Add version-specific JVM options
+@for((version, opts) <- opts.JVM_VERSION_OPTS) {
+if [ "$JAVA_VERSION" = "@version" ]; then
+  JAVA_OPTS="$JAVA_OPTS @opts"
+fi
+}
+
 CLASSPATH_SUFFIX=""
 # Path separator used in EXTRA_CLASSPATH
 PSEP=":"

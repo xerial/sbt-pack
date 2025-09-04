@@ -21,6 +21,7 @@ object LaunchScript {
       PROG_VERSION: String,
       PROG_REVISION: String,
       JVM_OPTS: String = "",
+      JVM_VERSION_OPTS: Map[Int, String] = Map.empty,
       EXTRA_CLASSPATH: String,
       MAC_ICON_FILE: String = "icon-mac.png",
       ENV_VARS: String = ""

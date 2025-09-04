@@ -1,0 +1,1 @@
+addSbtPlugin("xerial.sbt" % "sbt-pack" % sys.props("project.version"))

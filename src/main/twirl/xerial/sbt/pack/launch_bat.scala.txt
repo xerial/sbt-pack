@@ -88,6 +88,23 @@ goto Win9xApp
 SET PROG_HOME=%~dp0..
 SET PSEP=;
 
+@@REM Detect Java version for version-specific options
+for /f tokens^=2-5^ delims^=.-_+^" %%j in ('%JAVA_EXE% -fullversion 2^>^&1') do (
+  set "JAVA_VERSION_FULL=%%j.%%k.%%l.%%m"
+  if "%%j" == "1" (
+    set "JAVA_VERSION=%%k"
+  ) else (
+    set "JAVA_VERSION=%%j"
+  )
+)
+
+@@REM Add version-specific JVM options
+@for((version, opts) <- opts.JVM_VERSION_OPTS) {
+if "%JAVA_VERSION%" == "@version" (
+  set "JAVA_OPTS=%JAVA_OPTS% @opts"
+)
+}
+
 @@REM Start Java program
 :runm2
 SET CMDLINE=%JAVA_EXE% @(opts.JVM_OPTS) %JAVA_OPTS% -cp @if(expandedClasspath.isEmpty){"@(opts.EXTRA_CLASSPATH)%PROG_HOME%\lib\*;" } else {"@(opts.EXTRA_CLASSPATH)@(expandedClasspath.get);" } -Dprog.home="%PROG_HOME%" -Dprog.version="@(opts.PROG_VERSION)" -Dprog.revision="@(opts.PROG_REVISION)" @(opts.MAIN_CLASS) %CMD_LINE_ARGS%
