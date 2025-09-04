@@ -90,3 +90,4 @@ sbt-pack is an SBT plugin for creating distributable Scala packages. It bundles 
 - Supports multi-module projects with different main classes
 - Handles both application and library packaging scenarios
 - Special Docker-friendly features for container deployment
+- Before pushing changes, ensure formatting code with `./sbt scalafmtAll`
