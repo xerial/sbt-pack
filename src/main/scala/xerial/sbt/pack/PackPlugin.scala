@@ -77,8 +77,10 @@ object PackPlugin extends AutoPlugin with PackArchive {
     val packAllUnmanagedJars = taskKey[Seq[(Classpath, ProjectRef)]]("all unmanaged jar files")
     val packModuleEntries    = taskKey[Seq[ModuleEntry]]("modules that will be packed")
     val packJvmOpts          = settingKey[Map[String, Seq[String]]]("pack-jvm-opts")
-    val packJvmVersionSpecificOpts = settingKey[Map[String, Map[Int, Seq[String]]]]("Java version specific JVM options. Map[progName, Map[javaVersion, Seq[options]]]")
-    val packExtraClasspath   = settingKey[Map[String, Seq[String]]]("pack-extra-classpath")
+    val packJvmVersionSpecificOpts = settingKey[Map[String, Map[Int, Seq[String]]]](
+      "Java version specific JVM options. Map[progName, Map[javaVersion, Seq[options]]]"
+    )
+    val packExtraClasspath = settingKey[Map[String, Seq[String]]]("pack-extra-classpath")
     val packExpandedClasspath =
       settingKey[Boolean]("Expands the wildcard classpath in launch scripts to point at specific libraries")
     val packJarNameConvention = settingKey[String](
@@ -395,9 +397,10 @@ object PackPlugin extends AutoPlugin with PackArchive {
           None
         }
 
-        val versionSpecificOpts = packJvmVersionSpecificOpts.value.getOrElse(name, Map.empty)
+        val versionSpecificOpts = packJvmVersionSpecificOpts.value
+          .getOrElse(name, Map.empty)
           .map { case (version, opts) => version -> opts.map("\"%s\"".format(_)).mkString(" ") }
-        
+
         val scriptOpts = LaunchScript.Opts(
           PROG_NAME = name,
           PROG_VERSION = progVersion,
