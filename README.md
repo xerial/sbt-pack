@@ -83,7 +83,7 @@ packJvmVersionSpecificOpts := Map(
     8  -> Seq("-XX:MaxPermSize=256m"),           // Only for Java 8
     11 -> Seq("-XX:+UseJVMCICompiler"),          // Only for Java 11  
     17 -> Seq("-XX:+UseZGC"),                    // Only for Java 17
-    21 -> Seq("-XX:+UseZGC", "-XX:+GenerationalZGC"), // Only for Java 21
+    21 -> Seq("-XX:+UseZGC", "-XX:+ZGenerational"), // Only for Java 21
     24 -> Seq("--sun-misc-unsafe-memory-access=allow") // Java 24+ unsafe access
   )
 )

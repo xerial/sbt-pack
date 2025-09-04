@@ -48,11 +48,11 @@ object Main {
         println(s"  Has UseZGC (Java 17): $hasZGC")
         hasZGC
       case 21 =>
-        // Java 21 should have UseZGC and GenerationalZGC
+        // Java 21 should have UseZGC and ZGenerational
         val hasZGC = argsList.exists(_.contains("UseZGC"))
-        val hasGenZGC = argsList.exists(_.contains("GenerationalZGC"))
+        val hasGenZGC = argsList.exists(_.contains("ZGenerational"))
         println(s"  Has UseZGC (Java 21): $hasZGC")
-        println(s"  Has GenerationalZGC (Java 21): $hasGenZGC")
+        println(s"  Has ZGenerational (Java 21): $hasGenZGC")
         hasZGC && hasGenZGC
       case 24 =>
         // Java 24 should have UseG1GC, G1HeapRegionSize, and sun-misc-unsafe-memory-access
