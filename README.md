@@ -76,6 +76,24 @@ packMain := Map("hello" -> "myprog.Hello")
 // [Optional] JVM options of scripts (program name -> Seq(JVM option, ...))
 packJvmOpts := Map("hello" -> Seq("-Xmx512m"))
 
+// [Optional] Java version-specific JVM options (since 0.22)
+// The launch scripts will detect the Java version and apply appropriate options
+// Options are applied as version ranges: 
+// - Java 8-10 will get the options for version 8
+// - Java 11-16 will get the options for version 11
+// - Java 17-20 will get the options for version 17
+// - Java 21-23 will get the options for version 21
+// - Java 24+ will get the options for version 24
+packJvmVersionSpecificOpts := Map(
+  "hello" -> Map(
+    8  -> Seq("-XX:MaxPermSize=256m"),              // Applied for Java [8,11)
+    11 -> Seq("-XX:+UseJVMCICompiler"),             // Applied for Java [11,17)
+    17 -> Seq("-XX:+UseZGC"),                       // Applied for Java [17,21)
+    21 -> Seq("-XX:+UseZGC", "-XX:+ZGenerational"), // Applied for Java [21,24)
+    24 -> Seq("--sun-misc-unsafe-memory-access=allow") // Applied for Java [24,∞)
+  )
+)
+
 // [Optional] Extra class paths to look when launching a program. You can use ${PROG_HOME} to specify the base directory
 packExtraClasspath := Map("hello" -> Seq("${PROG_HOME}/etc")) 
 

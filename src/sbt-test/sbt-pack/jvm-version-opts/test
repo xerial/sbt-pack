@@ -1,0 +1,6 @@
+> 'set version := "0.1"'
+> pack
+$ exists target/pack/bin/test
+$ exists target/pack/bin/test.bat
+# Run the test program to verify it works (this also validates that version detection doesn't break the script)
+$ exec sh ./target/pack/bin/test
