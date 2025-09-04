@@ -78,7 +78,7 @@ object PackPlugin extends AutoPlugin with PackArchive {
     val packModuleEntries    = taskKey[Seq[ModuleEntry]]("modules that will be packed")
     val packJvmOpts          = settingKey[Map[String, Seq[String]]]("pack-jvm-opts")
     val packJvmVersionSpecificOpts = settingKey[Map[String, Map[Int, Seq[String]]]](
-      "Java version specific JVM options. Map[progName, Map[javaVersion, Seq[options]]]"
+      "Java version specific JVM options. Map[progName, Map[javaVersion, Seq[options]]]. Options are applied as ranges: if versions 8, 11, and 17 are specified, then Java [8,11) uses options for 8, [11,17) uses options for 11, and [17,∞) uses options for 17"
     )
     val packExtraClasspath = settingKey[Map[String, Seq[String]]]("pack-extra-classpath")
     val packExpandedClasspath =

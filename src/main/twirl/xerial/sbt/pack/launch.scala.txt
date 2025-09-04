@@ -123,10 +123,17 @@ getJavaVersion() {
 
 JAVA_VERSION=$(getJavaVersion "$JAVACMD")
 
-# Add version-specific JVM options
-@for((version, opts) <- opts.JVM_VERSION_OPTS) {
-if [ "$JAVA_VERSION" = "@version" ]; then
-  JAVA_OPTS="$JAVA_OPTS @opts"
+# Add version-specific JVM options using range matching
+# Options are applied based on version ranges: if versions 21 and 24 are specified,
+# then [21,24) gets opts for 21, [24,∞) gets opts for 24
+@if(opts.JVM_VERSION_OPTS.nonEmpty) {
+@for(version <- opts.JVM_VERSION_OPTS.keys.toList.sorted) {
+if [ "$JAVA_VERSION" -ge @version ]; then
+  VERSION_OPTS="@opts.JVM_VERSION_OPTS(version)"
+fi
+}
+if [ -n "$VERSION_OPTS" ]; then
+  JAVA_OPTS="$JAVA_OPTS $VERSION_OPTS"
 fi
 }
 

@@ -98,10 +98,18 @@ for /f tokens^=2-5^ delims^=.-_+^" %%j in ('%JAVA_EXE% -version 2^>^&1') do (
   )
 )
 
-@@REM Add version-specific JVM options
-@for((version, opts) <- opts.JVM_VERSION_OPTS) {
-if "%JAVA_VERSION%" == "@version" (
-  set "JAVA_OPTS=%JAVA_OPTS% @opts"
+@@REM Add version-specific JVM options using range matching
+@@REM Options are applied based on version ranges: if versions 21 and 24 are specified,
+@@REM then [21,24) gets opts for 21, [24,infinity) gets opts for 24
+@if(opts.JVM_VERSION_OPTS.nonEmpty) {
+set "VERSION_OPTS="
+@for(version <- opts.JVM_VERSION_OPTS.keys.toList.sorted) {
+if %JAVA_VERSION% GEQ @version (
+  set "VERSION_OPTS=@opts.JVM_VERSION_OPTS(version)"
+)
+}
+if defined VERSION_OPTS (
+  set "JAVA_OPTS=%JAVA_OPTS% %VERSION_OPTS%"
 )
 }
 
