@@ -76,7 +76,7 @@ packMain := Map("hello" -> "myprog.Hello")
 // [Optional] JVM options of scripts (program name -> Seq(JVM option, ...))
 packJvmOpts := Map("hello" -> Seq("-Xmx512m"))
 
-// [Optional] Java version-specific JVM options (since 0.21)
+// [Optional] Java version-specific JVM options (since 0.22)
 // The launch scripts will detect the Java version and apply appropriate options
 packJvmVersionSpecificOpts := Map(
   "hello" -> Map(
