@@ -89,7 +89,7 @@ SET PROG_HOME=%~dp0..
 SET PSEP=;
 
 @@REM Detect Java version for version-specific options
-for /f tokens^=2-5^ delims^=.-_+^" %%j in ('%JAVA_EXE% -fullversion 2^>^&1') do (
+for /f tokens^=2-5^ delims^=.-_+^" %%j in ('%JAVA_EXE% -version 2^>^&1') do (
   set "JAVA_VERSION_FULL=%%j.%%k.%%l.%%m"
   if "%%j" == "1" (
     set "JAVA_VERSION=%%k"

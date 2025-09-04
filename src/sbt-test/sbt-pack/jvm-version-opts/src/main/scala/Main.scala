@@ -8,7 +8,7 @@ object Main {
     val jvmArgs = runtimeMxBean.getInputArguments
     
     println("JVM Arguments:")
-    import scala.collection.JavaConverters._
+    import scala.jdk.CollectionConverters._
     jvmArgs.asScala.foreach { arg =>
       println(s"  $arg")
     }
