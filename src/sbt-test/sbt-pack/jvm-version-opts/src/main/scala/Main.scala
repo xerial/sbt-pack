@@ -55,12 +55,14 @@ object Main {
         println(s"  Has GenerationalZGC (Java 21): $hasGenZGC")
         hasZGC && hasGenZGC
       case 24 =>
-        // Java 24 should have UseG1GC and G1HeapRegionSize
+        // Java 24 should have UseG1GC, G1HeapRegionSize, and sun-misc-unsafe-memory-access
         val hasG1GC = argsList.exists(_.contains("UseG1GC"))
         val hasG1HeapRegion = argsList.exists(_.contains("G1HeapRegionSize"))
+        val hasUnsafeMemoryAccess = argsList.exists(_.contains("sun-misc-unsafe-memory-access=allow"))
         println(s"  Has UseG1GC (Java 24): $hasG1GC")
         println(s"  Has G1HeapRegionSize (Java 24): $hasG1HeapRegion")
-        hasG1GC && hasG1HeapRegion
+        println(s"  Has --sun-misc-unsafe-memory-access=allow (Java 24): $hasUnsafeMemoryAccess")
+        hasG1GC && hasG1HeapRegion && hasUnsafeMemoryAccess
       case _ =>
         // For other versions, no specific options are expected
         println(s"  No version-specific options for Java $majorVersion")
