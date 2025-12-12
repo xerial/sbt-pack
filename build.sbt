@@ -4,7 +4,7 @@ enablePlugins(SbtTwirl)
 enablePlugins(SbtPlugin)
 
 val SCALA_3 = "3.7.4"
-val SCALA_2 = "2.12.20"
+val SCALA_2 = "2.12.21"
 ThisBuild / crossScalaVersions := List(SCALA_3, SCALA_2)
 
 pluginCrossBuild / sbtVersion := {
