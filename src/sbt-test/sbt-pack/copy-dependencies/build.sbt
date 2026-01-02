@@ -51,7 +51,7 @@ lazy val module3 =
 
 lazy val module4 =
   project
-    .dependsOn(module2)
+    .dependsOn(module2, module3 % "test->compile")
     .settings(commonSettings)
     .settings(
       libraryDependencies ++= Seq(
