@@ -183,8 +183,8 @@ the `packCopyDependenciesTarget` setting.
 By default, a symbolic link will be created.  By setting `packCopyDependenciesUseSymbolicLinks` to `false`, 
 the files will be copied instead of symlinking.   A symbolic link is faster and uses less disk space.
 
-By default, only dependencies from child modules with mapping `compile->` will be copied.  By setting
-`includedDependencyMappings` to a list of mappings, you can control which dependencies are copied.
+By default, only dependencies from child modules with scope `compile->` will be copied.  By setting
+`packIncludedProjectScopes` to a list of scopes (e.g., `Seq("compile->", "test->")`), you can control which project dependencies are included.
 
 It can be used e.g. for copying dependencies of a webapp to `WEB-INF/lib`
 
