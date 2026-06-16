@@ -34,9 +34,22 @@ Add `sbt-pack` plugin to your sbt configuration:
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.xerial.sbt/sbt-pack/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.xerial.sbt/sbt-pack)
 
 ```scala
-// for sbt-0.13.x, sbt-1.x
-addSbtPlugin("org.xerial.sbt" % "sbt-pack" % "(version)")  
+// For sbt 2.x (Scala 3)
+addSbtPlugin("org.xerial.sbt" % "sbt-pack" % "1.x.y")
+
+// For sbt 1.x (Scala 2.12)
+addSbtPlugin("org.xerial.sbt" % "sbt-pack" % "0.23.x")
 ```
+
+Pick the version that matches your sbt:
+
+| Your sbt version | sbt-pack version | Source branch                                                         |
+|------------------|------------------|-----------------------------------------------------------------------|
+| sbt 2.x          | `1.x.y` and up   | [`main`](https://github.com/xerial/sbt-pack/tree/main)                |
+| sbt 1.x          | `0.23.x`         | [`sbt-1`](https://github.com/xerial/sbt-pack/tree/sbt-1) (maintenance)|
+
+The `1.0.0` release is the first version targeting sbt 2. The `0.x` line continues
+to receive maintenance fixes for sbt 1 users on the `sbt-1` branch.
 
 Repository URL: https://repo1.maven.org/maven2/org/xerial/sbt/
 
