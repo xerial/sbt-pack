@@ -3,18 +3,10 @@ Global / onChangedBuildSource := ReloadOnSourceChanges
 enablePlugins(SbtTwirl)
 enablePlugins(SbtPlugin)
 
-val SCALA_3 = "3.7.4"
-val SCALA_2 = "2.12.21"
-ThisBuild / crossScalaVersions := List(SCALA_3, SCALA_2)
+val SCALA_3 = "3.8.4"
+ThisBuild / scalaVersion := SCALA_3
 
-pluginCrossBuild / sbtVersion := {
-  scalaBinaryVersion.value match {
-    case "2.12" =>
-      (pluginCrossBuild / sbtVersion).value
-    case _ =>
-      "2.0.0-M4"
-  }
-}
+pluginCrossBuild / sbtVersion := "2.0.0"
 
 organization         := "org.xerial.sbt"
 organizationName     := "Xerial project"

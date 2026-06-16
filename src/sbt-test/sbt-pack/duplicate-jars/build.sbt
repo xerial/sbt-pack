@@ -18,7 +18,7 @@ lazy val module1 = Project(
   .settings(
     libraryDependencies ++= Seq(
       "org.xerial" % "xerial-core" % "3.3.6",
-      "org.slf4j"  % "slf4j-api"   % "1.7.2" force ()
+      ("org.slf4j"  % "slf4j-api"   % "1.7.2").force()
     )
   )
 
