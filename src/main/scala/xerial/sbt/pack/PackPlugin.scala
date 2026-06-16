@@ -15,6 +15,7 @@ import java.time.{Instant, ZoneId, ZonedDateTime}
 import java.util.{Date, Locale}
 import sbt.Keys.*
 import sbt.{io, *}
+import xsbti.FileConverter
 
 import scala.util.Try
 import scala.util.matching.Regex
@@ -131,12 +132,12 @@ object PackPlugin extends AutoPlugin with PackArchive {
   import autoImport._
 
   lazy val packSettings = Seq[Def.Setting[?]](
-    packTargetDir := target.value,
+    packTargetDir := baseDirectory.value / "target",
     packDir       := "pack",
     // packBashTemplate := "/xerial/sbt/template/launch.mustache",
     // packBatTemplate := "/xerial/sbt/template/launch-bat.mustache",
     // packMakeTemplate := "/xerial/sbt/template/Makefile.mustache",
-    packMain                   := packMainDiscovered.value,
+    packMain                   := Def.uncached(packMainDiscovered.value),
     packExclude                := Seq.empty,
     packExcludeLibJars         := Seq.empty,
     packExcludeJars            := Seq.empty,
@@ -152,7 +153,7 @@ object PackPlugin extends AutoPlugin with PackArchive {
     packDuplicateJarStrategy   := "latest",
     packGenerateWindowsBatFile := true,
     packGenerateMakefile       := true,
-    packMainDiscovered := Def.taskDyn {
+    packMainDiscovered := Def.uncached(Def.taskDyn {
       val mainClasses =
         getFromSelectedProjects(
           thisProjectRef.value,
@@ -166,8 +167,8 @@ object PackPlugin extends AutoPlugin with PackArchive {
         mainClasses.value
           .flatMap(_._1.map(mainClass => hyphenize(mainClass.split('.').last) -> mainClass).toMap).toMap
       }
-    }.value,
-    packAllUnmanagedJars := Def.taskDyn {
+    }.value),
+    packAllUnmanagedJars := Def.uncached(Def.taskDyn {
       val allUnmanagedJars =
         getFromSelectedProjects(
           thisProjectRef.value,
@@ -178,116 +179,113 @@ object PackPlugin extends AutoPlugin with PackArchive {
           packIncludedProjectScopes.value
         )
       Def.task { allUnmanagedJars.value }
-    }.value,
-    Def.derive(
-      packLibJars := Def.taskDyn {
-        def libJarsFromConfiguration(c: Configuration): Seq[Task[Seq[(FileRef, ProjectRef)]]] =
-          Seq(
-            getFromSelectedProjects[FileRef](
-              thisProjectRef.value,
-              c,
-              packageBin,
-              state.value,
-              packExcludeLibJars.value,
-              packIncludedProjectScopes.value
-            )
-          ) ++ c.extendsConfigs.flatMap(libJarsFromConfiguration)
+    }.value),
+    packLibJars := Def.uncached(Def.taskDyn {
+      def libJarsFromConfiguration(c: Configuration): Seq[Task[Seq[(FileRef, ProjectRef)]]] =
+        Seq(
+          getFromSelectedProjects[FileRef](
+            thisProjectRef.value,
+            c,
+            packageBin,
+            state.value,
+            packExcludeLibJars.value,
+            packIncludedProjectScopes.value
+          )
+        ) ++ c.extendsConfigs.flatMap(libJarsFromConfiguration)
 
-        val libJars = libJarsFromConfiguration(configuration.value).join
-        Def.task {
-          libJars.value.flatten.distinct
-        }
-      }.value
-    ),
-    mappings := Seq.empty,
-    Def.derive(
-      packModuleEntries := {
-        val out                          = streams.value
-        val jarExcludeFilter: Seq[Regex] = packExcludeJars.value.map(_.r)
-        def isExcludeJar(name: String): Boolean = {
-          val toExclude = jarExcludeFilter.exists(pattern => pattern.findFirstIn(name).isDefined)
-          if (toExclude) {
-            out.log.info(s"Exclude $name from the package")
-          }
-          toExclude
-        }
-
-        val df = configurationFilter(name = configuration.value.name) // &&
-
-        val dependentJars =
-          for {
-            c                <- update.value.filter(df).configurations
-            m                <- c.modules if !m.evicted
-            (artifact, file) <- m.artifacts
-            if !packExcludeArtifactTypes.value.contains(artifact.`type`) && !isExcludeJar(file.getName())
-          } yield {
-            val mid = m.module
-            ModuleEntry(
-              mid.organization,
-              mid.name,
-              VersionString(mid.revision),
-              artifact.name,
-              artifact.classifier,
-              file
-            )
-          }
-
-        implicit val versionStringOrdering = DefaultVersionStringOrdering
-        val distinctDpJars = dependentJars
-          .groupBy(_.noVersionModuleName)
-          .flatMap {
-            case (key, entries) if entries.groupBy(_.revision).size == 1 => entries
-            case (key, entries) =>
-              val revisions      = entries.groupBy(_.revision).map(_._1).toList.sorted
-              val latestRevision = revisions.last
-              packDuplicateJarStrategy.value match {
-                case "latest" =>
-                  out.log
-                    .debug(s"Version conflict on $key. Using ${latestRevision} (found ${revisions.mkString(", ")})")
-                  entries.filter(_.revision == latestRevision)
-                case "exit" =>
-                  sys.error(s"Version conflict on $key (found ${revisions.mkString(", ")})")
-                case x =>
-                  sys.error("Unknown duplicate JAR strategy '%s'".format(x))
-              }
-          }
-        distinctDpJars.toSeq.distinct.sortBy(_.noVersionModuleName)
+      val libJars = libJarsFromConfiguration(Runtime).join
+      Def.task {
+        libJars.value.flatten.distinct
       }
-    ),
+    }.value),
+    mappings := Seq.empty,
+    packModuleEntries := Def.uncached {
+      val out                          = streams.value
+      val jarExcludeFilter: Seq[Regex] = packExcludeJars.value.map(_.r)
+      def isExcludeJar(name: String): Boolean = {
+        val toExclude = jarExcludeFilter.exists(pattern => pattern.findFirstIn(name).isDefined)
+        if (toExclude) {
+          out.log.info(s"Exclude $name from the package")
+        }
+        toExclude
+      }
+
+      val df = configurationFilter(name = Runtime.name) // &&
+
+      val dependentJars =
+        for {
+          c                <- update.value.filter(df).configurations
+          m                <- c.modules if !m.evicted
+          (artifact, file) <- m.artifacts
+          if !packExcludeArtifactTypes.value.contains(artifact.`type`) && !isExcludeJar(file.getName())
+        } yield {
+          val mid = m.module
+          ModuleEntry(
+            mid.organization,
+            mid.name,
+            VersionString(mid.revision),
+            artifact.name,
+            artifact.classifier,
+            file
+          )
+        }
+
+      implicit val versionStringOrdering = DefaultVersionStringOrdering
+      val distinctDpJars = dependentJars
+        .groupBy(_.noVersionModuleName)
+        .flatMap {
+          case (key, entries) if entries.groupBy(_.revision).size == 1 => entries
+          case (key, entries) =>
+            val revisions      = entries.groupBy(_.revision).map(_._1).toList.sorted
+            val latestRevision = revisions.last
+            packDuplicateJarStrategy.value match {
+              case "latest" =>
+                out.log
+                  .debug(s"Version conflict on $key. Using ${latestRevision} (found ${revisions.mkString(", ")})")
+                entries.filter(_.revision == latestRevision)
+              case "exit" =>
+                sys.error(s"Version conflict on $key (found ${revisions.mkString(", ")})")
+              case x =>
+                sys.error("Unknown duplicate JAR strategy '%s'".format(x))
+            }
+        }
+      distinctDpJars.toSeq.distinct.sortBy(_.noVersionModuleName)
+    },
     packCopyDependenciesUseSymbolicLinks := true,
     packIncludedProjectScopes            := Seq("compile->"),
     packCopyDependenciesTarget           := target.value / "lib",
-    Def.derive(
-      packCopyDependencies := {
-        val log = streams.value.log
+    packCopyDependencies := Def.uncached {
+      val log                   = streams.value.log
+      given conv: FileConverter = fileConverter.value
 
-        val distinctDpJars   = packModuleEntries.value.map(_.file)
-        val unmanaged        = packAllUnmanagedJars.value.flatMap(_._1).map(x => toFile(x.data))
-        val copyDepTargetDir = packCopyDependenciesTarget.value
-        val useSymlink       = packCopyDependenciesUseSymbolicLinks.value
+      val distinctDpJars   = packModuleEntries.value.map(_.file)
+      val unmanaged        = packAllUnmanagedJars.value.flatMap(_._1).map(x => toFile(x.data))
+      val copyDepTargetDir = packCopyDependenciesTarget.value
+      val useSymlink       = packCopyDependenciesUseSymbolicLinks.value
 
-        copyDepTargetDir.mkdirs()
-        IO.delete((copyDepTargetDir * "*.jar").get())
-        (distinctDpJars ++ unmanaged).foreach { d =>
-          log.debug(s"Copying ${d.getName()}")
-          val dest = copyDepTargetDir / d.getName()
-          if (useSymlink) {
-            Files.createSymbolicLink(dest.toPath, d.toPath())
-          } else {
-            IO.copyFile(d, dest)
-          }
+      copyDepTargetDir.mkdirs()
+      IO.delete((copyDepTargetDir * "*.jar").get())
+      (distinctDpJars ++ unmanaged).foreach { d =>
+        log.debug(s"Copying ${d.getName()}")
+        val dest = copyDepTargetDir / d.getName()
+        if (useSymlink) {
+          Files.createSymbolicLink(dest.toPath, d.toPath())
+        } else {
+          IO.copyFile(d, dest)
         }
-        val libs = packLibJars.value.map(_._1)
-        libs.foreach(l => IO.copyFile(l, copyDepTargetDir / l.getName()))
-
-        log.info(s"Copied ${distinctDpJars.size + libs.size} jars to ${copyDepTargetDir}")
       }
-    ),
-    packEnvVars := Map.empty,
-    Def.derive(pack := {
+      val libs = packLibJars.value.map(_._1).map(toFile)
+      libs.foreach(l => IO.copyFile(l, copyDepTargetDir / l.getName()))
+
+      log.info(s"Copied ${distinctDpJars.size + libs.size} jars to ${copyDepTargetDir}")
+    },
+    packEnvVars := Def.uncached(Map.empty),
+    pack := Def.uncached {
       val out        = streams.value
       val logPrefix  = "[" + name.value + "] "
       val base: File = new File(".") // Using the working directory as base for readability
+
+      given conv: FileConverter = fileConverter.value
 
       val distDir: File = packTargetDir.value / packDir.value
       out.log.info(logPrefix + "Creating a distributable package in " + rpath(base, distDir))
@@ -300,8 +298,8 @@ object PackPlugin extends AutoPlugin with PackArchive {
 
       // Copy project jars
       out.log.info(logPrefix + "Copying libraries to " + rpath(base, libDir))
-      val libs: Seq[FileRef] = packLibJars.value.map(_._1)
-      out.log.info(logPrefix + "project jars:\n" + libs.map(path => rpath(base, new io.RichFile(path))).mkString("\n"))
+      val libs: Seq[File] = packLibJars.value.map(_._1).map(toFile)
+      out.log.info(logPrefix + "project jars:\n" + libs.map(path => rpath(base, path)).mkString("\n"))
       val projectJars = libs.map(l => {
         val dest = libDir / l.getName()
         IO.copyFile(l, dest)
@@ -323,7 +321,7 @@ object PackPlugin extends AutoPlugin with PackArchive {
 
       // Copy unmanaged jars in ${baseDir}/lib folder
       out.log.info(logPrefix + "Copying unmanaged dependencies:")
-      val unmanagedDepsJars = for ((m, projectRef) <- packAllUnmanagedJars.value; um <- m; f = um.data) yield {
+      val unmanagedDepsJars = for ((m, projectRef) <- packAllUnmanagedJars.value; um <- m; f = toFile(um.data)) yield {
         out.log.info(f.getPath)
         val dest = libDir / f.getName()
         sbt.IO.copyFile(f, dest, true)
@@ -331,7 +329,7 @@ object PackPlugin extends AutoPlugin with PackArchive {
       }
 
       // Copy explicitly added dependencies
-      val mapped: Seq[(FileRef, String)] = mappings.value
+      val mapped: Seq[(File, String)] = mappings.value.map { case (ref, p) => (toFile(ref), p) }
       out.log.info(logPrefix + "Copying explicit dependencies:")
       val explicitDepsJars = for ((file, path) <- mapped) yield {
         out.log.info(file.getPath)
@@ -398,7 +396,7 @@ object PackPlugin extends AutoPlugin with PackArchive {
         def expandedClasspath(sep: String): String = {
           val projJars = libs.map(l => "${PROG_HOME}/lib/" + l.getName())
           val depJars  = distinctDpJars.map(m => "${PROG_HOME}/lib/" + resolveJarName(m, jarNameConvention))
-          val unmanagedJars = for ((m, projectRef) <- packAllUnmanagedJars.value; um <- m; f = um.data) yield {
+          val unmanagedJars = for ((m, projectRef) <- packAllUnmanagedJars.value; um <- m; f = toFile(um.data)) yield {
             "${PROG_HOME}/lib/" + f.getName()
           }
           (projJars ++ depJars ++ unmanagedJars).mkString("", sep, sep)
@@ -505,8 +503,8 @@ object PackPlugin extends AutoPlugin with PackArchive {
 
       out.log.info(logPrefix + "done.")
       distDir
-    }),
-    Def.derive(packInstall := {
+    },
+    packInstall := {
       val arg: Option[String] = targetFolderParser.parsed
       val packDir             = pack.value
       val cmd = arg match {
@@ -516,7 +514,7 @@ object PackPlugin extends AutoPlugin with PackArchive {
           s"make install"
       }
       sys.process.Process(cmd, Some(packDir)).!
-    })
+    }
   )
 
   private def getFromSelectedProjects[T](
