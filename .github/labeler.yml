@@ -1,0 +1,12 @@
+breaking:
+  - head-branch: ['^breaking[-/]']
+feature:
+  - head-branch: ['^feature[-/]', '^feat[-/]']
+bug:
+  - head-branch: ['^fix[-/]', '^bugfix[-/]', '^hotfix[-/]']
+deprecation:
+  - head-branch: ['^deprecate[-/]', '^deprecation[-/]']
+doc:
+  - head-branch: ['^doc[-/]', '^docs[-/]']
+internal:
+  - head-branch: ['^internal[-/]', '^chore[-/]', '^refactor[-/]']
