@@ -10,6 +10,7 @@ import org.apache.commons.compress.compressors.xz.XZCompressorOutputStream
 import org.apache.commons.io.IOUtils
 import sbt.Keys.*
 import sbt.*
+import xsbti.FileConverter
 import PluginCompat.*
 import PluginCompat.toFile
 
@@ -89,31 +90,42 @@ trait PackArchive {
     packArchiveTbzArtifact := Artifact(packArchivePrefix.value, "arch", "tar.bz2"),
     packArchiveTxzArtifact := Artifact(packArchivePrefix.value, "arch", "tar.xz"),
     packArchiveZipArtifact := Artifact(packArchivePrefix.value, "arch", "zip"),
-    Def.derive(
-      packArchiveTgz := createArchive[TarArchiveEntry](
+    packArchiveTgz := Def.uncached {
+      given conv: FileConverter = fileConverter.value
+      val file = createArchive[TarArchiveEntry](
         "tar.gz",
         (fos) => createTarArchiveOutputStream(new GzipCompressorOutputStream(fos)),
         createTarEntry
       ).value
-    ),
-    Def.derive(
-      packArchiveTbz := createArchive[TarArchiveEntry](
+      toFileRef(file)
+    },
+    packArchiveTbz := Def.uncached {
+      given conv: FileConverter = fileConverter.value
+      val file = createArchive[TarArchiveEntry](
         "tar.bz2",
         (fos) => createTarArchiveOutputStream(new BZip2CompressorOutputStream(fos)),
         createTarEntry
       ).value
-    ),
-    Def.derive(
-      packArchiveTxz := createArchive[TarArchiveEntry](
+      toFileRef(file)
+    },
+    packArchiveTxz := Def.uncached {
+      given conv: FileConverter = fileConverter.value
+      val file = createArchive[TarArchiveEntry](
         "tar.xz",
         (fos) => createTarArchiveOutputStream(new XZCompressorOutputStream(fos)),
         createTarEntry
       ).value
-    ),
-    Def.derive(
-      packArchiveZip := createArchive[ZipArchiveEntry]("zip", new ZipArchiveOutputStream(_), createZipEntry).value
-    ),
-    Def.derive(packArchive := Seq(packArchiveTgz.value, packArchiveZip.value))
+      toFileRef(file)
+    },
+    packArchiveZip := Def.uncached {
+      given conv: FileConverter = fileConverter.value
+      val file = createArchive[ZipArchiveEntry]("zip", new ZipArchiveOutputStream(_), createZipEntry).value
+      toFileRef(file)
+    },
+    packArchive := Def.uncached {
+      given conv: FileConverter = fileConverter.value
+      Seq(toFile(packArchiveTgz.value), toFile(packArchiveZip.value))
+    }
   )
 
   def publishPackArchiveTgz: SettingsDefinition =
