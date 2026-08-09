@@ -5,7 +5,14 @@
 
 version: 2
 updates:
-  - package-ecosystem: "github-actions" # See documentation for possible values
-    directory: "/" # Location of package manifests
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+
+  # Also track GitHub Actions updates on the sbt-1 maintenance branch.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    target-branch: "sbt-1"
     schedule:
       interval: "weekly"
