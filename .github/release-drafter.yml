@@ -12,13 +12,13 @@ categories:
     labels:
       - 'deprecation'
   - title: '⛓  Dependency Updates'
-    label:
+    labels:
       - 'library-update'
       - 'test-library-update'
       - 'sbt-plugin-update'
       - 'dependencies'
   - title: '🛠  Internal Updates'
-    label:
+    labels:
       - 'internal'
       - 'kaizen'
   - title: '📚 Docs'
