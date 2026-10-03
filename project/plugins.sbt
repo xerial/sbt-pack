@@ -1,8 +1,3 @@
-ThisBuild / libraryDependencySchemes += "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always
-
-addSbtPlugin("com.github.sbt"          % "sbt-pgp"      % "2.3.2")
-addSbtPlugin("org.scalameta"           % "sbt-scalafmt" % "2.3.4")
-addSbtPlugin("com.github.sbt"          % "sbt-dynver"   % "5.1.1")
-addSbtPlugin("org.scalameta"           % "sbt-scalafmt" % "2.6.2")
-
-libraryDependencies += "org.scala-sbt" %% "scripted-plugin" % sbtVersion.value
+addSbtPlugin("com.github.sbt" % "sbt-pgp"      % "2.3.2")
+addSbtPlugin("org.scalameta"  % "sbt-scalafmt" % "2.6.2")
+addSbtPlugin("com.github.sbt" % "sbt-dynver"   % "5.1.1")

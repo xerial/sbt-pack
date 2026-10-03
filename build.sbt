@@ -5,12 +5,13 @@ enablePlugins(SbtPlugin)
 val SCALA_3 = "3.8.4"
 ThisBuild / scalaVersion := SCALA_3
 
+// Compile against the oldest sbt 2 release so that the plugin works with any sbt 2.x
 pluginCrossBuild / sbtVersion := "2.0.0"
 
 organization         := "org.xerial.sbt"
 organizationName     := "Xerial project"
 name                 := "sbt-pack"
-organizationHomepage := Some(new URL("http://xerial.org/"))
+organizationHomepage := Some(url("http://xerial.org/"))
 description          := "A sbt plugin for packaging distributable Scala code"
 
 publishMavenStyle      := true
