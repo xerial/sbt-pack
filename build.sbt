@@ -40,7 +40,7 @@ testFrameworks += new TestFramework("wvlet.airspec.Framework")
 libraryDependencies ++= Seq(
   "org.wvlet.airframe" %% "airspec"          % "2025.1.27" % Test,
   "org.apache.commons"  % "commons-compress" % "1.28.0",
-  "org.tukaani"         % "xz"               % "1.11"
+  "org.tukaani"         % "xz"               % "1.12"
 )
 
 // Publishing settings
