@@ -3,7 +3,7 @@ Global / onChangedBuildSource := ReloadOnSourceChanges
 enablePlugins(SbtTwirl)
 enablePlugins(SbtPlugin)
 
-val SCALA_3 = "3.8.4"
+val SCALA_3 = "3.9.0"
 ThisBuild / scalaVersion := SCALA_3
 
 pluginCrossBuild / sbtVersion := "2.0.0"
