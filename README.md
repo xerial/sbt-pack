@@ -1,4 +1,4 @@
-sbt-pack plugin [![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.xerial.sbt/sbt-pack/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.xerial.sbt/sbt-pack)
+sbt-pack plugin [![sbt 2](https://img.shields.io/maven-central/v/org.xerial.sbt/sbt-pack_sbt2_3?label=sbt%202)](https://central.sonatype.com/artifact/org.xerial.sbt/sbt-pack_sbt2_3) [![sbt 1](https://img.shields.io/maven-central/v/org.xerial.sbt/sbt-pack_2.12_1.0?label=sbt%201)](https://central.sonatype.com/artifact/org.xerial.sbt/sbt-pack_2.12_1.0)
 ========
 
 A sbt plugin for creating distributable Scala packages that include dependent jars and launch scripts.
@@ -31,7 +31,7 @@ Add `sbt-pack` plugin to your sbt configuration:
 
 **project/plugins.sbt**
 
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.xerial.sbt/sbt-pack/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.xerial.sbt/sbt-pack)
+[![sbt 2](https://img.shields.io/maven-central/v/org.xerial.sbt/sbt-pack_sbt2_3?label=sbt%202)](https://central.sonatype.com/artifact/org.xerial.sbt/sbt-pack_sbt2_3) [![sbt 1](https://img.shields.io/maven-central/v/org.xerial.sbt/sbt-pack_2.12_1.0?label=sbt%201)](https://central.sonatype.com/artifact/org.xerial.sbt/sbt-pack_2.12_1.0)
 
 ```scala
 // For sbt 2.x (Scala 3)
