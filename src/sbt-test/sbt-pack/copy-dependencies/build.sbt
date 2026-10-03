@@ -1,7 +1,7 @@
 ThisBuild / scalaVersion := "2.13.16"
 
 val commonSettings = Seq(
-  scalaVersion               := "2.12.21",
+  scalaVersion               := "2.13.18",
   version                    := "0.1",
   crossPaths                 := false,
   packCopyDependenciesTarget := baseDirectory.value / "target" / "WEB-INF/lib"
@@ -19,7 +19,7 @@ lazy val module1 =
     .settings(
       libraryDependencies ++= Seq(
         "org.xerial"     % "xerial-core"    % "3.3.6",
-        ("org.slf4j"      % "slf4j-api"      % "1.7.2").force(),
+        ("org.slf4j"     % "slf4j-api"      % "1.7.2").force(),
         "jakarta-regexp" % "jakarta-regexp" % "1.4",
         "xalan"          % "xalan"          % "2.7.1"
       ),
