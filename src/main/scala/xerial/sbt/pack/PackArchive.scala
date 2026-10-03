@@ -90,9 +90,9 @@ trait PackArchive {
     packArchiveTbzArtifact := Artifact(packArchivePrefix.value, "arch", "tar.bz2"),
     packArchiveTxzArtifact := Artifact(packArchivePrefix.value, "arch", "tar.xz"),
     packArchiveZipArtifact := Artifact(packArchivePrefix.value, "arch", "zip"),
-    packArchiveTgz := Def.uncached {
+    packArchiveTgz         := Def.uncached {
       given conv: FileConverter = fileConverter.value
-      val file = createArchive[TarArchiveEntry](
+      val file                  = createArchive[TarArchiveEntry](
         "tar.gz",
         (fos) => createTarArchiveOutputStream(new GzipCompressorOutputStream(fos)),
         createTarEntry
@@ -101,7 +101,7 @@ trait PackArchive {
     },
     packArchiveTbz := Def.uncached {
       given conv: FileConverter = fileConverter.value
-      val file = createArchive[TarArchiveEntry](
+      val file                  = createArchive[TarArchiveEntry](
         "tar.bz2",
         (fos) => createTarArchiveOutputStream(new BZip2CompressorOutputStream(fos)),
         createTarEntry
@@ -110,7 +110,7 @@ trait PackArchive {
     },
     packArchiveTxz := Def.uncached {
       given conv: FileConverter = fileConverter.value
-      val file = createArchive[TarArchiveEntry](
+      val file                  = createArchive[TarArchiveEntry](
         "tar.xz",
         (fos) => createTarArchiveOutputStream(new XZCompressorOutputStream(fos)),
         createTarEntry

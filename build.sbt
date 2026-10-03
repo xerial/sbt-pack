@@ -45,7 +45,7 @@ libraryDependencies ++= Seq(
 
 // Publishing settings
 homepage := Some(url("https://github.com/xerial/sbt-pack"))
-scmInfo := Some(
+scmInfo  := Some(
   ScmInfo(
     url("https://github.com/xerial/sbt-pack"),
     "scm:git@github.com:xerial/sbt-pack.git"
