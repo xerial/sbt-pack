@@ -2,24 +2,38 @@ name: CI
 
 on:
   pull_request:
-    paths:
-      - '**.scala'
-      - '**.java'
-      - '**.sbt'
-      - '.scalafmt.conf'
-      - '.github/workflows/test.yml'
   push:
     branches:
       - main
-    paths:
-      - '**.scala'
-      - '**.java'
-      - '**.sbt'
-      - '.scalafmt.conf'
+  workflow_dispatch:
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      src: ${{ steps.filter.outputs.src }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dorny/paths-filter@v4
+        id: filter
+        with:
+          filters: |
+            src:
+              - '.github/workflows/test.yml'
+              - 'project/**'
+              - 'src/**'
+              - '**.scala'
+              - '**.java'
+              - '**.sbt'
+              - '.scalafmt.conf'
+              - 'sbt'
+
   code_format:
     name: Code format
+    needs: changes
+    if: ${{ needs.changes.outputs.src == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -28,6 +42,8 @@ jobs:
 
   test_sbt2_plugin:
     name: plugin test (sbt 2.x)
+    needs: changes
+    if: ${{ needs.changes.outputs.src == 'true' }}
     strategy:
       fail-fast: false
       matrix:
@@ -47,3 +63,15 @@ jobs:
           java-version: "${{ matrix.java }}"
       - name: scripted tests (sbt 2.x)
         run: ./sbt test scripted
+
+  # Single required status check for branch rulesets and auto-merge.
+  # Passes when all tests pass or are skipped because no source files changed.
+  ci_passed:
+    name: CI passed
+    needs: [changes, code_format, test_sbt2_plugin]
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check results
+        if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}
+        run: exit 1
