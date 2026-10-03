@@ -1,4 +1,3 @@
-@(opts:xerial.sbt.pack.LaunchScript.Opts, expandedClasspath:Option[String])
 #!/bin/sh
 #/*--------------------------------------------------------------------------
 # *  Copyright 2012 Taro L. Saito
@@ -59,7 +58,7 @@ case "`uname`" in
            if [ -z "$JAVA_HOME" ] ; then
              JAVA_HOME=/System/Library/Frameworks/JavaVM.framework/Versions/${JAVA_VERSION}/Home
            fi
-           JAVA_OPTS="$JAVA_OPTS -Xdock:name=\"${PROG_NAME}\" -Xdock:icon=\"$PROG_HOME/@(opts.MAC_ICON_FILE)\" -Dapple.laf.useScreenMenuBar=true"
+           JAVA_OPTS="$JAVA_OPTS -Xdock:name=\"${PROG_NAME}\" -Xdock:icon=\"$PROG_HOME/custom-icon.png\" -Dapple.laf.useScreenMenuBar=true"
            JAVACMD="`command -v java`"
            ;;
 esac
@@ -126,16 +125,20 @@ JAVA_VERSION=$(getJavaVersion "$JAVACMD")
 # Add version-specific JVM options using range matching
 # Options are applied based on version ranges: if versions 21 and 24 are specified,
 # then [21,24) gets opts for 21, [24,∞) gets opts for 24
-@if(opts.JVM_VERSION_OPTS.nonEmpty) {
-@for(version <- opts.JVM_VERSION_OPTS.keys.toList.sorted) {
-if [ "$JAVA_VERSION" -ge @version ]; then
-  VERSION_OPTS="@opts.JVM_VERSION_OPTS(version)"
+
+
+if [ "$JAVA_VERSION" -ge 17 ]; then
+  VERSION_OPTS=""--add-opens=java.base/java.lang=ALL-UNNAMED""
 fi
-}
+
+if [ "$JAVA_VERSION" -ge 24 ]; then
+  VERSION_OPTS=""--enable-native-access=ALL-UNNAMED""
+fi
+
 if [ -n "$VERSION_OPTS" ]; then
   JAVA_OPTS="$JAVA_OPTS $VERSION_OPTS"
 fi
-}
+
 
 CLASSPATH_SUFFIX=""
 # Path separator used in EXTRA_CLASSPATH
@@ -162,29 +165,29 @@ if $mingw ; then
 fi
 
 
-PROG_NAME=@(opts.PROG_NAME)
-PROG_VERSION=@(opts.PROG_VERSION)
-PROG_REVISION=@(opts.PROG_REVISION)
+PROG_NAME=hello
+PROG_VERSION=1.0.0
+PROG_REVISION=abc1234
 
 for arg do
   shift
   case $arg in
     -D*) JAVA_OPTS="$JAVA_OPTS $arg" ;;
-      *) set -- "$@@" "$arg" ;;
+      *) set -- "$@" "$arg" ;;
   esac
 done
 
-ENV_VARS='@(opts.ENV_VARS)'
+ENV_VARS='FOO=1 BAR=2'
 if [ -n "$ENV_VARS" ] ; then
   export $ENV_VARS
 fi
 
 eval exec "\"$JAVACMD\"" \
-     @(opts.JVM_OPTS) \
+     "-Xmx512m" "-Dfoo=bar" \
      ${JAVA_OPTS} \
-     @if(expandedClasspath.isEmpty) { -cp "'@(opts.EXTRA_CLASSPATH)${PROG_HOME}/lib/*${CLASSPATH_SUFFIX}'" } else { -cp "'@(opts.EXTRA_CLASSPATH)@(expandedClasspath.get)${CLASSPATH_SUFFIX}'" }\
+      -cp "'${PROG_HOME}/etc:${PROG_HOME}/lib/a.jar:${PROG_HOME}/lib/b.jar${CLASSPATH_SUFFIX}'" \
      -Dprog.home="'${PROG_HOME}'" \
      -Dprog.version="${PROG_VERSION}" \
      -Dprog.revision="${PROG_REVISION}" \
-     @(opts.MAIN_CLASS) \"\$@@\"
+     org.example.Main \"\$@\"
 exit $?

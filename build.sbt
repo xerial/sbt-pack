@@ -1,6 +1,5 @@
 Global / onChangedBuildSource := ReloadOnSourceChanges
 
-enablePlugins(SbtTwirl)
 enablePlugins(SbtPlugin)
 
 val SCALA_3 = "3.8.4"

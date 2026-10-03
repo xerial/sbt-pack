@@ -50,11 +50,11 @@ sbt-pack is an SBT plugin for creating distributable Scala packages. It bundles 
 3. **src/main/scala/xerial/sbt/pack/PackArchive.scala** - Archive creation
    - Creates tar.gz, tar.bz2, tar.xz, and zip archives
 
-4. **src/main/twirl/xerial/sbt/pack/** - Twirl templates
-   - Templates for generating launch scripts
-   - `launch.scala.txt` - Unix/Linux script template
-   - `launch-bat.scala.txt` - Windows batch file template
-   - `Makefile.scala.txt` - Installation Makefile template
+4. **src/main/resources/xerial/sbt/pack/** - Script templates with `{{NAME}}` placeholders, rendered by `LaunchScript`
+   - `launch.sh.template` - Unix/Linux script template
+   - `launch.bat.template` - Windows batch file template (CRLF line endings)
+   - `Makefile.template` - Installation Makefile template
+   - Golden outputs for these are in `src/test/resources/xerial/sbt/pack/golden` (regenerate with `UPDATE_GOLDEN=1`)
 
 ### Key Plugin Settings
 
