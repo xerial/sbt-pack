@@ -2,11 +2,12 @@ Global / onChangedBuildSource := ReloadOnSourceChanges
 
 enablePlugins(SbtPlugin)
 
-val SCALA_3 = "3.8.4"
-ThisBuild / scalaVersion := SCALA_3
+val SCALA_3 = "3.9.0"
+ThisBuild / scalaVersion       := SCALA_3
+ThisBuild / crossScalaVersions := Seq(SCALA_3)
 
-// Compile against the oldest sbt 2 release so that the plugin works with any sbt 2.x
-pluginCrossBuild / sbtVersion := "2.0.0"
+// Scala 3.9 LTS requires sbt 2.1 or newer.
+pluginCrossBuild / sbtVersion := "2.1.0"
 
 organization         := "org.xerial.sbt"
 organizationName     := "Xerial project"
