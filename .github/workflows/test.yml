@@ -54,6 +54,12 @@ jobs:
           - os: ubuntu-latest
             distribution: temurin
             java: 24
+          - os: ubuntu-latest
+            distribution: temurin
+            java: 17
+          - os: ubuntu-latest
+            distribution: temurin
+            java: 25
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
